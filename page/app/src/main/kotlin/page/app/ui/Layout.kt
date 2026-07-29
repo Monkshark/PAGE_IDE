@@ -1,13 +1,13 @@
 package page.app.ui
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandHorizontally
-import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -23,6 +23,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -40,6 +42,7 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -579,39 +582,69 @@ internal fun IdeMainLayout(
             }
             }
         }
-        AnimatedVisibility(
-            visible = ui.problemsOpen,
-            enter = expandVertically(tween(180)) + fadeIn(tween(180)),
-            exit = shrinkVertically(tween(180)) + fadeOut(tween(180)),
-        ) {
-            ProblemsPanel(
-                diagnostics = scopedDiagnostics,
-                onJump = onJumpToProblem,
-                onClose = { onEvent(IdeEvent.Panel.CloseProblems) },
-                height = ui.problemsHeight,
-                onResizeDelta = { onEvent(IdeEvent.Panel.ResizeProblems(it)) },
-                collapsedKeys = ui.problemsCollapsed,
-                onCollapsedKeysChange = { onEvent(IdeEvent.Panel.ProblemsCollapsedChanged(it)) },
-                fileOrder = ui.problemsFileOrder,
-                onFileOrderChange = { onEvent(IdeEvent.Panel.ProblemsFileOrderChanged(it)) },
-            )
+        val bottomDockTotal = page.app.mvi.defaultOutputHeight()
+        fun panelOpen(panelKey: String): Boolean = when (panelKey) {
+            "problems" -> ui.problemsOpen
+            "todo" -> ui.todoOpen
+            "terminal" -> ui.terminalOpen
+            else -> ui.outputOpen
         }
-        AnimatedVisibility(
-            visible = ui.todoOpen,
-            enter = expandVertically(tween(180)) + fadeIn(tween(180)),
-            exit = shrinkVertically(tween(180)) + fadeOut(tween(180)),
-        ) {
-            TodoPanel(
-                items = todoItems,
-                onJump = onJumpToProblem,
-                onClose = { onEvent(IdeEvent.Panel.CloseTodo) },
-                height = ui.todoHeight,
-                onResizeDelta = { onEvent(IdeEvent.Panel.ResizeTodo(it)) },
-                collapsedKeys = ui.todoCollapsed,
-                onCollapsedKeysChange = { onEvent(IdeEvent.Panel.TodoCollapsedChanged(it)) },
-                fileOrder = ui.todoFileOrder,
-                onFileOrderChange = { onEvent(IdeEvent.Panel.TodoFileOrderChanged(it)) },
-            )
+        val dockOrder = remember { mutableStateListOf<String>() }
+        listOf("problems", "todo", "terminal", "output").forEach { panelKey ->
+            if (panelOpen(panelKey) && panelKey !in dockOrder) dockOrder.add(panelKey)
+        }
+        val bottomPerTarget = bottomDockTotal /
+            listOf("problems", "todo", "terminal", "output").count { panelOpen(it) }.coerceAtLeast(1)
+        dockOrder.forEach { panel ->
+            key(panel) {
+                val open = panelOpen(panel)
+                val heightAnim = remember { Animatable(0.dp, Dp.VectorConverter) }
+                LaunchedEffect(open, bottomPerTarget) {
+                    heightAnim.animateTo(if (open) bottomPerTarget else 0.dp, tween(180))
+                    if (!panelOpen(panel)) dockOrder.remove(panel)
+                }
+                val bottomPer = heightAnim.value
+                if (bottomPer > 0.dp) {
+                when (panel) {
+                    "problems" -> ProblemsPanel(
+                        diagnostics = scopedDiagnostics,
+                        onJump = onJumpToProblem,
+                        onClose = { onEvent(IdeEvent.Panel.CloseProblems) },
+                        height = bottomPer,
+                        onResizeDelta = { onEvent(IdeEvent.Panel.ResizeProblems(it)) },
+                        collapsedKeys = ui.problemsCollapsed,
+                        onCollapsedKeysChange = { onEvent(IdeEvent.Panel.ProblemsCollapsedChanged(it)) },
+                        fileOrder = ui.problemsFileOrder,
+                        onFileOrderChange = { onEvent(IdeEvent.Panel.ProblemsFileOrderChanged(it)) },
+                    )
+                    "todo" -> TodoPanel(
+                        items = todoItems,
+                        onJump = onJumpToProblem,
+                        onClose = { onEvent(IdeEvent.Panel.CloseTodo) },
+                        height = bottomPer,
+                        onResizeDelta = { onEvent(IdeEvent.Panel.ResizeTodo(it)) },
+                        collapsedKeys = ui.todoCollapsed,
+                        onCollapsedKeysChange = { onEvent(IdeEvent.Panel.TodoCollapsedChanged(it)) },
+                        fileOrder = ui.todoFileOrder,
+                        onFileOrderChange = { onEvent(IdeEvent.Panel.TodoFileOrderChanged(it)) },
+                    )
+                    "terminal" -> TerminalPanel(
+                        manager = terminalManager,
+                        onPanelClose = { onEvent(IdeEvent.Panel.CloseTerminal) },
+                        height = bottomPer,
+                        onResizeDelta = { onEvent(IdeEvent.Panel.ResizeTerminal(it)) },
+                    )
+                    "output" -> OutputPanel(
+                        state = outputState,
+                        onClose = { onEvent(IdeEvent.Panel.CloseOutput) },
+                        onClear = onOutputClear,
+                        onStop = onStopRun,
+                        height = bottomPer,
+                        onResizeDelta = { onEvent(IdeEvent.Panel.ResizeOutput(it)) },
+                    )
+                }
+                }
+            }
         }
         if (referencesState != null) {
             ReferencesPanel(
@@ -621,32 +654,6 @@ internal fun IdeMainLayout(
                 height = ui.referencesHeight,
                 onResizeDelta = { onEvent(IdeEvent.Panel.ResizeReferences(it)) },
                 linePreviewFor = linePreviewFor,
-            )
-        }
-        AnimatedVisibility(
-            visible = ui.terminalOpen,
-            enter = expandVertically(tween(180)) + fadeIn(tween(180)),
-            exit = shrinkVertically(tween(180)) + fadeOut(tween(180)),
-        ) {
-            TerminalPanel(
-                manager = terminalManager,
-                onPanelClose = { onEvent(IdeEvent.Panel.CloseTerminal) },
-                height = ui.terminalHeight,
-                onResizeDelta = { onEvent(IdeEvent.Panel.ResizeTerminal(it)) },
-            )
-        }
-        AnimatedVisibility(
-            visible = ui.outputOpen,
-            enter = expandVertically(tween(180)) + fadeIn(tween(180)),
-            exit = shrinkVertically(tween(180)) + fadeOut(tween(180)),
-        ) {
-            OutputPanel(
-                state = outputState,
-                onClose = { onEvent(IdeEvent.Panel.CloseOutput) },
-                onClear = onOutputClear,
-                onStop = onStopRun,
-                height = ui.outputHeight,
-                onResizeDelta = { onEvent(IdeEvent.Panel.ResizeOutput(it)) },
             )
         }
         GlobalStatusBar(

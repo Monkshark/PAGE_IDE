@@ -39,4 +39,14 @@ object FileDialogs {
             chooser.selectedFile.toPath()
         } else null
     }
+
+    fun newProjectDirectory(parent: Frame): Path? {
+        val chooser = JFileChooser().apply {
+            dialogTitle = "New Project"
+            fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
+        }
+        return if (chooser.showDialog(parent, "Create") == JFileChooser.APPROVE_OPTION) {
+            chooser.selectedFile.toPath()
+        } else null
+    }
 }
