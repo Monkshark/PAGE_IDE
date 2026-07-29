@@ -96,4 +96,10 @@ internal class FileMenuController(
             openInTab(target)
         }
     }
+
+    fun newProject(parent: Frame) {
+        val target = FileDialogs.newProjectDirectory(parent) ?: return
+        runCatching { java.nio.file.Files.createDirectories(target) }
+        openWorkspaceFolder(target)
+    }
 }

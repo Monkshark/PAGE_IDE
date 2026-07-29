@@ -145,6 +145,7 @@ internal class AppController(
 
     private val openWorkspaceFolder: (Path) -> Unit = { picked ->
         PerfRegistry.instance?.begin(StartupPhases.WORKSPACE_OPEN)
+        RecentProjects.push(picked)
         workspaceState.rootDir = picked
         workspaceState.expanded = setOf(picked)
         appScope.launch {
@@ -184,6 +185,7 @@ internal class AppController(
     val openFolder = fileMenuController::openFolder
     val openFolderPath = fileMenuController::openFolderPath
     val newFile = fileMenuController::newFile
+    val newProject = fileMenuController::newProject
 
     private val fileTreeContextController = FileTreeContextController(
         ui = layoutUiState,
