@@ -3,25 +3,36 @@ package page.app
 import page.runtime.*
 import page.workspace.*
 
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.draganddrop.dragAndDropTarget
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.hoverable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.ArrowDownward
+import androidx.compose.material.icons.outlined.CreateNewFolder
+import androidx.compose.material.icons.outlined.Folder
+import androidx.compose.material.icons.outlined.FolderOpen
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -35,23 +46,31 @@ import androidx.compose.ui.draganddrop.DragAndDropEvent
 import androidx.compose.ui.draganddrop.DragAndDropTarget
 import androidx.compose.ui.draganddrop.awtTransferable
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import page.core.PageIdentity
+import page.ui.EditorFontFamily
+import page.ui.Glass
 import java.awt.Cursor
 import java.awt.datatransfer.DataFlavor
 import java.io.File
 import java.nio.file.Path
-import page.core.PageIdentity
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
 @Composable
 fun WelcomeScreen(
     onOpenFolder: () -> Unit,
-    onNewFile: () -> Unit,
+    onNewProject: () -> Unit,
     onDropPaths: (List<Path>) -> Unit = {},
+    recents: List<Path> = emptyList(),
+    onOpenRecent: (Path) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     var dragHovered by remember { mutableStateOf(false) }
@@ -74,9 +93,7 @@ fun WelcomeScreen(
             }
         }
     }
-    val bg = if (dragHovered)
-        MaterialTheme.colorScheme.primary.copy(alpha = 0.10f)
-    else MaterialTheme.colorScheme.background
+    val bg = if (dragHovered) Glass.colors.primarySoft else Glass.colors.background
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -89,82 +106,231 @@ fun WelcomeScreen(
                 },
                 target = dropTarget,
             ),
-        contentAlignment = Alignment.Center,
+        contentAlignment = Alignment.TopCenter,
     ) {
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(28.dp),
+            modifier = Modifier
+                .widthIn(max = 460.dp)
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 40.dp, vertical = 52.dp),
         ) {
-            Text(
-                text = "PAGE",
-                fontSize = 56.sp,
-                fontWeight = FontWeight.Light,
-                color = MaterialTheme.colorScheme.onBackground,
-            )
-            Text(
-                text = "v${PageIdentity.VERSION}",
-                fontSize = 13.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Wordmark()
             Spacer(Modifier.height(12.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                WelcomeAction(
-                    title = "Open folder",
-                    subtitle = "Open an existing project directory",
-                    onClick = onOpenFolder,
-                )
-                WelcomeAction(
-                    title = "New file",
-                    subtitle = "Create an empty file and start typing",
-                    onClick = onNewFile,
-                )
-            }
-            Spacer(Modifier.height(8.dp))
             Text(
-                text = "Shortcuts: Ctrl+Shift+O open folder · Ctrl+O open file",
-                fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                text = "${PageIdentity.ACRONYM}  ·  v${PageIdentity.VERSION}",
+                fontFamily = EditorFontFamily,
+                fontSize = 11.5.sp,
+                letterSpacing = 0.6.sp,
+                color = Glass.colors.muted,
             )
+
+            Spacer(Modifier.height(26.dp))
+            Divider()
+            Spacer(Modifier.height(26.dp))
+
+            SectionLabel("Start")
+            ActionRow(
+                icon = Icons.Outlined.FolderOpen,
+                title = "Open folder…",
+                accentHover = false,
+                onClick = onOpenFolder,
+            ) { Kbd("⌃⇧O") }
+            ActionRow(
+                icon = Icons.Outlined.CreateNewFolder,
+                title = "New project",
+                accentHover = false,
+                onClick = onNewProject,
+            ) {}
+
+            if (recents.isNotEmpty()) {
+                Spacer(Modifier.height(26.dp))
+                SectionLabel("Recent")
+                recents.forEach { project ->
+                    ActionRow(
+                        icon = Icons.Outlined.Folder,
+                        title = project.fileName?.toString() ?: project.toString(),
+                        accentHover = true,
+                        onClick = { onOpenRecent(project) },
+                    ) {
+                        Text(
+                            text = displayPath(project),
+                            fontFamily = EditorFontFamily,
+                            fontSize = 11.5.sp,
+                            color = Glass.colors.faint,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(22.dp))
+            Divider()
+            Spacer(Modifier.height(16.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Outlined.ArrowDownward,
+                    contentDescription = null,
+                    tint = Glass.colors.faint,
+                    modifier = Modifier.size(13.dp),
+                )
+                Spacer(Modifier.width(9.dp))
+                Text(
+                    text = "Drop a folder anywhere to open",
+                    fontFamily = EditorFontFamily,
+                    fontSize = 11.sp,
+                    color = Glass.colors.faint,
+                )
+                Spacer(Modifier.weight(1f))
+                DocsLink()
+            }
         }
     }
 }
 
 @Composable
-private fun WelcomeAction(
-    title: String,
-    subtitle: String,
-    onClick: () -> Unit,
-) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val hovered by interactionSource.collectIsHoveredAsState()
-    val borderColor = if (hovered)
-        MaterialTheme.colorScheme.primary
-    else MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
-    val bg = if (hovered)
-        MaterialTheme.colorScheme.surface.copy(alpha = 0.85f)
-    else MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
-    Column(
-        modifier = Modifier
-            .width(220.dp)
-            .clip(RoundedCornerShape(10.dp))
-            .background(bg)
-            .border(1.dp, borderColor, RoundedCornerShape(10.dp))
-            .hoverable(interactionSource)
-            .pointerHoverIcon(PointerIcon(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 20.dp, vertical = 22.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
+private fun Wordmark() {
+    Row(verticalAlignment = Alignment.Bottom) {
         Text(
-            text = title,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.onSurface,
+            text = "PAGE",
+            fontFamily = FontFamily.SansSerif,
+            fontSize = 44.sp,
+            fontWeight = FontWeight.SemiBold,
+            letterSpacing = (-0.5).sp,
+            color = Glass.colors.text,
         )
-        Text(
-            text = subtitle,
-            fontSize = 12.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        Box(
+            modifier = Modifier
+                .padding(start = 9.dp, bottom = 7.dp)
+                .size(8.dp)
+                .clip(RoundedCornerShape(2.dp))
+                .background(Glass.colors.accent),
         )
     }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun DocsLink() {
+    val interaction = remember { MutableInteractionSource() }
+    val hovered by interaction.collectIsHoveredAsState()
+    Text(
+        text = "Documentation",
+        fontFamily = EditorFontFamily,
+        fontSize = 11.sp,
+        color = if (hovered) Glass.colors.accent else Glass.colors.muted,
+        modifier = Modifier
+            .hoverable(interaction)
+            .pointerHoverIcon(PointerIcon(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)))
+            .clickable {
+                runCatching {
+                    java.awt.Desktop.getDesktop().browse(java.net.URI("https://monkshark.github.io/page-ide/"))
+                }
+            },
+    )
+}
+
+@Composable
+private fun SectionLabel(text: String) {
+    Text(
+        text = text.uppercase(),
+        fontFamily = EditorFontFamily,
+        fontSize = 10.sp,
+        letterSpacing = 2.6.sp,
+        color = Glass.colors.faint,
+        modifier = Modifier.padding(start = 2.dp, bottom = 11.dp),
+    )
+}
+
+@Composable
+private fun Divider() {
+    Box(Modifier.fillMaxWidth().height(1.dp).background(Glass.colors.separator))
+}
+
+@Composable
+private fun Kbd(text: String) {
+    Text(
+        text = text,
+        fontFamily = EditorFontFamily,
+        fontSize = 10.5.sp,
+        color = Glass.colors.faint,
+        modifier = Modifier
+            .clip(RoundedCornerShape(6.dp))
+            .border(1.dp, Glass.colors.outline, RoundedCornerShape(6.dp))
+            .padding(horizontal = 7.dp, vertical = 2.dp),
+    )
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun ActionRow(
+    icon: ImageVector,
+    title: String,
+    accentHover: Boolean,
+    onClick: () -> Unit,
+    trailing: @Composable () -> Unit,
+) {
+    val interaction = remember { MutableInteractionSource() }
+    val hovered by interaction.collectIsHoveredAsState()
+    val railHeight by animateDpAsState(if (hovered) 20.dp else 0.dp, tween(140))
+    val hoverTint = if (accentHover) Glass.colors.accent else Glass.colors.primary
+    val tileBg = if (hovered) hoverTint.copy(alpha = 0.14f) else Glass.colors.surface
+    val tileBorder = if (hovered) hoverTint else Glass.colors.outline
+    val iconTint = if (hovered) hoverTint else Glass.colors.muted
+    val rowBg = if (hovered) Glass.colors.text.copy(alpha = 0.04f) else Color.Transparent
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(10.dp))
+            .background(rowBg)
+            .hoverable(interaction)
+            .pointerHoverIcon(PointerIcon(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)))
+            .clickable(onClick = onClick),
+    ) {
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .padding(start = 3.dp)
+                .width(2.dp)
+                .height(railHeight)
+                .clip(RoundedCornerShape(2.dp))
+                .background(Glass.colors.accent),
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 11.dp, vertical = 9.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(28.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(tileBg)
+                    .border(1.dp, tileBorder, RoundedCornerShape(8.dp)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = iconTint,
+                    modifier = Modifier.size(16.dp),
+                )
+            }
+            Spacer(Modifier.width(13.dp))
+            Text(
+                text = title,
+                fontFamily = FontFamily.SansSerif,
+                fontSize = 14.sp,
+                color = Glass.colors.text,
+            )
+            Spacer(Modifier.weight(1f))
+            trailing()
+        }
+    }
+}
+
+private fun displayPath(project: Path): String {
+    val raw = project.toString().replace('\\', '/')
+    val home = runCatching { System.getProperty("user.home") }.getOrNull()?.replace('\\', '/')
+    return if (home != null && raw.startsWith(home)) "~" + raw.removePrefix(home) else raw
 }

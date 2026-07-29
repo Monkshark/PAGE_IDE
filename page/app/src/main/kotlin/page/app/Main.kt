@@ -139,9 +139,10 @@ fun main() {
 @Composable
 private fun androidx.compose.ui.window.ApplicationScope.AppContent() {
     val windowState = rememberWindowState(
-        placement = androidx.compose.ui.window.WindowPlacement.Maximized,
-        width = 1280.dp,
-        height = 800.dp,
+        placement = androidx.compose.ui.window.WindowPlacement.Floating,
+        position = androidx.compose.ui.window.WindowPosition.Aligned(Alignment.Center),
+        width = 720.dp,
+        height = 560.dp,
     )
     val undoTrackerPrimary = remember { UndoGroupTracker() }
     val undoTrackerSecondary = remember { UndoGroupTracker() }
@@ -581,7 +582,7 @@ private fun androidx.compose.ui.window.ApplicationScope.AppContent() {
     val saveAllDirty = app.saveAllDirty
     val openFolder = app.openFolder
     val openFolderPath = app.openFolderPath
-    val newFile = app.newFile
+    val newProject = app.newProject
     val remapTreeStateAfterRename = app.remapTreeStateAfterRename
     val remapTabsAfterRename = app.remapTabsAfterRename
     val readFileTextWithTabs = app.readFileTextWithTabs
@@ -702,6 +703,15 @@ private fun androidx.compose.ui.window.ApplicationScope.AppContent() {
         val showWelcome = rootDir == null &&
             primaryPane.book.tabs.isEmpty() &&
             secondaryPane.book.tabs.isEmpty()
+        LaunchedEffect(showWelcome) {
+            if (showWelcome) {
+                windowState.placement = androidx.compose.ui.window.WindowPlacement.Floating
+                windowState.size = androidx.compose.ui.unit.DpSize(720.dp, 560.dp)
+                windowState.position = androidx.compose.ui.window.WindowPosition.Aligned(Alignment.Center)
+            } else {
+                windowState.placement = androidx.compose.ui.window.WindowPlacement.Maximized
+            }
+        }
         GlassTheme(palette = palette) {
             Surface(
                 modifier = Modifier.fillMaxSize(),
@@ -709,9 +719,12 @@ private fun androidx.compose.ui.window.ApplicationScope.AppContent() {
             ) {
                 Box(modifier = Modifier.fillMaxSize()) {
                 if (showWelcome) {
+                    val recents = remember(showWelcome) { RecentProjects.load() }
                     WelcomeScreen(
                         onOpenFolder = { frameRef.value?.let { openFolder(it) } },
-                        onNewFile = { frameRef.value?.let { newFile(it) } },
+                        onNewProject = { frameRef.value?.let { newProject(it) } },
+                        recents = recents,
+                        onOpenRecent = { openFolderPath(it) },
                         onDropPaths = { dropped ->
                             val folder = dropped.firstOrNull { java.nio.file.Files.isDirectory(it) }
                             if (folder != null) {

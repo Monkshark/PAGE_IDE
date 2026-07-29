@@ -118,7 +118,7 @@ internal data class AppState(
     val run: RunState = RunState(),
 )
 
-private fun defaultOutputHeight(): Dp {
+internal fun defaultOutputHeight(): Dp {
     if (java.awt.GraphicsEnvironment.isHeadless()) return 480.dp
     return (java.awt.Toolkit.getDefaultToolkit().screenSize.height / 2f)
         .coerceIn(240f, 1200f)
