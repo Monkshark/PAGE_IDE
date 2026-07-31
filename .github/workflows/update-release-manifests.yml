@@ -82,7 +82,7 @@ jobs:
           token: ${{ secrets.MANIFEST_BOT_PAT }}
           author: Huido Choo <justinchoo0814@gmail.com>
           committer: Huido Choo <justinchoo0814@gmail.com>
-          branch: chore/release-manifest-refresh
+          branch: ci/release-manifest-refresh
           delete-branch: true
           commit-message: "GitHub release manifest 자동 갱신"
           title: "GitHub release manifest 자동 갱신"
