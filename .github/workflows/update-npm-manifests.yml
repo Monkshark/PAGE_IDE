@@ -83,8 +83,8 @@ jobs:
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.MANIFEST_BOT_PAT }}
-          author: Justin choo <justinchoo0814@gmail.com>
-          committer: Justin choo <justinchoo0814@gmail.com>
+          author: Huido Choo <justinchoo0814@gmail.com>
+          committer: Huido Choo <justinchoo0814@gmail.com>
           branch: chore/npm-manifest-refresh
           delete-branch: true
           commit-message: "npm registry manifest 자동 갱신"
