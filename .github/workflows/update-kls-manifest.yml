@@ -61,10 +61,6 @@ jobs:
           delete-branch: true
           commit-message: "KLS release manifest 자동 갱신"
           title: "KLS release manifest 자동 갱신"
-          body: |
-            Monkshark fork + fwcd upstream 의 최신 release 목록을 `docs/lsp/kotlin.json` 에 반영합니다.
-
-            매일 KLS manifest GitHub Action 이 자동으로 생성/갱신합니다.
           labels: |
             automation
             lsp
