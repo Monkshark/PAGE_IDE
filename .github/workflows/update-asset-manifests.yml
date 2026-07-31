@@ -99,12 +99,6 @@ jobs:
           delete-branch: true
           commit-message: "page-ide-assets 자산 + Adoptium JDK 매니페스트 자동 갱신"
           title: "page-ide-assets 자산 + Adoptium JDK 매니페스트 자동 갱신"
-          body: |
-            monkshark/page-ide-assets 번들 자산 + Adoptium JDK 버전을 정적 매니페스트로 갱신.
-            - `docs/lsp/*-bundle.json` — metals/jdtls/dart/flutter/ruby 번들 자산명
-            - `docs/jdk/versions.json` — Adoptium Temurin LTS major별 GA 버전 (8/11/17/21/25)
-
-            매일 PAGE asset manifest GitHub Action 이 자동 생성/갱신합니다.
           labels: |
             automation
             lsp

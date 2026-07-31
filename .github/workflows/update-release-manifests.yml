@@ -86,10 +86,6 @@ jobs:
           delete-branch: true
           commit-message: "GitHub release manifest 자동 갱신"
           title: "GitHub release manifest 자동 갱신"
-          body: |
-            rust/clangd(c·cpp)/lua/markdown/zig/elixir/clojure/haskell 의 최신 release 목록을 `docs/lsp/*.json` 에 반영합니다.
-
-            매일 GitHub release manifest GitHub Action 이 자동으로 생성/갱신합니다.
           labels: |
             automation
             lsp
