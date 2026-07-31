@@ -93,6 +93,8 @@ jobs:
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.MANIFEST_BOT_PAT }}
+          author: Huido Choo <justinchoo0814@gmail.com>
+          committer: Huido Choo <justinchoo0814@gmail.com>
           branch: chore/asset-manifest-refresh
           delete-branch: true
           commit-message: "page-ide-assets 자산 + Adoptium JDK 매니페스트 자동 갱신"
