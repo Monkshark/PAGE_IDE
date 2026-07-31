@@ -95,7 +95,7 @@ jobs:
           token: ${{ secrets.MANIFEST_BOT_PAT }}
           author: Huido Choo <justinchoo0814@gmail.com>
           committer: Huido Choo <justinchoo0814@gmail.com>
-          branch: chore/asset-manifest-refresh
+          branch: ci/asset-manifest-refresh
           delete-branch: true
           commit-message: "page-ide-assets 자산 + Adoptium JDK 매니페스트 자동 갱신"
           title: "page-ide-assets 자산 + Adoptium JDK 매니페스트 자동 갱신"

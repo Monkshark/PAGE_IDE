@@ -57,7 +57,7 @@ jobs:
           token: ${{ secrets.MANIFEST_BOT_PAT }}
           author: Huido Choo <justinchoo0814@gmail.com>
           committer: Huido Choo <justinchoo0814@gmail.com>
-          branch: chore/kls-manifest-refresh
+          branch: ci/kls-manifest-refresh
           delete-branch: true
           commit-message: "KLS release manifest 자동 갱신"
           title: "KLS release manifest 자동 갱신"

@@ -85,7 +85,7 @@ jobs:
           token: ${{ secrets.MANIFEST_BOT_PAT }}
           author: Huido Choo <justinchoo0814@gmail.com>
           committer: Huido Choo <justinchoo0814@gmail.com>
-          branch: chore/npm-manifest-refresh
+          branch: ci/npm-manifest-refresh
           delete-branch: true
           commit-message: "npm registry manifest 자동 갱신"
           title: "npm registry manifest 자동 갱신"
