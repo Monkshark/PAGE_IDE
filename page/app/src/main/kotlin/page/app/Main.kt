@@ -129,6 +129,9 @@ import java.awt.Cursor
 import java.nio.file.Path
 
 fun main() {
+    if (System.getProperty("skiko.renderApi").isNullOrBlank() && System.getenv("SKIKO_RENDER_API").isNullOrBlank()) {
+        System.setProperty("skiko.renderApi", "OPENGL")
+    }
     PerfRegistry.start(StartupKind.COLD).begin(StartupPhases.COMPOSE_INIT)
     UiFreezeWatchdog.start()
     application {
