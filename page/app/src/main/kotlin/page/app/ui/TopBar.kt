@@ -49,24 +49,34 @@ internal fun TopBar(
     onOpenRunDialog: () -> Unit,
 ) {
     val colors = Glass.colors
+    val chrome = LocalWindowChrome.current
     Surface(
-        modifier = Modifier.fillMaxWidth().height(34.dp),
+        modifier = Modifier.fillMaxWidth().height(36.dp),
         color = Color.Transparent,
     ) {
         Row(
-            modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp),
+            modifier = Modifier.fillMaxSize(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            AppMarkGlyph(size = 14.dp)
-            Spacer(Modifier.width(8.dp))
-            Text(
-                text = PageIdentity.NAME,
-                style = MaterialTheme.typography.titleSmall,
-                color = colors.text,
-            )
-            Spacer(Modifier.width(16.dp))
-            Breadcrumb(path = path, workspaceRoot = workspaceRoot)
-            Spacer(Modifier.weight(1f))
+            Row(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .let { if (chrome != null) it.titleBarDrag(chrome.window, chrome.onToggleMaximize) else it }
+                    .padding(start = 12.dp, end = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                AppMarkGlyph(size = 14.dp)
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = PageIdentity.NAME,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = colors.text,
+                )
+                Spacer(Modifier.width(16.dp))
+                Breadcrumb(path = path, workspaceRoot = workspaceRoot)
+                Spacer(Modifier.weight(1f))
+            }
             val currentFileTemplate = activeFilePath?.let { LanguageRunDefaults.forFile(it) }
             RunDropdown(
                 state = runState,
@@ -96,6 +106,10 @@ internal fun TopBar(
                 icon = { tint -> StopGlyph(tint = tint) },
                 enabledIconTint = colors.danger,
             )
+            if (chrome != null) {
+                Spacer(Modifier.width(6.dp))
+                WindowControls(chrome, Modifier.fillMaxHeight())
+            }
         }
     }
 }
