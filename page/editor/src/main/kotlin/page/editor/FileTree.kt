@@ -11,6 +11,24 @@ data class TreeNode(
 
 object FileTree {
 
+    private val HEAVY_DIR_NAMES = setOf(
+        "build", "out", "dist", "target", "bin",
+        "node_modules", "vendor", "bower_components", "jspm_packages",
+        ".git", ".svn", ".hg",
+        ".gradle", ".idea", ".kotlin", ".dart_tool", ".m2",
+        ".cache", ".xwin-cache", ".ccache", "caches",
+        ".venv", "venv", "__pycache__", ".mypy_cache", ".pytest_cache", ".tox",
+        ".next", ".nuxt", ".svelte-kit", ".angular", ".parcel-cache", ".turbo",
+        "tmp", "temp",
+    )
+
+    private const val MAX_RECURSIVE_DIRS = 20_000
+
+    fun isHeavyDir(path: Path): Boolean {
+        val name = path.fileName?.toString()?.lowercase() ?: return false
+        return name in HEAVY_DIR_NAMES || name.endsWith("-cache") || name.endsWith(".egg-info")
+    }
+
     fun listTree(root: Path, expanded: Set<Path>): List<TreeNode> {
         val result = mutableListOf<TreeNode>()
         val rootIsDir = isDirectorySafe(root)
@@ -22,15 +40,15 @@ object FileTree {
     }
 
     fun descendantDirs(dir: Path): Set<Path> {
-        if (!isDirectorySafe(dir)) return emptySet()
+        if (!isDirectorySafe(dir) || isHeavyDir(dir)) return emptySet()
         val out = LinkedHashSet<Path>()
         val stack = ArrayDeque<Path>()
         stack.addLast(dir)
-        while (stack.isNotEmpty()) {
+        while (stack.isNotEmpty() && out.size < MAX_RECURSIVE_DIRS) {
             val cur = stack.removeLast()
             val children = listChildrenSorted(cur) ?: continue
             for (child in children) {
-                if (isDirectorySafe(child) && out.add(child)) {
+                if (isDirectorySafe(child) && !isHeavyDir(child) && out.add(child)) {
                     stack.addLast(child)
                 }
             }
