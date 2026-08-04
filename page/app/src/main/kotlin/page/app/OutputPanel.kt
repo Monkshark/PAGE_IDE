@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import page.ui.Glass
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -191,7 +192,7 @@ private fun OutputHeader(
         Text(
             text = "Output",
             style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurface,
+            color = Glass.colors.text,
         )
         Spacer(Modifier.width(12.dp))
         val label = state.commandLabel
@@ -212,7 +213,8 @@ private fun OutputHeader(
             onClick = onStop,
         )
         HeaderAction(label = "Clear", enabled = true, onClick = onClear)
-        HeaderAction(label = "Close", enabled = true, onClick = onClose)
+        Spacer(Modifier.width(4.dp))
+        page.app.ui.PanelCloseButton(onClose = onClose)
     }
 }
 

@@ -4,7 +4,6 @@ import page.runtime.*
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -120,17 +119,16 @@ fun QuickOpenDialog(
             level = GlassSurfaceLevel.Overlay,
             shape = RoundedCornerShape(Glass.radius.lg),
             modifier = Modifier
-                .padding(top = 96.dp)
-                .width(660.dp)
-                .height(440.dp)
+                .padding(top = 64.dp)
+                .width(520.dp)
+                .height(380.dp)
                 .clickable(interactionSource = cardInteraction, indication = null) {},
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .clip(RoundedCornerShape(Glass.radius.lg))
-                    .background(colors.surface)
-                    .padding(14.dp),
+                    .background(colors.surface),
             ) {
                 QueryInput(
                     value = query,
@@ -140,8 +138,8 @@ fun QuickOpenDialog(
                     },
                     focus = queryFocus,
                 )
-                Spacer(Modifier.height(10.dp))
-                Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                Box(Modifier.fillMaxWidth().height(1.dp).background(colors.separator))
+                Box(modifier = Modifier.weight(1f).fillMaxWidth().padding(6.dp)) {
                     ResultList(
                         results = results,
                         selected = selected,
@@ -152,8 +150,6 @@ fun QuickOpenDialog(
                         },
                     )
                 }
-                Spacer(Modifier.height(10.dp))
-                HintBar(count = results.size)
             }
         }
     }
@@ -165,15 +161,12 @@ private fun QueryInput(value: String, onChange: (String) -> Unit, focus: FocusRe
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(40.dp)
-            .clip(RoundedCornerShape(Glass.radius.sm))
-            .background(colors.surfaceL2)
-            .border(1.dp, colors.outline, RoundedCornerShape(Glass.radius.sm))
-            .padding(horizontal = 12.dp),
+            .height(46.dp)
+            .padding(horizontal = 15.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        SearchGlyph(tint = colors.muted, size = 15.dp)
-        Spacer(Modifier.width(9.dp))
+        SearchGlyph(tint = colors.faint, size = 16.dp)
+        Spacer(Modifier.width(10.dp))
         Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
             BasicTextField(
                 value = value,
@@ -183,7 +176,7 @@ private fun QueryInput(value: String, onChange: (String) -> Unit, focus: FocusRe
                 textStyle = TextStyle(
                     color = colors.text,
                     fontFamily = FontFamily.Monospace,
-                    fontSize = 13.sp,
+                    fontSize = 14.sp,
                 ),
                 modifier = Modifier.fillMaxWidth().focusRequester(focus),
             )
@@ -193,7 +186,7 @@ private fun QueryInput(value: String, onChange: (String) -> Unit, focus: FocusRe
                     style = LocalTextStyle.current.copy(
                         color = colors.muted,
                         fontFamily = FontFamily.Monospace,
-                        fontSize = 13.sp,
+                        fontSize = 14.sp,
                     ),
                 )
             }
@@ -257,14 +250,16 @@ private fun ResultRow(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 1.dp)
-            .height(30.dp)
-            .clip(RoundedCornerShape(Glass.radius.xs))
+            .height(34.dp)
+            .clip(RoundedCornerShape(Glass.radius.sm))
             .background(rowBg)
             .hoverable(interaction)
             .clickable(onClick = onClick)
             .padding(horizontal = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        FileTypeIcon(path = result.file.path, isDirectory = false, size = 15.dp)
+        Spacer(Modifier.width(10.dp))
         Text(
             text = highlightedName(name, result.nameIndices, colors.text, colors.primary),
             style = TextStyle(
@@ -276,10 +271,10 @@ private fun ResultRow(
             overflow = TextOverflow.Ellipsis,
         )
         if (parent.isNotEmpty()) {
-            Spacer(Modifier.width(8.dp))
+            Spacer(Modifier.weight(1f).width(8.dp))
             Text(
                 text = parent,
-                color = colors.muted,
+                color = colors.faint,
                 style = TextStyle(
                     fontFamily = FontFamily.Monospace,
                     fontSize = 11.sp,
@@ -290,27 +285,6 @@ private fun ResultRow(
         }
     }
     LaunchedEffect(isSelected) { if (isSelected) onHover() }
-}
-
-@Composable
-private fun HintBar(count: Int) {
-    val colors = Glass.colors
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = if (count == 1) "1 result" else "$count results",
-            color = colors.faint,
-            fontSize = 11.sp,
-        )
-        Spacer(Modifier.weight(1f))
-        Text(
-            text = "↑↓ navigate   ↵ open   esc close",
-            color = colors.faint,
-            fontSize = 11.sp,
-        )
-    }
 }
 
 @Composable
