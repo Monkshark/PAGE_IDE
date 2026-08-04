@@ -159,7 +159,7 @@ fun ProblemsPanel(
                     text = "Problems",
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = Glass.colors.text,
                 )
                 if (errorCount > 0) ProblemBadge(errorCount, "errors", Glass.colors.error)
                 if (warningCount > 0) ProblemBadge(warningCount, "warnings", Glass.colors.warn)
@@ -178,18 +178,13 @@ fun ProblemsPanel(
                             .padding(4.dp),
                     )
                 }
-                Text(
-                    text = "Close",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.clickable { onClose() }.padding(4.dp),
-                )
+                page.app.ui.PanelCloseButton(onClose = onClose)
             }
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(1.dp)
-                    .background(MaterialTheme.colorScheme.outlineVariant),
+                    .background(Glass.colors.separator),
             )
             if (entries.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
