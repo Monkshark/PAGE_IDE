@@ -102,7 +102,7 @@ internal fun PaneRegion(
                 { editor.collapseSplit() }
             } else null,
         )
-        FocusIndicator(visible = isFocused)
+        FocusIndicator(visible = isFocused && editor.splitEnabled)
         when (kind) {
             FileKind.IMAGE -> PreviewPanel(
                 path = active.path,
