@@ -2,6 +2,7 @@ package page.ui
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -44,11 +45,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
@@ -762,11 +769,135 @@ fun CodeEditor(
 
 data class CompletionDisplay(
     val label: String,
-    val kindHint: String,
+    val kindIcon: CompletionKindIcon = CompletionKindIcon.GENERIC,
     val detail: String? = null,
     val documentation: String? = null,
-    val kindColor: Color? = null,
 )
+
+enum class CompletionKindIcon {
+    METHOD, PROPERTY, CLASS, INTERFACE, ENUM, KEYWORD, VARIABLE, CONSTANT, MODULE, SNIPPET, GENERIC
+}
+
+@Composable
+private fun GlassPopup(
+    modifier: Modifier = Modifier,
+    shape: Shape = RoundedCornerShape(Glass.radius.sm),
+    content: @Composable () -> Unit,
+) {
+    val shadow = Glass.elevation.overlay
+    Box(
+        modifier = modifier
+            .shadow(
+                elevation = shadow.blur,
+                shape = shape,
+                clip = false,
+                ambientColor = Color.Black.copy(alpha = shadow.alpha),
+                spotColor = Color.Black.copy(alpha = shadow.alpha),
+            )
+            .clip(shape)
+            .background(Glass.colors.surfaceRaised)
+            .border(1.dp, Glass.colors.outline, shape),
+    ) {
+        content()
+    }
+}
+
+private fun kindGlyphColor(icon: CompletionKindIcon, c: GlassColors): Color = when (icon) {
+    CompletionKindIcon.METHOD -> c.primary
+    CompletionKindIcon.PROPERTY -> c.accent
+    CompletionKindIcon.CLASS, CompletionKindIcon.INTERFACE -> c.syntax.type
+    CompletionKindIcon.ENUM, CompletionKindIcon.CONSTANT -> c.syntax.number
+    CompletionKindIcon.KEYWORD -> c.syntax.keyword
+    CompletionKindIcon.VARIABLE -> c.syntax.string
+    CompletionKindIcon.MODULE -> c.accent
+    CompletionKindIcon.SNIPPET -> c.success
+    CompletionKindIcon.GENERIC -> c.muted
+}
+
+@Composable
+private fun CompletionKindGlyph(icon: CompletionKindIcon, modifier: Modifier = Modifier) {
+    val color = kindGlyphColor(icon, Glass.colors)
+    Canvas(modifier = modifier.size(15.dp)) {
+        val s = size.minDimension
+        fun p(x: Float, y: Float) = Offset(x / 16f * s, y / 16f * s)
+        val sw = s * 0.09f
+        val stroke = Stroke(width = sw, cap = StrokeCap.Round)
+        when (icon) {
+            CompletionKindIcon.METHOD, CompletionKindIcon.SNIPPET -> {
+                val cube = Path().apply {
+                    moveTo(p(8f, 2f).x, p(8f, 2f).y)
+                    lineTo(p(13f, 4.8f).x, p(13f, 4.8f).y)
+                    lineTo(p(13f, 11.2f).x, p(13f, 11.2f).y)
+                    lineTo(p(8f, 14f).x, p(8f, 14f).y)
+                    lineTo(p(3f, 11.2f).x, p(3f, 11.2f).y)
+                    lineTo(p(3f, 4.8f).x, p(3f, 4.8f).y)
+                    close()
+                }
+                drawPath(cube, color, style = stroke)
+                drawLine(color, p(3f, 4.8f), p(8f, 7.6f), sw, StrokeCap.Round)
+                drawLine(color, p(8f, 7.6f), p(13f, 4.8f), sw, StrokeCap.Round)
+                drawLine(color, p(8f, 7.6f), p(8f, 14f), sw, StrokeCap.Round)
+            }
+            CompletionKindIcon.PROPERTY -> {
+                val tag = Path().apply {
+                    moveTo(p(8.5f, 2.5f).x, p(8.5f, 2.5f).y)
+                    lineTo(p(13f, 2.5f).x, p(13f, 2.5f).y)
+                    lineTo(p(13f, 7f).x, p(13f, 7f).y)
+                    lineTo(p(7.5f, 12.5f).x, p(7.5f, 12.5f).y)
+                    lineTo(p(3f, 7.5f).x, p(3f, 7.5f).y)
+                    close()
+                }
+                drawPath(tag, color, style = stroke)
+                drawCircle(color, radius = s * 0.06f, center = p(10.4f, 5.1f))
+            }
+            CompletionKindIcon.MODULE -> {
+                drawRoundRect(
+                    color = color,
+                    topLeft = p(3f, 3f),
+                    size = Size(p(10f, 0f).x, p(0f, 10f).y),
+                    cornerRadius = CornerRadius(s * 0.14f, s * 0.14f),
+                    style = stroke,
+                )
+                drawLine(color, p(3f, 8f), p(13f, 8f), sw, StrokeCap.Round)
+                drawLine(color, p(8f, 3f), p(8f, 13f), sw, StrokeCap.Round)
+            }
+            CompletionKindIcon.CLASS, CompletionKindIcon.INTERFACE, CompletionKindIcon.ENUM -> {
+                drawRoundRect(
+                    color = color,
+                    topLeft = p(3f, 3f),
+                    size = Size(p(10f, 0f).x, p(0f, 10f).y),
+                    cornerRadius = CornerRadius(s * 0.14f, s * 0.14f),
+                    style = stroke,
+                )
+                drawLine(color, p(3f, 6.2f), p(13f, 6.2f), sw, StrokeCap.Round)
+            }
+            CompletionKindIcon.KEYWORD -> {
+                drawCircle(color, radius = s * 0.17f, center = p(6f, 6.2f), style = stroke)
+                drawLine(color, p(7.9f, 8.1f), p(13f, 13.2f), sw, StrokeCap.Round)
+                drawLine(color, p(11f, 11.2f), p(12.6f, 9.6f), sw, StrokeCap.Round)
+            }
+            CompletionKindIcon.VARIABLE, CompletionKindIcon.CONSTANT -> {
+                val left = Path().apply {
+                    moveTo(p(6.2f, 3f).x, p(6.2f, 3f).y)
+                    lineTo(p(4f, 3f).x, p(4f, 3f).y)
+                    lineTo(p(4f, 13f).x, p(4f, 13f).y)
+                    lineTo(p(6.2f, 13f).x, p(6.2f, 13f).y)
+                }
+                val right = Path().apply {
+                    moveTo(p(9.8f, 3f).x, p(9.8f, 3f).y)
+                    lineTo(p(12f, 3f).x, p(12f, 3f).y)
+                    lineTo(p(12f, 13f).x, p(12f, 13f).y)
+                    lineTo(p(9.8f, 13f).x, p(9.8f, 13f).y)
+                }
+                drawPath(left, color, style = stroke)
+                drawPath(right, color, style = stroke)
+            }
+            CompletionKindIcon.GENERIC -> {
+                drawCircle(color, radius = s * 0.13f, center = p(8f, 8f))
+            }
+        }
+    }
+}
 
 data class SignatureHelpDisplay(
     val label: String,
@@ -785,50 +916,47 @@ private fun SignatureHelpPopup(
 ) {
     val label = display.label
     val activeRange = display.activeParamRange
+    val colors = Glass.colors
     val annotated = buildAnnotatedString {
-        if (activeRange == null || activeRange.first >= label.length) {
-            append(label)
-        } else {
+        append(label)
+        addStyle(SpanStyle(color = colors.text), 0, label.length)
+        Regex("\\b[A-Z][A-Za-z0-9_]*\\b").findAll(label).forEach {
+            addStyle(SpanStyle(color = colors.syntax.type), it.range.first, it.range.last + 1)
+        }
+        Regex("\\b(fun|val|var|suspend|vararg|reified|out|in)\\b").findAll(label).forEach {
+            addStyle(SpanStyle(color = colors.syntax.keyword), it.range.first, it.range.last + 1)
+        }
+        if (activeRange != null && activeRange.first < label.length) {
             val s = activeRange.first.coerceIn(0, label.length)
             val e = (activeRange.last + 1).coerceIn(s, label.length)
-            if (s > 0) append(label, 0, s)
-            withStyle(
-                SpanStyle(
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary,
-                ),
-            ) { append(label, s, e) }
-            if (e < label.length) append(label, e, label.length)
+            addStyle(SpanStyle(color = colors.primary, fontWeight = FontWeight.Bold), s, e)
         }
     }
     Popup(
         offset = IntOffset(anchor.x.toInt(), anchor.y.toInt() - 8),
         focusable = false,
     ) {
-        Surface(
-            modifier = Modifier.widthIn(max = 560.dp),
-            color = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-            shadowElevation = 6.dp,
-            tonalElevation = 4.dp,
-            shape = RoundedCornerShape(6.dp),
-        ) {
+        GlassPopup(modifier = Modifier.widthIn(max = 560.dp)) {
             Column {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                        .padding(horizontal = 13.dp, vertical = 9.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     if (display.signatureCount > 1) {
                         Text(
-                            text = "${display.signatureIndex + 1}/${display.signatureCount}",
+                            text = "${display.signatureIndex + 1} / ${display.signatureCount}",
                             style = textStyle.copy(
-                                fontSize = 11.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontSize = 10.5.sp,
+                                color = Glass.colors.muted,
                             ),
                             maxLines = 1,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(Glass.radius.xs))
+                                .background(Glass.colors.outline.copy(alpha = 0.55f))
+                                .padding(horizontal = 6.dp, vertical = 2.dp),
                         )
                     }
                     Text(
@@ -838,7 +966,7 @@ private fun SignatureHelpPopup(
                             fontSize = 13.sp,
                             lineHeight = 18.sp,
                         ),
-                        color = MaterialTheme.colorScheme.onSurface,
+                        color = Glass.colors.text,
                     )
                 }
                 val paramDoc = display.activeParamDoc?.takeIf { it.isNotBlank() }
@@ -846,14 +974,13 @@ private fun SignatureHelpPopup(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f))
-                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                            .padding(horizontal = 13.dp, vertical = 6.dp),
                     ) {
                         Text(
                             text = paramDoc,
                             style = textStyle.copy(
                                 fontSize = 12.sp,
-                                color = MaterialTheme.colorScheme.onSurface,
+                                color = Glass.colors.muted,
                             ),
                         )
                     }
@@ -863,13 +990,13 @@ private fun SignatureHelpPopup(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                            .padding(horizontal = 13.dp, vertical = 6.dp),
                     ) {
                         Text(
                             text = docs,
                             style = textStyle.copy(
                                 fontSize = 12.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                color = Glass.colors.faint,
                             ),
                         )
                     }
@@ -907,68 +1034,52 @@ private fun CompletionPopup(
         focusable = false,
     ) {
         Row {
-            Surface(
-                modifier = Modifier.requiredWidth(360.dp),
-                color = MaterialTheme.colorScheme.surface,
-                contentColor = MaterialTheme.colorScheme.onSurface,
-                shadowElevation = 6.dp,
-                tonalElevation = 4.dp,
-            ) {
+            GlassPopup(modifier = Modifier.requiredWidth(340.dp)) {
                 LazyColumn(
                     state = listState,
                     modifier = Modifier
-                        .padding(vertical = 4.dp)
+                        .padding(5.dp)
                         .requiredHeight(minOf(items.size, 10).times(28).dp),
                 ) {
                     itemsIndexed(items) { idx, item ->
                         val selected = idx == selectedIndex
-                        val rowBg = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
-                        else Color.Transparent
+                        val rowBg = if (selected) Glass.colors.primarySoft else Color.Transparent
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .height(28.dp)
+                                .clip(RoundedCornerShape(Glass.radius.xs))
                                 .background(rowBg)
                                 .clickable { onItemClick?.invoke(idx) }
-                                .padding(horizontal = 10.dp, vertical = 4.dp),
+                                .padding(horizontal = 9.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Text(
-                                text = item.kindHint,
-                                style = textStyle.copy(
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = item.kindColor ?: MaterialTheme.colorScheme.primary,
-                                ),
-                                maxLines = 1,
-                                softWrap = false,
-                                modifier = Modifier.requiredWidth(20.dp),
-                            )
+                            CompletionKindGlyph(item.kindIcon)
+                            Spacer(Modifier.width(9.dp))
                             Text(
                                 text = item.label,
                                 style = textStyle.copy(
                                     fontSize = 13.sp,
-                                    color = MaterialTheme.colorScheme.onSurface,
+                                    color = Glass.colors.text,
                                 ),
                                 maxLines = 1,
                                 softWrap = false,
                                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .padding(start = 6.dp),
+                                modifier = Modifier.weight(1f),
                             )
                             if (!item.detail.isNullOrBlank()) {
                                 Text(
                                     text = item.detail,
                                     style = textStyle.copy(
                                         fontSize = 11.sp,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        color = Glass.colors.muted,
                                     ),
                                     maxLines = 1,
                                     softWrap = false,
                                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                                     modifier = Modifier
                                         .padding(start = 12.dp)
-                                        .widthIn(max = 140.dp),
+                                        .widthIn(max = 130.dp),
                                 )
                             }
                         }
@@ -976,16 +1087,11 @@ private fun CompletionPopup(
                 }
             }
             if (selectedDoc != null) {
-                Spacer(Modifier.width(4.dp))
-                Surface(
+                Spacer(Modifier.width(5.dp))
+                GlassPopup(
                     modifier = Modifier
-                        .widthIn(min = 200.dp, max = 360.dp)
+                        .widthIn(min = 200.dp, max = 340.dp)
                         .heightIn(max = minOf(items.size, 10).times(28).dp),
-                    color = MaterialTheme.colorScheme.surface,
-                    contentColor = MaterialTheme.colorScheme.onSurface,
-                    shadowElevation = 6.dp,
-                    tonalElevation = 4.dp,
-                    shape = RoundedCornerShape(6.dp),
                 ) {
                     Box(modifier = Modifier.padding(12.dp)) {
                         Text(
@@ -993,7 +1099,7 @@ private fun CompletionPopup(
                             style = textStyle.copy(
                                 fontSize = 12.sp,
                                 lineHeight = 17.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                color = Glass.colors.muted,
                             ),
                             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                         )
@@ -1013,14 +1119,7 @@ private fun HoverPopup(text: String?, diagnostic: HoverDiagnostic?, position: Of
         offset = IntOffset(position.x.toInt() + 12, position.y.toInt() + 18),
         focusable = false,
     ) {
-        Surface(
-            modifier = Modifier.widthIn(max = 560.dp),
-            color = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-            shadowElevation = 8.dp,
-            tonalElevation = 6.dp,
-            shape = RoundedCornerShape(6.dp),
-        ) {
+        GlassPopup(modifier = Modifier.widthIn(max = 560.dp)) {
             Column {
                 if (diagnostic != null) {
                     DiagnosticHeader(diagnostic)
@@ -1031,10 +1130,8 @@ private fun HoverPopup(text: String?, diagnostic: HoverDiagnostic?, position: Of
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(
-                                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f),
-                                    )
-                                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                                    .background(Glass.colors.outline.copy(alpha = 0.45f))
+                                    .padding(horizontal = 13.dp, vertical = 9.dp),
                             ) {
                                 Text(
                                     text = seg.text,
@@ -1043,7 +1140,7 @@ private fun HoverPopup(text: String?, diagnostic: HoverDiagnostic?, position: Of
                                         fontSize = 13.sp,
                                         lineHeight = 18.sp,
                                     ),
-                                    color = MaterialTheme.colorScheme.onSurface,
+                                    color = Glass.colors.text,
                                 )
                             }
                         }
@@ -1051,7 +1148,7 @@ private fun HoverPopup(text: String?, diagnostic: HoverDiagnostic?, position: Of
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                                    .padding(horizontal = 13.dp, vertical = 8.dp),
                             ) {
                                 Text(
                                     text = seg.text,
@@ -1059,7 +1156,7 @@ private fun HoverPopup(text: String?, diagnostic: HoverDiagnostic?, position: Of
                                         fontSize = 13.sp,
                                         lineHeight = 18.sp,
                                     ),
-                                    color = MaterialTheme.colorScheme.onSurface,
+                                    color = Glass.colors.text,
                                 )
                             }
                         }
@@ -1067,11 +1164,9 @@ private fun HoverPopup(text: String?, diagnostic: HoverDiagnostic?, position: Of
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 12.dp, vertical = 4.dp)
+                                    .padding(horizontal = 13.dp, vertical = 4.dp)
                                     .height(1.dp)
-                                    .background(
-                                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
-                                    ),
+                                    .background(Glass.colors.separator),
                             )
                         }
                         HoverSegmentKind.TAGS -> {
@@ -1089,8 +1184,8 @@ private fun DiagnosticHeader(d: HoverDiagnostic) {
     val color = when (d.severity) {
         HoverDiagnosticSeverity.ERROR -> Glass.colors.error
         HoverDiagnosticSeverity.WARNING -> Glass.colors.warn
-        HoverDiagnosticSeverity.INFO -> MaterialTheme.colorScheme.primary
-        HoverDiagnosticSeverity.HINT -> MaterialTheme.colorScheme.tertiary
+        HoverDiagnosticSeverity.INFO -> Glass.colors.primary
+        HoverDiagnosticSeverity.HINT -> Glass.colors.accent
     }
     Row(
         modifier = Modifier
@@ -1111,16 +1206,16 @@ private fun DiagnosticHeader(d: HoverDiagnostic) {
                 fontSize = 13.sp,
                 lineHeight = 18.sp,
             ),
-            color = MaterialTheme.colorScheme.onSurface,
+            color = Glass.colors.text,
         )
     }
 }
 
 @Composable
 private fun KdocTagList(tags: List<KdocTag>) {
-    val sectionColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.72f)
-    val nameColor = MaterialTheme.colorScheme.onSurface
-    val descColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.92f)
+    val sectionColor = Glass.colors.accent
+    val nameColor = Glass.colors.syntax.type
+    val descColor = Glass.colors.muted
     val sections = remember(tags) { groupKdocTags(tags) }
     Column(
         modifier = Modifier

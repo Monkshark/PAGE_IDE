@@ -116,6 +116,7 @@ import page.lsp.enrichWithKDocFromDefinition
 import page.lsp.needsKdocEnrichment
 import page.ui.CodeEditor
 import page.ui.CompletionDisplay
+import page.ui.CompletionKindIcon
 import page.ui.EditorDecoration
 import page.ui.EditorFontFamily
 import page.ui.Glass
@@ -916,7 +917,7 @@ fun EditorPanel(
     val completionDisplay = remember(filteredItems) {
         filteredItems.map { item ->
             if (item.insertText.isEmpty() && item.label.isEmpty()) {
-                CompletionDisplay(label = " ", kindHint = "", detail = null)
+                CompletionDisplay(label = " ", kindIcon = CompletionKindIcon.GENERIC, detail = null)
             } else {
                 val displayLabel = sanitizeLabel(item.label)
                     ?: sanitizeLabel(item.filterText)
@@ -926,10 +927,9 @@ fun EditorPanel(
                 val effectiveDetail = resolved?.detail?.takeIf { it.isNotBlank() } ?: item.detail
                 CompletionDisplay(
                     label = displayLabel,
-                    kindHint = kindHint(item.kind),
+                    kindIcon = completionKindIcon(item.kind),
                     detail = effectiveDetail?.replace(Regex("\\s+"), " ")?.trim()?.takeIf { it.isNotEmpty() },
                     documentation = resolved?.documentation?.takeIf { it.isNotBlank() } ?: item.documentation,
-                    kindColor = kindColor(item.kind),
                 )
             }
         }
@@ -1408,39 +1408,25 @@ private fun severityRank(s: DiagnosticSeverity): Int = when (s) {
     DiagnosticSeverity.HINT -> 3
 }
 
-private fun kindHint(kind: LspCompletionItemKind): String = when (kind) {
-    LspCompletionItemKind.METHOD -> "M"
-    LspCompletionItemKind.FUNCTION -> "ƒ"
-    LspCompletionItemKind.CONSTRUCTOR -> "C"
-    LspCompletionItemKind.FIELD -> "f"
-    LspCompletionItemKind.VARIABLE -> "v"
-    LspCompletionItemKind.CLASS -> "C"
-    LspCompletionItemKind.INTERFACE -> "I"
-    LspCompletionItemKind.MODULE -> "m"
-    LspCompletionItemKind.PROPERTY -> "p"
-    LspCompletionItemKind.UNIT -> "u"
-    LspCompletionItemKind.VALUE -> "V"
-    LspCompletionItemKind.ENUM, LspCompletionItemKind.ENUM_MEMBER -> "E"
-    LspCompletionItemKind.KEYWORD -> "K"
-    LspCompletionItemKind.SNIPPET -> "▤"
-    LspCompletionItemKind.CONSTANT -> "c"
-    LspCompletionItemKind.STRUCT -> "S"
-    LspCompletionItemKind.TYPE_PARAMETER -> "T"
-    else -> "•"
-}
-
-private fun kindColor(kind: LspCompletionItemKind): Color = when (kind) {
-    LspCompletionItemKind.METHOD, LspCompletionItemKind.FUNCTION -> Color(0xFF3B82F6)
-    LspCompletionItemKind.CONSTRUCTOR -> Color(0xFF8B5CF6)
-    LspCompletionItemKind.CLASS, LspCompletionItemKind.INTERFACE, LspCompletionItemKind.STRUCT -> Color(0xFFF59E0B)
-    LspCompletionItemKind.VARIABLE, LspCompletionItemKind.FIELD, LspCompletionItemKind.PROPERTY -> Color(0xFF6366F1)
-    LspCompletionItemKind.KEYWORD -> Color(0xFFEF4444)
-    LspCompletionItemKind.SNIPPET -> Color(0xFF10B981)
-    LspCompletionItemKind.ENUM, LspCompletionItemKind.ENUM_MEMBER -> Color(0xFFEC4899)
-    LspCompletionItemKind.MODULE -> Color(0xFF14B8A6)
-    LspCompletionItemKind.CONSTANT -> Color(0xFFF97316)
-    LspCompletionItemKind.TYPE_PARAMETER -> Color(0xFF0EA5E9)
-    else -> Color(0xFF9CA3AF)
+internal fun completionKindIcon(kind: LspCompletionItemKind): CompletionKindIcon = when (kind) {
+    LspCompletionItemKind.METHOD,
+    LspCompletionItemKind.FUNCTION,
+    LspCompletionItemKind.CONSTRUCTOR -> CompletionKindIcon.METHOD
+    LspCompletionItemKind.PROPERTY,
+    LspCompletionItemKind.FIELD -> CompletionKindIcon.PROPERTY
+    LspCompletionItemKind.CLASS,
+    LspCompletionItemKind.STRUCT -> CompletionKindIcon.CLASS
+    LspCompletionItemKind.INTERFACE -> CompletionKindIcon.INTERFACE
+    LspCompletionItemKind.ENUM,
+    LspCompletionItemKind.ENUM_MEMBER -> CompletionKindIcon.ENUM
+    LspCompletionItemKind.KEYWORD,
+    LspCompletionItemKind.OPERATOR -> CompletionKindIcon.KEYWORD
+    LspCompletionItemKind.VARIABLE,
+    LspCompletionItemKind.VALUE -> CompletionKindIcon.VARIABLE
+    LspCompletionItemKind.CONSTANT -> CompletionKindIcon.CONSTANT
+    LspCompletionItemKind.MODULE -> CompletionKindIcon.MODULE
+    LspCompletionItemKind.SNIPPET -> CompletionKindIcon.SNIPPET
+    else -> CompletionKindIcon.GENERIC
 }
 
 private fun sanitizeLabel(s: String?): String? {
