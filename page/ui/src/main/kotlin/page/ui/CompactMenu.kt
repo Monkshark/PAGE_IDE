@@ -3,6 +3,7 @@ package page.ui
 import androidx.compose.foundation.ContextMenuItem
 import androidx.compose.foundation.ContextMenuRepresentation
 import androidx.compose.foundation.ContextMenuState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -44,6 +45,7 @@ fun CompactMenuContainer(
     ) {
         Column(
             modifier = Modifier
+                .background(Glass.colors.surfaceRaised)
                 .width(IntrinsicSize.Max)
                 .widthIn(min = minWidth)
                 .padding(vertical = 2.dp),
