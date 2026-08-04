@@ -182,4 +182,40 @@ class FileTreeTest {
         assertEquals(setOf(a), result)
         assertTrue(dir !in result)
     }
+
+    @Test
+    fun `descendantDirs skips heavy build and cache directories`(@TempDir dir: Path) {
+        val src = Files.createDirectory(dir.resolve("src"))
+        val main = Files.createDirectory(src.resolve("main"))
+        val build = Files.createDirectory(dir.resolve("build"))
+        Files.createDirectory(build.resolve("classes"))
+        val node = Files.createDirectory(dir.resolve("node_modules"))
+        Files.createDirectory(node.resolve("pkg"))
+        val cache = Files.createDirectory(dir.resolve(".xwin-cache"))
+        Files.createDirectory(cache.resolve("blob"))
+
+        val result = FileTree.descendantDirs(dir)
+
+        assertEquals(setOf(src, main), result)
+        assertTrue(build !in result)
+        assertTrue(node !in result)
+        assertTrue(cache !in result)
+    }
+
+    @Test
+    fun `descendantDirs is empty when the input itself is a heavy dir`(@TempDir dir: Path) {
+        val build = Files.createDirectory(dir.resolve("build"))
+        Files.createDirectory(build.resolve("classes"))
+        assertEquals(emptySet(), FileTree.descendantDirs(build))
+    }
+
+    @Test
+    fun `isHeavyDir matches known names and cache suffixes`(@TempDir dir: Path) {
+        assertTrue(FileTree.isHeavyDir(dir.resolve("build")))
+        assertTrue(FileTree.isHeavyDir(dir.resolve(".gradle")))
+        assertTrue(FileTree.isHeavyDir(dir.resolve("node_modules")))
+        assertTrue(FileTree.isHeavyDir(dir.resolve("something-cache")))
+        assertTrue(!FileTree.isHeavyDir(dir.resolve("src")))
+        assertTrue(!FileTree.isHeavyDir(dir.resolve("app")))
+    }
 }

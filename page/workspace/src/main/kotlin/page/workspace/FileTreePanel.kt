@@ -451,7 +451,7 @@ fun FileTreePanel(
                                             if (files.isNotEmpty()) { files.forEach { onOpenFile(it) }; true } else false
                                         } else {
                                             val last = lastInteractedState.value ?: selection.firstOrNull()
-                                            if (last != null) { activate(last, recursive = e.isCtrlPressed); true } else false
+                                            if (last != null) { activate(last, recursive = e.isShiftPressed); true } else false
                                         }
                                     }
                                     Key.F2 -> tryRenameSelected()
@@ -501,7 +501,7 @@ fun FileTreePanel(
                                         selection = selection,
                                         onToggle = onToggle,
                                         onPrimaryClick = handlePrimaryClick,
-                                        onDoubleClick = { path, mods -> activate(path, recursive = mods.ctrl) },
+                                        onDoubleClick = { path, mods -> activate(path, recursive = mods.shift) },
                                         onSecondaryDown = handleSecondaryDown,
                                         onCreateFile = onCreateFile,
                                         onCreateFolder = onCreateFolder,

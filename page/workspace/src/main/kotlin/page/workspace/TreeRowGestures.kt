@@ -55,7 +55,7 @@ fun Modifier.chevronToggleGesture(
         awaitEachGesture {
             val down = awaitDownEvent()
             if (down.primary) {
-                cb.value(down.ctrl)
+                cb.value(down.shift)
             }
         }
     }

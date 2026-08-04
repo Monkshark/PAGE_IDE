@@ -1,13 +1,19 @@
 package page.app.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.InsertDriveFile
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import page.ui.Glass
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -223,10 +229,21 @@ private fun EmptyPanePlaceholder(modifier: Modifier = Modifier) {
         modifier = modifier.background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center,
     ) {
-        Text(
-            text = "No file open",
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
-            fontSize = 12.sp,
-        )
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Outlined.InsertDriveFile,
+                contentDescription = null,
+                tint = Glass.colors.outline,
+                modifier = Modifier.size(40.dp),
+            )
+            Text(
+                text = "No file open",
+                color = Glass.colors.muted,
+                fontSize = 13.sp,
+            )
+        }
     }
 }
