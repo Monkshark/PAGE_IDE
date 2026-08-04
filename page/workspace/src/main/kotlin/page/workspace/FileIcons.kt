@@ -2,7 +2,7 @@ package page.workspace
 
 import java.nio.file.Path
 
-internal object FileIcons {
+object FileIcons {
     private const val DIR = "fileicons"
 
     fun resourceFor(path: Path, isDirectory: Boolean): String? {

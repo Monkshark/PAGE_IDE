@@ -413,6 +413,8 @@ private fun TabChip(
                 PinIndicator()
                 Spacer(Modifier.width(6.dp))
             }
+            page.workspace.FileTypeIcon(path = tab.path, isDirectory = false, size = 14.dp)
+            Spacer(Modifier.width(7.dp))
             Text(
                 text = name,
                 style = LocalTextStyle.current.copy(

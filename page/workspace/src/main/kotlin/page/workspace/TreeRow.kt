@@ -15,17 +15,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
-import page.ui.Glass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -51,50 +45,6 @@ import page.editor.TreeNode
 import java.awt.datatransfer.DataFlavor
 import java.nio.file.Files
 import java.nio.file.Path
-
-@Composable
-private fun TreeNodeIcon(node: TreeNode) {
-    val res = FileIcons.resourceFor(node.path, node.isDirectory)
-    when {
-        res != null -> Image(
-            painter = painterResource(res),
-            contentDescription = null,
-            modifier = Modifier.size(15.dp),
-        )
-        !node.isDirectory && node.path.fileName?.toString()?.substringAfterLast('.', "")?.isNotEmpty() == true ->
-            FileExtChip(node.path.fileName!!.toString().substringAfterLast('.').take(4).lowercase())
-        else -> Image(
-            painter = painterResource(FileIcons.documentResource()),
-            contentDescription = null,
-            modifier = Modifier.size(15.dp),
-        )
-    }
-}
-
-@Composable
-private fun FileExtChip(ext: String) {
-    val colors = Glass.colors
-    Box(
-        modifier = Modifier
-            .size(width = 20.dp, height = 15.dp)
-            .clip(RoundedCornerShape(3.dp))
-            .background(colors.surfaceL3),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = ext,
-            color = colors.muted,
-            style = LocalTextStyle.current.copy(
-                fontFamily = FontFamily.Monospace,
-                fontSize = 7.sp,
-                lineHeight = 7.sp,
-                lineHeightStyle = TreeCenterTight,
-            ),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-    }
-}
 
 private val RowHeight = 22.dp
 private val ChevronSlot = 18.dp
@@ -328,7 +278,7 @@ fun TreeRow(
                 }
             }
             Spacer(Modifier.width(2.dp))
-            TreeNodeIcon(node = node)
+            FileTypeIcon(path = node.path, isDirectory = node.isDirectory)
             Spacer(Modifier.width(6.dp))
             Text(
                 text = name,
