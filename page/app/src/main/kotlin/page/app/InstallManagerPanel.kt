@@ -4,7 +4,6 @@ import page.runtime.*
 import page.workspace.*
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,12 +15,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -81,7 +83,7 @@ internal fun InstallManagerPanel(
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(Unit) { runCatching { focusRequester.requestFocus() } }
 
-    Row(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
+    Row(modifier = modifier.fillMaxSize().background(Glass.colors.background)
         .focusRequester(focusRequester)
         .focusable()
         .onPreviewKeyEvent { event ->
@@ -99,7 +101,7 @@ internal fun InstallManagerPanel(
         )
         Box(
             modifier = Modifier.width(1.dp).fillMaxHeight()
-                .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+                .background(Glass.colors.separator)
         )
         val entry = entries.firstOrNull { it.id == selectedId }
         if (entry != null) {
@@ -113,7 +115,7 @@ internal fun InstallManagerPanel(
             )
         } else {
             Box(modifier = Modifier.weight(1f).fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Select a tool", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f), fontSize = 13.sp)
+                Text("Select a tool", color = Glass.colors.muted, fontSize = 13.sp)
             }
         }
     }
@@ -127,26 +129,21 @@ private fun ManagerSidebar(
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.4f))) {
+    Column(modifier = modifier.background(Glass.colors.surfaceL2)) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
+            modifier = Modifier.fillMaxWidth().height(40.dp).padding(horizontal = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
                 text = "Install Manager",
-                color = MaterialTheme.colorScheme.onSurface,
+                color = Glass.colors.text,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold,
             )
             Spacer(Modifier.weight(1f))
-            Text(
-                text = "×",
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                fontSize = 14.sp,
-                modifier = Modifier.clickable { onClose() }.padding(4.dp),
-            )
+            page.app.ui.PanelCloseButton(onClose = onClose)
         }
-        Box(Modifier.fillMaxWidth().height(1.dp).background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)))
+        Box(Modifier.fillMaxWidth().height(1.dp).background(Glass.colors.separator))
         val scrollState = rememberScrollState()
         Column(modifier = Modifier.verticalScroll(scrollState).weight(1f).padding(vertical = 4.dp)) {
             for (category in ManagerCategory.entries) {
@@ -154,33 +151,36 @@ private fun ManagerSidebar(
                 if (categoryEntries.isEmpty()) continue
                 Text(
                     text = category.label.uppercase(),
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                    fontSize = 10.sp,
+                    color = Glass.colors.faint,
+                    fontSize = 9.5.sp,
                     fontWeight = FontWeight.SemiBold,
-                    letterSpacing = 0.5.sp,
+                    letterSpacing = 0.6.sp,
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                 )
                 for (entry in categoryEntries) {
                     val isSelected = entry.id == selectedId
-                    val bg = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) else Color.Transparent
+                    val bg = if (isSelected) Glass.colors.primarySoft else Color.Transparent
                     val installer = remember(entry.id) { LspInstallers.forId(entry.id) }
                     val installed = remember(entry.id) { installer?.isInstalled() == true }
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { onSelect(entry.id) }
+                            .height(26.dp)
+                            .padding(horizontal = 6.dp, vertical = 1.dp)
+                            .clip(RoundedCornerShape(Glass.radius.sm))
                             .background(bg)
-                            .padding(horizontal = 12.dp, vertical = 5.dp),
+                            .clickable { onSelect(entry.id) }
+                            .padding(horizontal = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
                             text = entry.displayName,
-                            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                            color = if (isSelected) Glass.colors.primary else Glass.colors.text,
                             fontSize = 12.sp,
                             modifier = Modifier.weight(1f),
                         )
                         if (installed) {
-                            Text(text = "●", color = Glass.colors.success, fontSize = 8.sp)
+                            Box(Modifier.size(6.dp).clip(CircleShape).background(Glass.colors.success))
                         }
                     }
                 }
@@ -245,10 +245,10 @@ private fun ManagerDetailPane(
         ),
     )
 
-    Column(modifier = modifier.padding(16.dp)) {
+    Column(modifier = modifier.padding(20.dp).widthIn(max = 560.dp)) {
         Text(
             text = entry.displayName,
-            color = MaterialTheme.colorScheme.onSurface,
+            color = Glass.colors.text,
             fontSize = 16.sp,
             fontWeight = FontWeight.SemiBold,
         )
@@ -257,10 +257,10 @@ private fun ManagerDetailPane(
         if (installedVersions.isNotEmpty()) {
             Text(
                 text = "INSTALLED",
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                fontSize = 10.sp,
+                color = Glass.colors.faint,
+                fontSize = 9.5.sp,
                 fontWeight = FontWeight.SemiBold,
-                letterSpacing = 0.5.sp,
+                letterSpacing = 0.6.sp,
             )
             Spacer(Modifier.height(6.dp))
             val scroll = rememberScrollState()
@@ -268,15 +268,17 @@ private fun ManagerDetailPane(
                 for (v in installedVersions) {
                     val isCurrent = v == activeVersion
                     val isConfirming = confirmDeleteVersion == v
-                    val bg = if (isConfirming) Glass.colors.danger.copy(alpha = 0.08f)
-                    else if (isCurrent) MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
+                    val bg = if (isConfirming) Glass.colors.danger.copy(alpha = 0.10f)
+                    else if (isCurrent) Glass.colors.primarySoft
                     else Color.Transparent
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(28.dp)
+                            .height(30.dp)
+                            .padding(vertical = 1.dp)
+                            .clip(RoundedCornerShape(Glass.radius.sm))
                             .background(bg)
-                            .padding(horizontal = 8.dp),
+                            .padding(horizontal = 10.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         if (isConfirming) {
@@ -287,20 +289,20 @@ private fun ManagerDetailPane(
                                 modifier = Modifier.clickable { confirmDeleteVersion = null; deleteVersion(v) }.padding(horizontal = 8.dp),
                             )
                             Text(
-                                text = "No", color = MaterialTheme.colorScheme.onSurfaceVariant, style = centeredStyle,
+                                text = "No", color = Glass.colors.muted, style = centeredStyle,
                                 modifier = Modifier.clickable { confirmDeleteVersion = null }.padding(horizontal = 8.dp),
                             )
                         } else {
                             Text(
                                 text = v,
-                                color = MaterialTheme.colorScheme.onSurface,
+                                color = if (isCurrent) Glass.colors.primary else Glass.colors.text,
                                 style = centeredStyle.copy(fontFamily = FontFamily.Monospace),
                             )
                             if (isCurrent) {
                                 Spacer(Modifier.width(8.dp))
                                 Text(
                                     text = "current",
-                                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
+                                    color = Glass.colors.primary,
                                     style = centeredStyle.copy(fontSize = 10.sp),
                                 )
                             }
@@ -308,7 +310,7 @@ private fun ManagerDetailPane(
                             if (!isCurrent) {
                                 Text(
                                     text = "Apply",
-                                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
+                                    color = Glass.colors.primary,
                                     style = centeredStyle.copy(fontSize = 11.sp),
                                     modifier = Modifier.clickable {
                                         installer?.applyVersion(v)
@@ -318,14 +320,15 @@ private fun ManagerDetailPane(
                                 )
                             }
                             Box(
-                                modifier = Modifier.height(28.dp).width(28.dp)
+                                modifier = Modifier.height(24.dp).width(24.dp)
+                                    .clip(RoundedCornerShape(Glass.radius.xs))
                                     .clickable { confirmDeleteVersion = v },
                                 contentAlignment = Alignment.Center,
                             ) {
                                 Text(
-                                    text = "×",
-                                    color = Glass.colors.danger.copy(alpha = 0.6f),
-                                    style = centeredStyle.copy(fontSize = 14.sp, lineHeight = 14.sp),
+                                    text = "✕",
+                                    color = Glass.colors.danger.copy(alpha = 0.7f),
+                                    style = centeredStyle.copy(fontSize = 12.sp, lineHeight = 12.sp),
                                 )
                             }
                         }
@@ -335,28 +338,29 @@ private fun ManagerDetailPane(
             Spacer(Modifier.height(16.dp))
         }
 
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = "INSTALL NEW VERSION",
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                fontSize = 10.sp,
-                fontWeight = FontWeight.SemiBold,
-                letterSpacing = 0.5.sp,
-            )
-            Spacer(Modifier.weight(1f))
-        }
+        Text(
+            text = "INSTALL NEW VERSION",
+            color = Glass.colors.faint,
+            fontSize = 9.5.sp,
+            fontWeight = FontWeight.SemiBold,
+            letterSpacing = 0.6.sp,
+        )
         Spacer(Modifier.height(8.dp))
-        Surface(
+        Row(
             modifier = Modifier
+                .height(30.dp)
+                .clip(RoundedCornerShape(Glass.radius.sm))
+                .background(Glass.colors.primary)
                 .clickable { onInstallRequested(entry.id) }
-                .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)),
-            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(7.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
                 text = "Open installer",
-                color = MaterialTheme.colorScheme.primary,
+                color = Glass.colors.onPrimary,
                 fontSize = 12.sp,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                fontWeight = FontWeight.Medium,
             )
         }
     }

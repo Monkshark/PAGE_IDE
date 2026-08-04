@@ -31,7 +31,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -46,9 +45,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.foundation.focusable
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import page.ui.Glass
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -57,8 +61,10 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.CoroutineScope
@@ -291,32 +297,36 @@ internal fun InstallGuideDialog(
                 ) { if (!installing) onDismiss() else onMinimize?.invoke() },
             contentAlignment = Alignment.Center,
         ) {
+            val dlgShape = RoundedCornerShape(Glass.radius.md)
             Surface(
                 modifier = Modifier
                     .width(560.dp)
                     .height(460.dp)
-                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f))
                     .clickable(
                         interactionSource = cardInteraction,
                         indication = null,
                     ) { },
-                color = MaterialTheme.colorScheme.background,
+                shape = dlgShape,
+                color = Glass.colors.surface,
+                border = androidx.compose.foundation.BorderStroke(1.dp, Glass.colors.outline),
+                shadowElevation = 20.dp,
             ) {
-                Column(modifier = Modifier.fillMaxSize().padding(14.dp)) {
+                Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
                             text = "Install ${definition.displayName}",
-                            color = MaterialTheme.colorScheme.onSurface,
+                            color = Glass.colors.text,
                             fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
                         )
                         if (onOpenManager != null) {
                             Spacer(Modifier.weight(1f))
                             Text(
                                 text = "Manage",
-                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
+                                color = Glass.colors.primary,
                                 fontSize = 11.sp,
                                 modifier = Modifier.clickable { onOpenManager() }.padding(horizontal = 6.dp, vertical = 2.dp),
                             )
@@ -333,8 +343,8 @@ internal fun InstallGuideDialog(
                     }
                     Text(
                         text = description,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        style = LocalTextStyle.current.copy(fontSize = 11.sp),
+                        color = Glass.colors.muted,
+                        style = LocalTextStyle.current.copy(fontSize = 11.5.sp, lineHeight = 16.sp),
                     )
                     val heavyEstimate = installer?.heavyInstall
                     if (heavyEstimate != null && installProgress == null && precheck is LspInstaller.Precheck.Ok) {
@@ -363,8 +373,9 @@ internal fun InstallGuideDialog(
                         modifier = Modifier
                             .fillMaxWidth()
                             .weight(1f)
-                            .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
-                            .background(MaterialTheme.colorScheme.surface)
+                            .clip(RoundedCornerShape(Glass.radius.sm))
+                            .background(Glass.colors.surfaceL2)
+                            .border(1.dp, Glass.colors.separator, RoundedCornerShape(Glass.radius.sm))
                             .padding(12.dp),
                     ) {
                         val scroll = rememberScrollState()
@@ -374,7 +385,7 @@ internal fun InstallGuideDialog(
                                 Spacer(Modifier.height(4.dp))
                                 Text(
                                     text = installLocationOf(installer!!, selectedVersion),
-                                    color = MaterialTheme.colorScheme.onSurface,
+                                    color = Glass.colors.text,
                                     style = LocalTextStyle.current.copy(
                                         fontSize = 11.sp,
                                         fontFamily = FontFamily.Monospace,
@@ -397,7 +408,7 @@ internal fun InstallGuideDialog(
                                     Spacer(Modifier.height(4.dp))
                                     Text(
                                         text = "Loading versions…",
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        color = Glass.colors.muted,
                                         style = LocalTextStyle.current.copy(fontSize = 10.sp),
                                     )
                                 } else if (groups != null && groups.isNotEmpty()) {
@@ -413,7 +424,7 @@ internal fun InstallGuideDialog(
                                     Spacer(Modifier.height(4.dp))
                                     Text(
                                         text = "No versions available (network or rate-limit)",
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        color = Glass.colors.muted,
                                         style = LocalTextStyle.current.copy(fontSize = 10.sp),
                                     )
                                 } else {
@@ -443,13 +454,13 @@ internal fun InstallGuideDialog(
                                     if (versionsLoading) {
                                         Text(
                                             text = "Loading versions…",
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            color = Glass.colors.muted,
                                             style = LocalTextStyle.current.copy(fontSize = 10.sp),
                                         )
                                     } else if (upstreamVersions.isEmpty()) {
                                         Text(
                                             text = "No upstream versions",
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            color = Glass.colors.muted,
                                             style = LocalTextStyle.current.copy(fontSize = 10.sp),
                                         )
                                     } else {
@@ -471,7 +482,7 @@ internal fun InstallGuideDialog(
                                 Spacer(Modifier.height(4.dp))
                                 Text(
                                     text = "${precheck.tool} — install from ${precheck.installUrl}",
-                                    color = MaterialTheme.colorScheme.onSurface,
+                                    color = Glass.colors.text,
                                     style = LocalTextStyle.current.copy(
                                         fontSize = 11.sp,
                                         fontFamily = FontFamily.Monospace,
@@ -484,7 +495,7 @@ internal fun InstallGuideDialog(
                                 Spacer(Modifier.height(4.dp))
                                 Text(
                                     text = InstallGuide.installText(definition, selectedOs),
-                                    color = MaterialTheme.colorScheme.onSurface,
+                                    color = Glass.colors.text,
                                     style = LocalTextStyle.current.copy(
                                         fontSize = 12.sp,
                                         fontFamily = FontFamily.Monospace,
@@ -496,7 +507,7 @@ internal fun InstallGuideDialog(
                                 val bins = InstallGuide.expectedBinaries(definition, selectedOs)
                                 Text(
                                     text = bins.joinToString("  ·  "),
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    color = Glass.colors.muted,
                                     style = LocalTextStyle.current.copy(
                                         fontSize = 11.sp,
                                         fontFamily = FontFamily.Monospace,
@@ -509,7 +520,7 @@ internal fun InstallGuideDialog(
                                 Spacer(Modifier.height(4.dp))
                                 Text(
                                     text = InstallGuide.formatAttempted(attempted),
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    color = Glass.colors.muted,
                                     style = LocalTextStyle.current.copy(
                                         fontSize = 10.sp,
                                         fontFamily = FontFamily.Monospace,
@@ -529,7 +540,7 @@ internal fun InstallGuideDialog(
                                     val errClipboard = LocalClipboardManager.current
                                     Text(
                                         text = if (errCopied) "Copied" else "Copy",
-                                        color = if (errCopied) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        color = if (errCopied) Glass.colors.primary else Glass.colors.muted,
                                         style = LocalTextStyle.current.copy(fontSize = 10.sp),
                                         modifier = Modifier
                                             .clickable {
@@ -542,26 +553,27 @@ internal fun InstallGuideDialog(
                                 Spacer(Modifier.height(4.dp))
                                 Text(
                                     text = errMsg,
-                                    color = MaterialTheme.colorScheme.error,
+                                    color = Glass.colors.error,
                                     style = LocalTextStyle.current.copy(fontSize = 11.sp),
                                 )
                             }
                         }
                     }
-                    Spacer(Modifier.height(10.dp))
+                    Spacer(Modifier.height(12.dp))
+                    Box(Modifier.fillMaxWidth().height(1.dp).background(Glass.colors.separator))
+                    Spacer(Modifier.height(12.dp))
                     val statusLine = statusLineFor(installProgress, definition.displayName, selectedVersion) ?: "After install, the LSP restarts automatically."
-                    Text(
-                        text = statusLine,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        style = LocalTextStyle.current.copy(fontSize = 10.sp),
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    Spacer(Modifier.height(8.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
+                        Text(
+                            text = statusLine,
+                            color = Glass.colors.muted,
+                            style = LocalTextStyle.current.copy(fontSize = 10.sp, lineHeight = 13.sp),
+                            modifier = Modifier.weight(1f),
+                        )
                         if (canInAppInstall && !precheckBlocked) {
                             val mode = remember(
                                 installProgress,
@@ -592,6 +604,7 @@ internal fun InstallGuideDialog(
                                         label = "Minimize",
                                         primary = false,
                                         enabled = true,
+                                        width = 132.dp,
                                         onClick = onMinimize,
                                     )
                                     Spacer(Modifier.width(8.dp))
@@ -600,7 +613,17 @@ internal fun InstallGuideDialog(
                                     label = "Cancel",
                                     primary = false,
                                     enabled = true,
+                                    width = 132.dp,
                                     onClick = { showCancelConfirm = true },
+                                )
+                                Spacer(Modifier.width(8.dp))
+                            } else {
+                                InstallGuideButton(
+                                    label = "Cancel",
+                                    primary = false,
+                                    enabled = true,
+                                    width = 132.dp,
+                                    onClick = onDismiss,
                                 )
                                 Spacer(Modifier.width(8.dp))
                             }
@@ -609,6 +632,7 @@ internal fun InstallGuideDialog(
                                 primary = true,
                                 enabled = enableInstall,
                                 progress = installProgressFraction(installProgress),
+                                width = 132.dp,
                                 onClick = action,
                             )
                         } else {
@@ -670,23 +694,25 @@ private fun CancelConfirmOverlay(
         Surface(
             modifier = Modifier
                 .width(360.dp)
-                .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f))
                 .clickable(
                     interactionSource = cardInteraction,
                     indication = null,
                 ) { },
-            color = MaterialTheme.colorScheme.background,
+            shape = RoundedCornerShape(Glass.radius.md),
+            color = Glass.colors.surface,
+            border = androidx.compose.foundation.BorderStroke(1.dp, Glass.colors.outline),
+            shadowElevation = 18.dp,
         ) {
             Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
                 Text(
                     text = "Cancel $displayName install",
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = Glass.colors.text,
                     fontSize = 13.sp,
                 )
                 Spacer(Modifier.height(8.dp))
                 Text(
                     text = "Cancel the install? All files downloaded so far will be deleted.",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = Glass.colors.muted,
                     style = LocalTextStyle.current.copy(fontSize = 11.sp),
                 )
                 Spacer(Modifier.height(14.dp))
@@ -774,7 +800,7 @@ internal fun installActionLabel(
 ): Pair<String, () -> Unit> = when (progress) {
     null -> when (mode) {
         InstallButtonMode.AlreadyActive -> "Restart LSP" to { onInstalled(); onDismiss() }
-        InstallButtonMode.Apply -> "Apply & restart LSP" to onApply
+        InstallButtonMode.Apply -> "Apply & restart" to onApply
         InstallButtonMode.Install -> "Install" to onStart
     }
     is LspInstaller.Progress.Downloading -> "Downloading…" to {}
@@ -796,16 +822,16 @@ private fun OsTabRow(selected: String, onSelect: (String) -> Unit) {
 
 @Composable
 private fun OsTab(label: String, active: Boolean, onClick: () -> Unit) {
-    val bg = if (active) MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
-    else MaterialTheme.colorScheme.surface
-    val fg = if (active) MaterialTheme.colorScheme.onSurface
-    else MaterialTheme.colorScheme.onSurfaceVariant
-    val borderAlpha = if (active) 0.7f else 0.4f
+    val shape = RoundedCornerShape(Glass.radius.sm)
+    val bg = if (active) Glass.colors.primarySoft else Glass.colors.surfaceL2
+    val fg = if (active) Glass.colors.text else Glass.colors.muted
+    val border = if (active) Glass.colors.primary.copy(alpha = 0.45f) else Glass.colors.outline
     Box(
         modifier = Modifier
             .height(26.dp)
+            .clip(shape)
             .background(bg)
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = borderAlpha))
+            .border(1.dp, border, shape)
             .clickable(onClick = onClick)
             .padding(horizontal = 14.dp),
         contentAlignment = Alignment.Center,
@@ -829,19 +855,20 @@ private fun GroupedVersionList(
         val isRecSelected = rec == selectedVersion
         val isRecActive = rec == activeVersion
         val isRecInstalled = rec in installedVersions
-        val rowBg = if (isRecSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.18f) else Color.Transparent
+        val rowBg = if (isRecSelected) Glass.colors.primarySoft else Color.Transparent
         val recColor = when {
-            isRecActive -> MaterialTheme.colorScheme.primary
-            isRecInstalled -> MaterialTheme.colorScheme.onSurface
-            else -> MaterialTheme.colorScheme.onSurfaceVariant
+            isRecActive -> Glass.colors.primary
+            isRecInstalled -> Glass.colors.text
+            else -> Glass.colors.muted
         }
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(26.dp)
+                .clip(RoundedCornerShape(Glass.radius.sm))
                 .background(rowBg)
                 .clickable { onSelect(rec) }
-                .padding(horizontal = 6.dp),
+                .padding(horizontal = 8.dp),
             contentAlignment = Alignment.CenterStart,
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -856,7 +883,7 @@ private fun GroupedVersionList(
                             expandedGroups = if (isExpanded) expandedGroups - group.label else expandedGroups + group.label
                         }
                         .padding(end = 6.dp),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = Glass.colors.muted,
                     style = LocalTextStyle.current.copy(
                         fontSize = 9.sp,
                         lineHeight = 9.sp,
@@ -882,21 +909,21 @@ private fun GroupedVersionList(
                 Spacer(Modifier.width(10.dp))
                 Text(
                     text = group.label,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                    color = Glass.colors.muted.copy(alpha = 0.7f),
                     style = LocalTextStyle.current.copy(fontSize = 10.sp),
                 )
                 if (isRecActive) {
                     Spacer(Modifier.width(8.dp))
                     Text(
                         text = "· current",
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
+                        color = Glass.colors.primary.copy(alpha = 0.7f),
                         style = LocalTextStyle.current.copy(fontSize = 10.sp),
                     )
                 } else if (isRecInstalled) {
                     Spacer(Modifier.width(8.dp))
                     Text(
                         text = "· installed",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = Glass.colors.muted,
                         style = LocalTextStyle.current.copy(fontSize = 10.sp),
                     )
                 }
@@ -926,19 +953,20 @@ private fun VersionRow(
     onClick: () -> Unit,
     badge: String? = null,
 ) {
-    val bg = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.18f) else Color.Transparent
+    val bg = if (selected) Glass.colors.primarySoft else Color.Transparent
     val versionColor = when {
-        active -> MaterialTheme.colorScheme.primary
-        installed -> MaterialTheme.colorScheme.onSurface
-        else -> MaterialTheme.colorScheme.onSurfaceVariant
+        active -> Glass.colors.primary
+        installed -> Glass.colors.text
+        else -> Glass.colors.muted
     }
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(22.dp)
+            .clip(RoundedCornerShape(Glass.radius.sm))
             .background(bg)
             .clickable(onClick = onClick)
-            .padding(horizontal = 6.dp),
+            .padding(horizontal = 8.dp),
         contentAlignment = Alignment.CenterStart,
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
@@ -963,8 +991,8 @@ private fun VersionRow(
             }
             if (suffix != null) {
                 Spacer(Modifier.width(8.dp))
-                val suffixColor = if (active) MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
-                else MaterialTheme.colorScheme.onSurfaceVariant
+                val suffixColor = if (active) Glass.colors.primary.copy(alpha = 0.7f)
+                else Glass.colors.muted
                 Text(
                     text = suffix,
                     color = suffixColor,
@@ -998,7 +1026,7 @@ private fun SectionHeader(
         if (toggleable) {
             Text(
                 text = chevron,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = Glass.colors.muted,
                 style = LocalTextStyle.current.copy(
                     fontSize = 9.sp,
                     lineHeight = 9.sp,
@@ -1012,7 +1040,7 @@ private fun SectionHeader(
         }
         Text(
             text = label,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = Glass.colors.muted,
             style = LocalTextStyle.current.copy(
                 fontSize = 10.sp,
                 lineHeight = 10.sp,
@@ -1029,7 +1057,7 @@ private fun SectionHeader(
 private fun SectionLabel(text: String) {
     Text(
         text = text,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        color = Glass.colors.muted,
         style = LocalTextStyle.current.copy(fontSize = 10.sp),
     )
 }
@@ -1040,24 +1068,26 @@ private fun InstallGuideButton(
     primary: Boolean,
     enabled: Boolean = true,
     progress: Float = 0f,
+    width: Dp? = null,
     onClick: () -> Unit,
 ) {
     val alpha = if (enabled) 1f else 0.5f
-    val primaryColor = MaterialTheme.colorScheme.primary
+    val primaryColor = Glass.colors.primary
     val indeterminate = progress < 0f
     val active = primary && (indeterminate || progress > 0f)
+    val shape = RoundedCornerShape(Glass.radius.sm)
     val bg = if (primary) {
         if (active) primaryColor.copy(alpha = 0.25f * alpha) else primaryColor.copy(alpha = alpha)
-    } else MaterialTheme.colorScheme.surface
-    val fg = if (primary) MaterialTheme.colorScheme.onPrimary.copy(alpha = alpha)
-    else MaterialTheme.colorScheme.onSurface.copy(alpha = alpha)
-    val sizing = if (primary) Modifier.width(170.dp).height(28.dp)
-    else Modifier.height(28.dp)
+    } else Glass.colors.surfaceL2
+    val fg = if (primary) Glass.colors.onPrimary.copy(alpha = alpha)
+    else Glass.colors.text.copy(alpha = alpha)
+    val borderColor = if (primary) Color.Transparent else Glass.colors.outline
+    val sizing = Modifier.height(28.dp).let { if (width != null) it.width(width) else it }
     Box(
         modifier = sizing
-            .clipToBounds()
+            .clip(shape)
             .background(bg)
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f * alpha))
+            .border(1.dp, borderColor, shape)
             .let { if (enabled) it.clickable(onClick = onClick) else it },
         contentAlignment = Alignment.Center,
     ) {
@@ -1125,23 +1155,25 @@ private fun ButtonLabel(text: String, color: Color) {
 
 @Composable
 private fun HeavyEstimateBanner(estimate: LspInstaller.HeavyInstallEstimate) {
+    val shape = RoundedCornerShape(Glass.radius.sm)
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.08f))
-            .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.35f))
-            .padding(horizontal = 10.dp, vertical = 6.dp),
+            .clip(shape)
+            .background(Glass.colors.primary.copy(alpha = 0.09f))
+            .border(1.dp, Glass.colors.primary.copy(alpha = 0.35f), shape)
+            .padding(horizontal = 11.dp, vertical = 8.dp),
     ) {
         Column {
             Text(
                 text = "${estimate.sizeEstimate} · ${estimate.durationEstimate}",
-                color = MaterialTheme.colorScheme.primary,
+                color = Glass.colors.primary,
                 style = LocalTextStyle.current.copy(fontSize = 11.sp, fontFamily = FontFamily.Monospace),
             )
             Spacer(Modifier.height(2.dp))
             Text(
                 text = estimate.notes,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = Glass.colors.muted,
                 style = LocalTextStyle.current.copy(fontSize = 10.sp),
             )
         }
@@ -1163,10 +1195,12 @@ private fun OutputLogBox(modifier: Modifier = Modifier, lines: List<String>, fai
             copied = false
         }
     }
+    val logShape = RoundedCornerShape(Glass.radius.sm)
     Box(
         modifier = modifier
-            .background(MaterialTheme.colorScheme.surface)
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)),
+            .clip(logShape)
+            .background(Glass.colors.background)
+            .border(1.dp, Glass.colors.separator, logShape),
     ) {
         Column(modifier = Modifier.fillMaxSize().padding(horizontal = 8.dp, vertical = 6.dp)) {
             if (failedMessage != null) {
@@ -1187,14 +1221,15 @@ private fun OutputLogBox(modifier: Modifier = Modifier, lines: List<String>, fai
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .heightIn(max = 180.dp)
-                                .background(MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.6f))
-                                .border(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.5f))
+                                .clip(RoundedCornerShape(Glass.radius.xs))
+                                .background(Glass.colors.error.copy(alpha = 0.12f))
+                                .border(1.dp, Glass.colors.error.copy(alpha = 0.4f), RoundedCornerShape(Glass.radius.xs))
                                 .verticalScroll(errorScroll)
                                 .padding(horizontal = 8.dp, vertical = 6.dp),
                         ) {
                             Text(
                                 text = "Install failed: $failedMessage",
-                                color = MaterialTheme.colorScheme.error,
+                                color = Glass.colors.error,
                                 style = LocalTextStyle.current.copy(
                                     fontSize = 11.sp,
                                     lineHeight = 14.sp,
@@ -1214,7 +1249,7 @@ private fun OutputLogBox(modifier: Modifier = Modifier, lines: List<String>, fai
                 ) {
                     Text(
                         text = if (copied) "Copied" else "Copy",
-                        color = if (copied) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = if (copied) Glass.colors.primary else Glass.colors.muted,
                         style = LocalTextStyle.current.copy(fontSize = 10.sp),
                         modifier = Modifier
                             .clickable {
@@ -1231,7 +1266,7 @@ private fun OutputLogBox(modifier: Modifier = Modifier, lines: List<String>, fai
                     for (line in lines) {
                         Text(
                             text = line,
-                            color = MaterialTheme.colorScheme.onSurface,
+                            color = Glass.colors.text,
                             style = LocalTextStyle.current.copy(
                                 fontSize = 10.sp,
                                 lineHeight = 12.sp,
@@ -1268,35 +1303,37 @@ private fun HeavyConfirmOverlay(
         Surface(
             modifier = Modifier
                 .width(440.dp)
-                .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f))
                 .clickable(
                     interactionSource = cardInteraction,
                     indication = null,
                 ) { },
-            color = MaterialTheme.colorScheme.background,
+            shape = RoundedCornerShape(Glass.radius.md),
+            color = Glass.colors.surface,
+            border = androidx.compose.foundation.BorderStroke(1.dp, Glass.colors.outline),
+            shadowElevation = 18.dp,
         ) {
             Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
                 Text(
                     text = "Install $displayName",
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = Glass.colors.text,
                     fontSize = 13.sp,
                 )
                 Spacer(Modifier.height(8.dp))
                 Text(
                     text = "${estimate.sizeEstimate} · ${estimate.durationEstimate}",
-                    color = MaterialTheme.colorScheme.primary,
+                    color = Glass.colors.primary,
                     style = LocalTextStyle.current.copy(fontSize = 12.sp, fontFamily = FontFamily.Monospace),
                 )
                 Spacer(Modifier.height(6.dp))
                 Text(
                     text = estimate.notes,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = Glass.colors.muted,
                     style = LocalTextStyle.current.copy(fontSize = 11.sp),
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
                     text = "Closing this dialog while installing keeps the background task running.",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = Glass.colors.muted,
                     style = LocalTextStyle.current.copy(fontSize = 10.sp),
                 )
                 Spacer(Modifier.height(14.dp))
