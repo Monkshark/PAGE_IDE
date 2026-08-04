@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
@@ -30,6 +31,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
@@ -209,10 +211,17 @@ internal fun runtimeInfoFor(
 
 @Composable
 private fun LspLifecycleItem(text: String, onClick: (() -> Unit)? = null) {
-    val baseColor = MaterialTheme.colorScheme.onSurfaceVariant
-    val color = if (onClick != null) MaterialTheme.colorScheme.primary else baseColor
+    val colors = Glass.colors
+    val color = if (onClick != null) colors.primary else colors.muted
     val mod = if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier
     Row(verticalAlignment = Alignment.CenterVertically, modifier = mod) {
+        Box(
+            modifier = Modifier
+                .size(6.dp)
+                .clip(CircleShape)
+                .background(colors.success),
+        )
+        Spacer(Modifier.width(6.dp))
         Text(
             text = text,
             style = MaterialTheme.typography.labelSmall,
@@ -224,7 +233,7 @@ private fun LspLifecycleItem(text: String, onClick: (() -> Unit)? = null) {
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun RuntimeVersionItem(label: String, tooltip: String? = null, onClick: (() -> Unit)? = null) {
-    val color = if (onClick != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+    val colors = Glass.colors
     val mod = if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier
     if (tooltip != null) {
         TooltipArea(
@@ -242,10 +251,23 @@ private fun RuntimeVersionItem(label: String, tooltip: String? = null, onClick: 
                 }
             },
         ) {
-            Text(text = label, modifier = mod, style = MaterialTheme.typography.labelSmall, color = color)
+            RuntimePill(label = label, modifier = mod)
         }
     } else {
-        Text(text = label, modifier = mod, style = MaterialTheme.typography.labelSmall, color = color)
+        RuntimePill(label = label, modifier = mod)
+    }
+}
+
+@Composable
+private fun RuntimePill(label: String, modifier: Modifier = Modifier) {
+    val colors = Glass.colors
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(Glass.radius.sm))
+            .background(colors.primarySoft)
+            .padding(horizontal = 8.dp, vertical = 2.dp),
+    ) {
+        Text(text = label, style = MaterialTheme.typography.labelSmall, color = colors.primary)
     }
 }
 
