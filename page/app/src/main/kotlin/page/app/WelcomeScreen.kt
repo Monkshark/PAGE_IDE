@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -27,6 +28,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import page.app.ui.titleBarDrag
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowDownward
 import androidx.compose.material.icons.outlined.CreateNewFolder
@@ -184,6 +186,19 @@ fun WelcomeScreen(
                 )
                 Spacer(Modifier.weight(1f))
                 DocsLink()
+            }
+        }
+        val chrome = page.app.ui.LocalWindowChrome.current
+        if (chrome != null) {
+            Row(
+                modifier = Modifier.fillMaxWidth().height(36.dp).align(Alignment.TopCenter),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(
+                    modifier = Modifier.weight(1f).fillMaxHeight()
+                        .titleBarDrag(chrome.window, chrome.onToggleMaximize),
+                )
+                page.app.ui.WindowControls(chrome, Modifier.fillMaxHeight())
             }
         }
     }

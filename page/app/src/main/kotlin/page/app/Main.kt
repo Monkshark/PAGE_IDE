@@ -615,6 +615,7 @@ private fun androidx.compose.ui.window.ApplicationScope.AppContent() {
         state = windowState,
         title = windowTitle(focused().book.active?.path),
         icon = painterResource("logo_app_icon.svg"),
+        undecorated = true,
         onPreviewKeyEvent = handleShortcut,
         onKeyEvent = handleShortcut,
     ) {
@@ -715,6 +716,19 @@ private fun androidx.compose.ui.window.ApplicationScope.AppContent() {
                 windowState.placement = androidx.compose.ui.window.WindowPlacement.Maximized
             }
         }
+        val windowChrome = page.app.ui.WindowChrome(
+            window = window,
+            isMaximized = windowState.placement == androidx.compose.ui.window.WindowPlacement.Maximized,
+            onMinimize = { windowState.isMinimized = true },
+            onToggleMaximize = {
+                windowState.placement =
+                    if (windowState.placement == androidx.compose.ui.window.WindowPlacement.Maximized)
+                        androidx.compose.ui.window.WindowPlacement.Floating
+                    else androidx.compose.ui.window.WindowPlacement.Maximized
+            },
+            onClose = requestExit,
+        )
+        CompositionLocalProvider(page.app.ui.LocalWindowChrome provides windowChrome) {
         GlassTheme(palette = palette) {
             Surface(
                 modifier = Modifier.fillMaxSize(),
@@ -814,6 +828,7 @@ private fun androidx.compose.ui.window.ApplicationScope.AppContent() {
                 }
                 }
             }
+        }
         }
     }
 
