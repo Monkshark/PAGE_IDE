@@ -39,6 +39,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import page.ui.Glass
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
@@ -164,10 +168,6 @@ fun TabBar(
                             }
                             val tappedBounds = tabBounds[tappedIndex] ?: return@awaitEachGesture
                             onActivate(tappedIndex)
-                            draggingIndex = tappedIndex
-                            draggedNaturalLeft = tappedBounds.first
-                            draggedWidth = tappedBounds.last - tappedBounds.first
-                            dragOffsetPx = 0f
                             var crossedSlop = false
                             var preDx = 0f
                             var lastPointerX = down.position.x
@@ -177,6 +177,10 @@ fun TabBar(
                                 preDx += dx
                                 if (!crossedSlop && abs(preDx) > touchSlop) {
                                     crossedSlop = true
+                                    draggingIndex = tappedIndex
+                                    draggedNaturalLeft = tappedBounds.first
+                                    draggedWidth = tappedBounds.last - tappedBounds.first
+                                    dragOffsetPx = 0f
                                     onDragStart()
                                 }
                                 if (crossedSlop) {
@@ -378,6 +382,7 @@ private fun TabChip(
     val nameColor =
         if (isActive) MaterialTheme.colorScheme.onBackground
         else MaterialTheme.colorScheme.onSurfaceVariant
+    val activeUnderline = Glass.colors.primary
 
     Row(
         modifier = Modifier
@@ -391,6 +396,16 @@ private fun TabChip(
             modifier = Modifier
                 .fillMaxHeight()
                 .background(bg)
+                .drawBehind {
+                    if (isActive) {
+                        val h = 2.dp.toPx()
+                        drawRect(
+                            color = activeUnderline,
+                            topLeft = Offset(0f, size.height - h),
+                            size = Size(size.width, h),
+                        )
+                    }
+                }
                 .padding(start = 12.dp, end = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
