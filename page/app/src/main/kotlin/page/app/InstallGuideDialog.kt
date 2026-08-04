@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
@@ -63,6 +64,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.LineHeightStyle
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -110,6 +112,16 @@ internal fun InstallGuideDialog(
     var installedVersion by remember(installer) { mutableStateOf(installer?.activeVersion()) }
     var installedVersions by remember(installer) {
         mutableStateOf(installer?.installedVersions() ?: emptyList())
+    }
+    var systemInstall by remember(definition.id) { mutableStateOf<SystemInstall?>(null) }
+    LaunchedEffect(definition.id) {
+        systemInstall = withContext(Dispatchers.IO) {
+            val win = LspInstaller.isWindows()
+            val names = if (win) definition.lspWindowsBinaries.ifEmpty { definition.lspBinaries }
+            else definition.lspBinaries
+            if (names.isNotEmpty()) SystemInstallDetector.forLsp(names)
+            else SystemInstallDetector.forRuntime(definition.id)
+        }
     }
     LaunchedEffect(installer, installProgress is LspInstaller.Progress.Done, installProgress is LspInstaller.Progress.Failed, installProgress == null) {
         if (installer == null) return@LaunchedEffect
@@ -346,6 +358,10 @@ internal fun InstallGuideDialog(
                         color = Glass.colors.muted,
                         style = LocalTextStyle.current.copy(fontSize = 11.5.sp, lineHeight = 16.sp),
                     )
+                    systemInstall?.let { sys ->
+                        Spacer(Modifier.height(8.dp))
+                        GuideSystemNote(sys)
+                    }
                     val heavyEstimate = installer?.heavyInstall
                     if (heavyEstimate != null && installProgress == null && precheck is LspInstaller.Precheck.Ok) {
                         Spacer(Modifier.height(8.dp))
@@ -604,7 +620,6 @@ internal fun InstallGuideDialog(
                                         label = "Minimize",
                                         primary = false,
                                         enabled = true,
-                                        width = 132.dp,
                                         onClick = onMinimize,
                                     )
                                     Spacer(Modifier.width(8.dp))
@@ -613,16 +628,23 @@ internal fun InstallGuideDialog(
                                     label = "Cancel",
                                     primary = false,
                                     enabled = true,
-                                    width = 132.dp,
                                     onClick = { showCancelConfirm = true },
                                 )
                                 Spacer(Modifier.width(8.dp))
                             } else {
+                                if (systemInstall != null) {
+                                    InstallGuideButton(
+                                        label = "Use system",
+                                        primary = false,
+                                        enabled = true,
+                                        onClick = { onInstalled(); onDismiss() },
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                }
                                 InstallGuideButton(
                                     label = "Cancel",
                                     primary = false,
                                     enabled = true,
-                                    width = 132.dp,
                                     onClick = onDismiss,
                                 )
                                 Spacer(Modifier.width(8.dp))
@@ -632,7 +654,6 @@ internal fun InstallGuideDialog(
                                 primary = true,
                                 enabled = enableInstall,
                                 progress = installProgressFraction(installProgress),
-                                width = 132.dp,
                                 onClick = action,
                             )
                         } else {
@@ -1049,6 +1070,44 @@ private fun SectionHeader(
                     trim = LineHeightStyle.Trim.Both,
                 ),
             ),
+        )
+    }
+}
+
+@Composable
+private fun GuideSystemNote(info: SystemInstall) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        val tight = LineHeightStyle(
+            alignment = LineHeightStyle.Alignment.Center,
+            trim = LineHeightStyle.Trim.Both,
+        )
+        Box(Modifier.size(7.dp).clip(CircleShape).border(1.5.dp, Glass.colors.accent, CircleShape))
+        Text(
+            text = "Detected on system" + (info.version?.let { " · $it" } ?: ""),
+            color = Glass.colors.accent,
+            style = LocalTextStyle.current.copy(
+                fontSize = 11.sp,
+                lineHeight = 11.sp,
+                fontWeight = FontWeight.Medium,
+                lineHeightStyle = tight,
+            ),
+        )
+        Text(
+            text = info.path.toString(),
+            color = Glass.colors.muted,
+            style = LocalTextStyle.current.copy(
+                fontSize = 10.5.sp,
+                lineHeight = 10.5.sp,
+                fontFamily = FontFamily.Monospace,
+                lineHeightStyle = tight,
+            ),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f, fill = false),
         )
     }
 }

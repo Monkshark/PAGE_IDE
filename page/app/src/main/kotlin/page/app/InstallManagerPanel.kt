@@ -4,6 +4,7 @@ import page.runtime.*
 import page.workspace.*
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -47,6 +48,7 @@ import androidx.compose.ui.graphics.Color
 import page.ui.Glass
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -65,7 +67,24 @@ data class ManagerEntry(
     val id: String,
     val displayName: String,
     val category: ManagerCategory,
+    val binaries: List<String> = emptyList(),
+    val windowsBinaries: List<String> = emptyList(),
 )
+
+private fun ManagerEntry.pathBinaries(): List<String> {
+    val win = LspInstaller.isWindows()
+    return if (category == ManagerCategory.RUNTIME) SystemInstallDetector.runtimeNames(id)
+    else if (win) windowsBinaries.ifEmpty { binaries } else binaries
+}
+
+private fun ManagerEntry.systemPresent(): Boolean {
+    val names = pathBinaries()
+    return names.isNotEmpty() && SystemInstallDetector.findOnPath(names) != null
+}
+
+private fun ManagerEntry.systemDetail(): SystemInstall? =
+    if (category == ManagerCategory.RUNTIME) SystemInstallDetector.forRuntime(id)
+    else pathBinaries().takeIf { it.isNotEmpty() }?.let { SystemInstallDetector.forLsp(it) }
 
 @Composable
 internal fun InstallManagerPanel(
@@ -129,6 +148,12 @@ private fun ManagerSidebar(
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var systemPresent by remember { mutableStateOf<Set<String>>(emptySet()) }
+    LaunchedEffect(entries) {
+        systemPresent = withContext(Dispatchers.IO) {
+            entries.filter { it.systemPresent() }.map { it.id }.toSet()
+        }
+    }
     Column(modifier = modifier.background(Glass.colors.surfaceL2)) {
         Row(
             modifier = Modifier.fillMaxWidth().height(40.dp).padding(horizontal = 12.dp),
@@ -181,6 +206,8 @@ private fun ManagerSidebar(
                         )
                         if (installed) {
                             Box(Modifier.size(6.dp).clip(CircleShape).background(Glass.colors.success))
+                        } else if (entry.id in systemPresent) {
+                            SystemBadge()
                         }
                     }
                 }
@@ -205,6 +232,7 @@ private fun ManagerDetailPane(
     var availableVersions by remember(entry.id) { mutableStateOf<List<String>>(emptyList()) }
     var loading by remember(entry.id) { mutableStateOf(true) }
     var confirmDeleteVersion by remember(entry.id) { mutableStateOf<String?>(null) }
+    var sysDetail by remember(entry.id) { mutableStateOf<SystemInstall?>(null) }
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(entry.id) {
@@ -212,6 +240,10 @@ private fun ManagerDetailPane(
         val list = withContext(Dispatchers.IO) { installer?.availableVersions() ?: emptyList() }
         availableVersions = list
         loading = false
+    }
+
+    LaunchedEffect(entry.id) {
+        sysDetail = withContext(Dispatchers.IO) { entry.systemDetail() }
     }
 
     fun refreshVersions() {
@@ -252,6 +284,10 @@ private fun ManagerDetailPane(
             fontSize = 16.sp,
             fontWeight = FontWeight.SemiBold,
         )
+        sysDetail?.let { info ->
+            Spacer(Modifier.height(7.dp))
+            SystemNote(info)
+        }
         Spacer(Modifier.height(16.dp))
 
         if (installedVersions.isNotEmpty()) {
@@ -359,10 +395,65 @@ private fun ManagerDetailPane(
             Text(
                 text = "Open installer",
                 color = Glass.colors.onPrimary,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
+                style = LocalTextStyle.current.copy(
+                    fontSize = 12.sp,
+                    lineHeight = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    lineHeightStyle = LineHeightStyle(
+                        alignment = LineHeightStyle.Alignment.Center,
+                        trim = LineHeightStyle.Trim.Both,
+                    ),
+                ),
             )
         }
+    }
+}
+
+@Composable
+private fun SystemBadge() {
+    Box(
+        Modifier
+            .size(7.dp)
+            .clip(CircleShape)
+            .border(1.5.dp, Glass.colors.accent, CircleShape),
+    )
+}
+
+@Composable
+private fun SystemNote(info: SystemInstall) {
+    val tight = LineHeightStyle(
+        alignment = LineHeightStyle.Alignment.Center,
+        trim = LineHeightStyle.Trim.Both,
+    )
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Box(
+            Modifier.size(7.dp).clip(CircleShape).border(1.5.dp, Glass.colors.accent, CircleShape),
+        )
+        Text(
+            text = "Also on system" + (info.version?.let { " · $it" } ?: ""),
+            color = Glass.colors.accent,
+            style = LocalTextStyle.current.copy(
+                fontSize = 11.sp,
+                lineHeight = 11.sp,
+                fontWeight = FontWeight.Medium,
+                lineHeightStyle = tight,
+            ),
+        )
+        Text(
+            text = info.path.toString(),
+            color = Glass.colors.muted,
+            style = LocalTextStyle.current.copy(
+                fontSize = 10.5.sp,
+                lineHeight = 10.5.sp,
+                fontFamily = FontFamily.Monospace,
+                lineHeightStyle = tight,
+            ),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 
@@ -395,6 +486,8 @@ private fun buildManagerEntries(): List<ManagerEntry> {
             id = def.id,
             displayName = def.displayName,
             category = ManagerCategory.LSP,
+            binaries = def.lspBinaries,
+            windowsBinaries = def.lspWindowsBinaries,
         )
     }
     return entries
