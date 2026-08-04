@@ -1,0 +1,6 @@
+File-type icons in this directory are a curated subset of the
+VS Code Material Icon Theme by Philipp Kief / Material Extensions
+(https://github.com/material-extensions/vscode-material-icon-theme).
+
+License: MIT (see the LICENSE file in this directory).
+Copyright (c) 2025 Material Extensions.
