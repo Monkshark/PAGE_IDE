@@ -1,9 +1,7 @@
 package page.app
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -21,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -30,6 +29,17 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.material.icons.Icons
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.automirrored.outlined.Notes
+import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.Code
+import androidx.compose.material.icons.outlined.Extension
+import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.PlayArrow
+import androidx.compose.material.icons.outlined.Save
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -45,11 +55,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -61,9 +69,11 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import page.lsp.LspBackends
 import page.ui.Glass
 import page.ui.GlassPalette
+import page.ui.glassTokensFor
 
 data class PageSettings(
     val autoSave: AutoSaveOptions = AutoSaveOptions.DEFAULT,
@@ -81,13 +91,13 @@ private val CenteredLineHeight = LineHeightStyle(
     trim = LineHeightStyle.Trim.Both,
 )
 
-private enum class SettingsCategory(val label: String) {
-    AUTO_SAVE("AutoSave"),
-    EDITOR("Editor"),
-    LSP("LSP"),
-    AUTO_INPUT("AutoInput"),
-    UI("UI"),
-    RUN("Run"),
+private enum class SettingsCategory(val label: String, val group: String, val icon: ImageVector) {
+    AUTO_SAVE("AutoSave", "Workspace", Icons.Outlined.Save),
+    EDITOR("Editor", "Workspace", Icons.AutoMirrored.Outlined.Notes),
+    LSP("LSP", "Workspace", Icons.Outlined.Extension),
+    AUTO_INPUT("AutoInput", "Workspace", Icons.Outlined.Code),
+    UI("UI", "Appearance", Icons.Outlined.Palette),
+    RUN("Run", "Tasks", Icons.Outlined.PlayArrow),
 }
 
 @Composable
@@ -186,15 +196,32 @@ private fun SettingsSidebar(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.background(Glass.colors.surfaceL1).padding(8.dp)) {
+        var lastGroup: String? = null
         for (cat in SettingsCategory.values()) {
-            SidebarRow(label = cat.label, selected = cat == selected, onClick = { onSelect(cat) })
+            if (cat.group != lastGroup) {
+                GroupLabel(cat.group, first = lastGroup == null)
+                lastGroup = cat.group
+            }
+            SidebarRow(cat = cat, selected = cat == selected, onClick = { onSelect(cat) })
             Spacer(Modifier.height(2.dp))
         }
     }
 }
 
 @Composable
-private fun SidebarRow(label: String, selected: Boolean, onClick: () -> Unit) {
+private fun GroupLabel(text: String, first: Boolean) {
+    Text(
+        text = text.uppercase(),
+        color = Glass.colors.faint,
+        fontSize = Glass.type.label,
+        fontWeight = FontWeight.Medium,
+        letterSpacing = 1.6.sp,
+        modifier = Modifier.padding(start = 10.dp, top = if (first) 4.dp else 12.dp, bottom = 6.dp),
+    )
+}
+
+@Composable
+private fun SidebarRow(cat: SettingsCategory, selected: Boolean, onClick: () -> Unit) {
     val colors = Glass.colors
     val interaction = remember { MutableInteractionSource() }
     val hovered by interaction.collectIsHoveredAsState()
@@ -206,25 +233,40 @@ private fun SidebarRow(label: String, selected: Boolean, onClick: () -> Unit) {
         },
         animationSpec = tween(120),
     )
-    val labelColor by animateColorAsState(
+    val fg by animateColorAsState(
         targetValue = if (selected) colors.primary else colors.muted,
         animationSpec = tween(120),
     )
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(Glass.radius.sm))
-            .background(bg)
-            .clickable(interactionSource = interaction, indication = null, onClick = onClick)
-            .padding(horizontal = 10.dp, vertical = 7.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = label,
-            color = labelColor,
-            fontSize = Glass.type.ui,
-            fontWeight = if (selected) FontWeight.Medium else FontWeight.Normal,
-        )
+    Box(modifier = Modifier.fillMaxWidth()) {
+        if (selected) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .padding(start = 2.dp)
+                    .size(width = 2.5.dp, height = 18.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(colors.accent),
+            )
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(Glass.radius.sm))
+                .background(bg)
+                .clickable(interactionSource = interaction, indication = null, onClick = onClick)
+                .padding(horizontal = 10.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(imageVector = cat.icon, contentDescription = null, tint = fg, modifier = Modifier.size(16.dp))
+            Spacer(Modifier.width(10.dp))
+            Text(
+                text = cat.label,
+                color = fg,
+                fontSize = Glass.type.ui,
+                fontWeight = if (selected) FontWeight.Medium else FontWeight.Normal,
+                style = TextStyle(lineHeight = Glass.type.ui, lineHeightStyle = CenteredLineHeight),
+            )
+        }
     }
 }
 
@@ -438,11 +480,23 @@ private fun AutoInputSection(o: AutoInputOptions, onChange: (AutoInputOptions) -
 @Composable
 private fun UiSection(o: UiOptions, onChange: (UiOptions) -> Unit) {
     SectionLabel("Glass palette")
-    Spacer(Modifier.height(8.dp))
-    Row {
-        for (p in GlassPalette.values()) {
-            ChoiceChip(label = p.name, selected = p == o.palette, onClick = { onChange(o.copy(palette = p)) })
-            Spacer(Modifier.width(6.dp))
+    Spacer(Modifier.height(3.dp))
+    Hint("The token set that colors every surface, syntax, and control.")
+    Spacer(Modifier.height(10.dp))
+    val palettes = GlassPalette.values().toList()
+    Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
+        for (rowPalettes in palettes.chunked(3)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+                for (p in rowPalettes) {
+                    PaletteSwatch(
+                        palette = p,
+                        selected = p == o.palette,
+                        onClick = { onChange(o.copy(palette = p)) },
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+                repeat(3 - rowPalettes.size) { Spacer(Modifier.weight(1f)) }
+            }
         }
     }
     Spacer(Modifier.height(16.dp))
@@ -487,6 +541,67 @@ private fun SectionLabel(text: String) {
 @Composable
 private fun Hint(text: String) {
     Text(text = text, color = Glass.colors.muted, fontSize = Glass.type.label)
+}
+
+private fun paletteLabel(p: GlassPalette): String = when (p) {
+    GlassPalette.SignatureLight -> "Signature Light"
+    else -> p.name
+}
+
+@Composable
+private fun PaletteSwatch(
+    palette: GlassPalette,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = Glass.colors
+    val c = remember(palette) { glassTokensFor(palette).color }
+    val borderColor by animateColorAsState(
+        targetValue = if (selected) colors.primary else colors.outline,
+        animationSpec = tween(120),
+    )
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(Glass.radius.md))
+            .background(colors.surfaceL2)
+            .border(if (selected) 1.5.dp else 1.dp, borderColor, RoundedCornerShape(Glass.radius.md))
+            .clickable(onClick = onClick),
+    ) {
+        Column {
+            Row(modifier = Modifier.fillMaxWidth().height(38.dp)) {
+                Box(Modifier.weight(1f).fillMaxHeight().background(c.background))
+                Box(Modifier.weight(1f).fillMaxHeight().background(c.surface))
+                Box(Modifier.weight(1f).fillMaxHeight().background(c.primary))
+                Box(Modifier.weight(1f).fillMaxHeight().background(c.accent))
+            }
+            Text(
+                text = paletteLabel(palette),
+                color = colors.text,
+                fontSize = Glass.type.label,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.padding(start = 10.dp, end = 10.dp, top = 7.dp, bottom = 8.dp),
+            )
+        }
+        if (selected) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(6.dp)
+                    .size(16.dp)
+                    .clip(CircleShape)
+                    .background(colors.primary),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Check,
+                    contentDescription = null,
+                    tint = colors.onPrimary,
+                    modifier = Modifier.size(10.dp),
+                )
+            }
+        }
+    }
 }
 
 @Composable
@@ -629,23 +744,10 @@ private fun CheckRow(
     val colors = Glass.colors
     val interaction = remember { MutableInteractionSource() }
     val hovered by interaction.collectIsHoveredAsState()
-    val checkColor = colors.onPrimary
     val hoverBg = colors.surfaceRaised
     val rowBg by animateColorAsState(
         targetValue = if (hovered) hoverBg else hoverBg.copy(alpha = 0f),
         animationSpec = tween(120),
-    )
-    val boxBg by animateColorAsState(
-        targetValue = if (checked) colors.primary else colors.surfaceL2,
-        animationSpec = tween(140),
-    )
-    val boxBorder by animateColorAsState(
-        targetValue = if (checked) colors.primary else colors.outline,
-        animationSpec = tween(140),
-    )
-    val checkScale by animateFloatAsState(
-        targetValue = if (checked) 1f else 0f,
-        animationSpec = tween(160),
     )
     Row(
         modifier = Modifier
@@ -656,44 +758,7 @@ private fun CheckRow(
             .padding(horizontal = 8.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(
-            modifier = Modifier
-                .size(18.dp)
-                .clip(RoundedCornerShape(Glass.radius.xs))
-                .background(boxBg)
-                .border(1.dp, boxBorder, RoundedCornerShape(Glass.radius.xs)),
-            contentAlignment = Alignment.Center,
-        ) {
-            Canvas(
-                modifier = Modifier
-                    .size(11.dp)
-                    .graphicsLayer {
-                        scaleX = checkScale
-                        scaleY = checkScale
-                        alpha = checkScale
-                    },
-            ) {
-                val w = size.width
-                val h = size.height
-                val stroke = w * 0.16f
-                drawLine(
-                    color = checkColor,
-                    start = Offset(w * 0.16f, h * 0.54f),
-                    end = Offset(w * 0.40f, h * 0.78f),
-                    strokeWidth = stroke,
-                    cap = StrokeCap.Round,
-                )
-                drawLine(
-                    color = checkColor,
-                    start = Offset(w * 0.40f, h * 0.78f),
-                    end = Offset(w * 0.84f, h * 0.24f),
-                    strokeWidth = stroke,
-                    cap = StrokeCap.Round,
-                )
-            }
-        }
-        Spacer(Modifier.width(10.dp))
-        Column {
+        Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = label,
                 color = colors.text,
@@ -708,6 +773,43 @@ private fun CheckRow(
                 style = TextStyle(lineHeight = Glass.type.label, lineHeightStyle = CenteredLineHeight),
             )
         }
+        Spacer(Modifier.width(12.dp))
+        ToggleSwitch(checked = checked)
+    }
+}
+
+@Composable
+private fun ToggleSwitch(checked: Boolean) {
+    val colors = Glass.colors
+    val trackBg by animateColorAsState(
+        targetValue = if (checked) colors.primary else colors.surfaceL2,
+        animationSpec = tween(150),
+    )
+    val trackBorder by animateColorAsState(
+        targetValue = if (checked) colors.primary else colors.outline,
+        animationSpec = tween(150),
+    )
+    val knobX by animateDpAsState(if (checked) 16.dp else 0.dp, tween(160))
+    val knobColor by animateColorAsState(
+        targetValue = if (checked) colors.onPrimary else colors.muted,
+        animationSpec = tween(150),
+    )
+    Box(
+        modifier = Modifier
+            .size(width = 38.dp, height = 22.dp)
+            .clip(RoundedCornerShape(50))
+            .background(trackBg)
+            .border(1.dp, trackBorder, RoundedCornerShape(50)),
+    ) {
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .padding(start = 2.dp)
+                .offset(x = knobX)
+                .size(16.dp)
+                .clip(CircleShape)
+                .background(knobColor),
+        )
     }
 }
 
