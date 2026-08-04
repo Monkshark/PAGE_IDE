@@ -135,7 +135,7 @@ fun WelcomeScreen(
                 title = "Open folder…",
                 accentHover = false,
                 onClick = onOpenFolder,
-            ) { Kbd("⌃⇧O") }
+            ) {}
             ActionRow(
                 icon = Icons.Outlined.CreateNewFolder,
                 title = "New project",
@@ -246,20 +246,6 @@ private fun SectionLabel(text: String) {
 @Composable
 private fun Divider() {
     Box(Modifier.fillMaxWidth().height(1.dp).background(Glass.colors.separator))
-}
-
-@Composable
-private fun Kbd(text: String) {
-    Text(
-        text = text,
-        fontFamily = EditorFontFamily,
-        fontSize = 10.5.sp,
-        color = Glass.colors.faint,
-        modifier = Modifier
-            .clip(RoundedCornerShape(6.dp))
-            .border(1.dp, Glass.colors.outline, RoundedCornerShape(6.dp))
-            .padding(horizontal = 7.dp, vertical = 2.dp),
-    )
 }
 
 @OptIn(ExperimentalFoundationApi::class)
