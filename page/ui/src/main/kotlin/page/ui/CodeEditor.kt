@@ -306,6 +306,7 @@ fun CodeEditor(
                     value = latestValue,
                     onChange = latestOnChange,
                     layout = latestLayout,
+                    mapping = latestMapping,
                     clipboard = clipboard,
                     onUndo = performUndo,
                     onRedo = performRedo,
@@ -1441,6 +1442,7 @@ private fun handleDefaultKey(
     value: TextFieldValue,
     onChange: (TextFieldValue) -> Unit,
     layout: LineLayout,
+    mapping: OffsetMapping,
     clipboard: ClipboardManager,
     onUndo: () -> Boolean,
     onRedo: () -> Boolean,
@@ -1536,32 +1538,36 @@ private fun handleDefaultKey(
             true
         }
         Key.DirectionUp -> {
-            val targetLine = layout.getLineForOffset(sel.end) - 1
+            val curTrans = mapping.originalToTransformed(sel.end)
+            val targetLine = layout.getLineForOffset(curTrans) - 1
             if (targetLine < 0) return true
-            val x = preferredX.value ?: layout.getCursorRect(sel.end).left
+            val x = preferredX.value ?: layout.getCursorRect(curTrans).left
             preferredX.value = x
-            val newCaret = caretAt(layout, targetLine, x)
+            val newCaret = mapping.transformedToOriginal(caretAt(layout, targetLine, x))
             onChange(value.copy(selection = newSelection(sel, newCaret, shift)))
             true
         }
         Key.DirectionDown -> {
-            val targetLine = layout.getLineForOffset(sel.end) + 1
+            val curTrans = mapping.originalToTransformed(sel.end)
+            val targetLine = layout.getLineForOffset(curTrans) + 1
             if (targetLine >= layout.lineCount) return true
-            val x = preferredX.value ?: layout.getCursorRect(sel.end).left
+            val x = preferredX.value ?: layout.getCursorRect(curTrans).left
             preferredX.value = x
-            val newCaret = caretAt(layout, targetLine, x)
+            val newCaret = mapping.transformedToOriginal(caretAt(layout, targetLine, x))
             onChange(value.copy(selection = newSelection(sel, newCaret, shift)))
             true
         }
         Key.MoveHome -> {
-            val line = layout.getLineForOffset(sel.end)
-            val newCaret = layout.getLineStart(line)
+            val curTrans = mapping.originalToTransformed(sel.end)
+            val line = layout.getLineForOffset(curTrans)
+            val newCaret = mapping.transformedToOriginal(layout.getLineStart(line))
             onChange(value.copy(selection = newSelection(sel, newCaret, shift)))
             true
         }
         Key.MoveEnd -> {
-            val line = layout.getLineForOffset(sel.end)
-            val newCaret = layout.getLineEnd(line, visibleEnd = true)
+            val curTrans = mapping.originalToTransformed(sel.end)
+            val line = layout.getLineForOffset(curTrans)
+            val newCaret = mapping.transformedToOriginal(layout.getLineEnd(line, visibleEnd = true))
             onChange(value.copy(selection = newSelection(sel, newCaret, shift)))
             true
         }
@@ -1571,12 +1577,13 @@ private fun handleDefaultKey(
                 layout.getLineBottom(0) - layout.getLineTop(0)
             } else 0f
             val step = PageScroll.linesPerPage(viewportHeightPx, lineHeightPx)
-            val currentLine = layout.getLineForOffset(sel.end)
+            val curTrans = mapping.originalToTransformed(sel.end)
+            val currentLine = layout.getLineForOffset(curTrans)
             val targetLine = (currentLine + if (up) -step else step)
                 .coerceIn(0, layout.lineCount - 1)
-            val x = preferredX.value ?: layout.getCursorRect(sel.end).left
+            val x = preferredX.value ?: layout.getCursorRect(curTrans).left
             preferredX.value = x
-            val newCaret = caretAt(layout, targetLine, x)
+            val newCaret = mapping.transformedToOriginal(caretAt(layout, targetLine, x))
             onChange(value.copy(selection = newSelection(sel, newCaret, shift)))
             true
         }
