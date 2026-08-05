@@ -1032,6 +1032,8 @@ fun EditorPanel(
                     },
                     onPickKeyword = onPickKeyword,
                     textStyle = textStyle,
+                    viewportHeightProvider = { scrollState.viewportSize.toFloat() },
+                    scrollOffsetProvider = { scrollState.value.toFloat() },
                 )
             }
             fun triggerDefinitionOrReferences(text: String, offset: Int): Boolean {
