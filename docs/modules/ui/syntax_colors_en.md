@@ -49,6 +49,14 @@ Settings → Editor → Syntax colors selects the preset; `EditorOptions.syntaxP
 
 ---
 
+## Rainbow brackets
+
+`BracketScan.pairs(text, tokens)` walks the file once and pairs brackets with their nesting depth, skipping anything inside strings and comments. `SyntaxPalette.bracketAt(depth)` cycles the palette's own hues, so each theme rainbows in its own colors instead of a fixed set.
+
+Scope guides come from the same pairs: a rail runs from an opening bracket down to its match, which keeps it on the right column when arguments wrap. Settings → Editor → Rainbow brackets and Scope guides control both.
+
+---
+
 ## Signature palette
 
 <div class="glassdoc">

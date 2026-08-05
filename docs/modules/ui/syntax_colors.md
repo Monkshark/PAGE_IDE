@@ -49,6 +49,14 @@ data class SyntaxPalette(
 
 ---
 
+## 무지개 괄호
+
+`BracketScan.pairs(text, tokens)` 가 파일을 한 번 훑어 괄호를 중첩 깊이와 함께 짝짓는다. 문자열·주석 안의 괄호는 건너뛴다. `SyntaxPalette.bracketAt(depth)` 는 팔레트 자기 색을 순환시켜, 고정된 무지개색이 아니라 테마마다 제 색으로 물든다
+
+스코프 선도 같은 짝에서 나온다. 여는 괄호에서 짝까지 세로선을 긋기 때문에 인자가 줄바꿈돼도 열이 어긋나지 않는다. 설정 → Editor → Rainbow brackets · Scope guides 로 조절한다
+
+---
+
 ## Signature palette
 
 <div class="glassdoc">
