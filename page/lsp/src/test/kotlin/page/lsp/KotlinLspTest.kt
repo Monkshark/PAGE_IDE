@@ -9,6 +9,30 @@ import kotlin.test.assertTrue
 class KotlinLspTest {
 
     @Test
+    fun `index storage dir is stable per workspace`() {
+        val home = Path.of("/home/dev")
+        val workspace = Path.of("/projects/demo")
+        val first = KotlinLsp.indexStorageDir(workspace, home)
+        val second = KotlinLsp.indexStorageDir(Path.of("/projects", "demo"), home)
+        assertEquals(first, second)
+        assertTrue(first.toString().contains("demo"), "expected workspace name in $first")
+        assertTrue(first!!.startsWith(home.resolve(".page-ide")), "expected page-ide home in $first")
+    }
+
+    @Test
+    fun `index storage dir differs per workspace`() {
+        val home = Path.of("/home/dev")
+        val a = KotlinLsp.indexStorageDir(Path.of("/projects/demo"), home)
+        val b = KotlinLsp.indexStorageDir(Path.of("/other/demo"), home)
+        assertTrue(a != b, "expected distinct dirs, both were $a")
+    }
+
+    @Test
+    fun `index storage dir is null without a workspace`() {
+        assertEquals(null, KotlinLsp.indexStorageDir(null, Path.of("/home/dev")))
+    }
+
+    @Test
     fun `system property override resolves first`() {
         val tmp = Files.createTempFile("kls-fake", "")
         val prevOverride = System.getProperty("page.lsp.kotlin.path")

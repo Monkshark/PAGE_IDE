@@ -118,7 +118,33 @@ object KotlinLsp {
         val process = builder.start()
         val transport = if (onStderrLine != null) ProcessTransport(process, onStderrLine)
         else ProcessTransport(process)
-        return LspClient(transport, workspaceRoot, initialSettings = inlayHintsSettings())
+        return LspClient(
+            transport,
+            workspaceRoot,
+            initialSettings = inlayHintsSettings(),
+            initializationOptions = indexStorageOptions(workspaceRoot),
+        )
+    }
+
+    internal fun indexStorageDir(
+        workspaceRoot: Path?,
+        home: Path = Paths.get(System.getProperty("user.home") ?: "."),
+    ): Path? {
+        if (workspaceRoot == null) return null
+        val canonical = runCatching { workspaceRoot.toAbsolutePath().normalize().toString() }
+            .getOrDefault(workspaceRoot.toString())
+        val digest = java.security.MessageDigest.getInstance("SHA-1")
+            .digest(canonical.lowercase().toByteArray())
+            .joinToString("") { "%02x".format(it) }
+            .take(16)
+        val name = workspaceRoot.fileName?.toString()?.replace(Regex("[^A-Za-z0-9._-]"), "_") ?: "workspace"
+        return home.resolve(".page-ide").resolve("index").resolve("kotlin").resolve("$name-$digest")
+    }
+
+    private fun indexStorageOptions(workspaceRoot: Path?): Map<String, String>? {
+        val dir = indexStorageDir(workspaceRoot) ?: return null
+        runCatching { Files.createDirectories(dir) }.onFailure { return null }
+        return mapOf("storagePath" to dir.toAbsolutePath().toString())
     }
 
     private fun applyKlsGradleOpts(builder: ProcessBuilder) {
