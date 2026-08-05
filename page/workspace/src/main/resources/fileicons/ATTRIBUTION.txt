@@ -4,3 +4,6 @@ VS Code Material Icon Theme by Philipp Kief / Material Extensions
 
 License: MIT (see the LICENSE file in this directory).
 Copyright (c) 2025 Material Extensions.
+
+flutter.svg is from Devicon (https://github.com/devicons/devicon),
+also under the MIT License.
