@@ -71,6 +71,7 @@ import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import page.lsp.LspBackends
+import page.shared.syntax.SyntaxPreset
 import page.ui.Glass
 import page.ui.GlassPalette
 import page.ui.glassTokensFor
@@ -389,6 +390,43 @@ private fun EditorSection(o: EditorOptions, onChange: (EditorOptions) -> Unit) {
         description = "Tint the row containing the caret.",
         checked = o.highlightCurrentLine,
         onToggle = { onChange(o.copy(highlightCurrentLine = !o.highlightCurrentLine)) },
+    )
+    Spacer(Modifier.height(18.dp))
+    SectionLabel("Syntax colors")
+    Spacer(Modifier.height(3.dp))
+    Hint("How far the editor separates calls, members and parameters from plain names.")
+    Spacer(Modifier.height(8.dp))
+    Row {
+        for (preset in SyntaxPreset.entries) {
+            ChoiceChip(
+                label = preset.label,
+                selected = o.syntaxPreset == preset,
+                onClick = { onChange(o.copy(syntaxPreset = preset)) },
+            )
+            Spacer(Modifier.width(6.dp))
+        }
+    }
+    Spacer(Modifier.height(18.dp))
+    SectionLabel("Scope guides")
+    Spacer(Modifier.height(3.dp))
+    Hint("Vertical lines that connect a block to its closing brace.")
+    Spacer(Modifier.height(8.dp))
+    Row {
+        for (mode in ScopeGuideMode.entries) {
+            ChoiceChip(
+                label = mode.label,
+                selected = o.scopeGuides == mode,
+                onClick = { onChange(o.copy(scopeGuides = mode)) },
+            )
+            Spacer(Modifier.width(6.dp))
+        }
+    }
+    Spacer(Modifier.height(18.dp))
+    CheckRow(
+        label = "Highlight identifier under caret",
+        description = "Tint the other places the name at the caret appears.",
+        checked = o.highlightIdentifierUnderCaret,
+        onToggle = { onChange(o.copy(highlightIdentifierUnderCaret = !o.highlightIdentifierUnderCaret)) },
     )
 }
 

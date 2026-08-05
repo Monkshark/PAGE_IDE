@@ -178,12 +178,14 @@ fun EditorPanel(
     val caret = buffer.lineColOf(caretOffset)
 
     val matchBg = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)
+    val occurrenceBg = Glass.colors.accent.copy(alpha = 0.18f)
     val activeBg = MaterialTheme.colorScheme.primary.copy(alpha = 0.55f)
     val currentLineBg = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.06f)
     val bracketBg = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.45f)
     val foldPlaceholderColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.45f)
     val foldPlaceholderBg = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.06f)
     val palette = Glass.colors.syntax
+    val syntaxPreset = pageSettings.editor.syntaxPreset
     val defaultTodoColors = mapOf(
         "TODO" to MaterialTheme.colorScheme.secondary,
         "FIXME" to Glass.colors.error,
@@ -207,7 +209,9 @@ fun EditorPanel(
             return@produceState
         }
         if (sourceText.length > ASYNC_TOKENIZE_THRESHOLD) delay(60)
-        this.value = withContext(Dispatchers.Default) { TokenizedText(sourceText, lx.tokenize(sourceText)) }
+        this.value = withContext(Dispatchers.Default) {
+            TokenizedText(sourceText, page.shared.syntax.SyntaxRoles.refine(sourceText, lx.tokenize(sourceText)))
+        }
     }
     val tokens = remember(tokenized, sourceText) {
         if (tokenized.text == sourceText) tokenized.tokens
@@ -250,6 +254,15 @@ fun EditorPanel(
     val bracketMatch = remember(value.text, value.selection.start, value.selection.end) {
         if (value.selection.start != value.selection.end) null
         else BracketMatch.find(value.text, value.selection.start)
+    }
+
+    val identifierOccurrences = remember(
+        value.text, value.selection.start, value.selection.end, tokens,
+        pageSettings.editor.highlightIdentifierUnderCaret,
+    ) {
+        if (!pageSettings.editor.highlightIdentifierUnderCaret) emptyList()
+        else if (value.selection.start != value.selection.end) emptyList()
+        else IdentifierOccurrences.find(value.text, tokens, value.selection.start)
     }
 
     val errorColor = Glass.colors.error
@@ -444,7 +457,8 @@ fun EditorPanel(
     val inlayHintColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f)
 
     val visualTransformation = remember(
-        search, tokens, bracketMatch, matchBg, activeBg, bracketBg, palette,
+        search, tokens, bracketMatch, matchBg, activeBg, bracketBg, palette, syntaxPreset,
+        identifierOccurrences, occurrenceBg,
         foldSegments, foldPlaceholderColor, foldPlaceholderBg, todoColors,
         keywordOverrideByRange, inlayHintDisplays, inlayHintColor,
         unnecessaryRanges, unnecessaryColor,
@@ -457,6 +471,7 @@ fun EditorPanel(
             CombinedHighlightTransformation(
                 tokens = tokens,
                 palette = palette,
+                preset = syntaxPreset,
                 todoColors = todoColors,
                 commentColorOverrides = keywordOverrideByRange,
                 matches = matches,
@@ -465,6 +480,8 @@ fun EditorPanel(
                 activeBg = activeBg,
                 bracketMatch = bracketMatch,
                 bracketBg = bracketBg,
+                occurrences = identifierOccurrences,
+                occurrenceBg = occurrenceBg,
                 unnecessaryRanges = unnecessaryRanges,
                 unnecessaryStyle = SpanStyle(color = unnecessaryColor),
                 foldSegments = foldSegments,
@@ -1295,6 +1312,13 @@ fun EditorPanel(
                 manageHistory = false,
                 viewportHeightProvider = { scrollState.viewportSize.toFloat() },
                 scrollOffsetProvider = { scrollState.value.toFloat() },
+                scopeGuides = page.ui.ScopeGuides(
+                    enabled = pageSettings.editor.scopeGuides != ScopeGuideMode.OFF,
+                    onlyCurrentBlock = pageSettings.editor.scopeGuides == ScopeGuideMode.CURRENT,
+                    color = Glass.colors.muted.copy(alpha = 0.22f),
+                    activeColor = Glass.colors.primary.copy(alpha = 0.55f),
+                    indentWidth = pageSettings.editor.tabSize,
+                ),
                 focusRequestVersion = editorFocusVersion,
                 caretBringIntoViewEnabled = caretBringArmed,
                 decorations = decorations,
@@ -1579,6 +1603,7 @@ internal data class InlayHintDisplay(
 private class CombinedHighlightTransformation(
     private val tokens: List<Token>,
     private val palette: SyntaxPalette,
+    private val preset: page.shared.syntax.SyntaxPreset,
     private val todoColors: Map<String, androidx.compose.ui.graphics.Color>,
     private val commentColorOverrides: Map<IntRange, androidx.compose.ui.graphics.Color>,
     private val matches: List<IntRange>,
@@ -1587,6 +1612,8 @@ private class CombinedHighlightTransformation(
     private val activeBg: androidx.compose.ui.graphics.Color,
     private val bracketMatch: Pair<Int, Int>?,
     private val bracketBg: androidx.compose.ui.graphics.Color,
+    private val occurrences: List<IntRange> = emptyList(),
+    private val occurrenceBg: androidx.compose.ui.graphics.Color = androidx.compose.ui.graphics.Color.Unspecified,
     private val unnecessaryRanges: List<IntRange> = emptyList(),
     private val unnecessaryStyle: SpanStyle = SpanStyle(),
     private val foldSegments: List<FoldRegions.Segment>,
@@ -1755,7 +1782,10 @@ private class CombinedHighlightTransformation(
                     commentOverride[token.range]!!
                 else -> colorFor(token.kind, palette) ?: continue
             }
-            builder.addStyle(SpanStyle(color = color), start, end)
+            val span = page.shared.syntax.SyntaxStyles.spanFor(token.kind, palette, preset)
+                ?.copy(color = color)
+                ?: SpanStyle(color = color)
+            builder.addStyle(span, start, end)
         }
         matches.forEachIndexed { index, range ->
             val start = range.first.coerceIn(0, text.length)
@@ -1763,6 +1793,14 @@ private class CombinedHighlightTransformation(
             if (start == end) return@forEachIndexed
             val bg = if (index == activeIndex) activeBg else matchBg
             builder.addStyle(SpanStyle(background = bg), start, end)
+        }
+        if (occurrenceBg != androidx.compose.ui.graphics.Color.Unspecified) {
+            for (range in occurrences) {
+                val start = range.first.coerceIn(0, text.length)
+                val end = (range.last + 1).coerceIn(start, text.length)
+                if (start == end) continue
+                builder.addStyle(SpanStyle(background = occurrenceBg), start, end)
+            }
         }
         if (bracketMatch != null) {
             for (off in listOf(bracketMatch.first, bracketMatch.second)) {
@@ -1790,18 +1828,8 @@ private class CombinedHighlightTransformation(
         return null
     }
 
-    private fun colorFor(kind: TokenKind, palette: SyntaxPalette) = when (kind) {
-        TokenKind.KEYWORD -> palette.keyword
-        TokenKind.STRING -> palette.string
-        TokenKind.NUMBER -> palette.number
-        TokenKind.COMMENT -> palette.comment
-        TokenKind.DOC_COMMENT -> palette.docComment
-        TokenKind.TODO_TAG -> palette.todoTag
-        TokenKind.ANNOTATION -> palette.annotation
-        TokenKind.TYPE -> palette.type
-        TokenKind.IDENTIFIER -> palette.identifier
-        TokenKind.PUNCT -> null
-    }
+    private fun colorFor(kind: TokenKind, palette: SyntaxPalette) =
+        page.shared.syntax.SyntaxStyles.colorFor(kind, palette, preset)
 }
 
 private class FoldOffsetMapping(
