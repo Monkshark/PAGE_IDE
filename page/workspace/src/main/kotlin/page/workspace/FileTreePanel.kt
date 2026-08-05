@@ -482,7 +482,8 @@ fun FileTreePanel(
                             ) {
                                 items(nodes, key = { it.path.toString() }) { node ->
                                     val active = dragState.active
-                                    val targetFolder = TreeDragController.resolveTargetFolder(node.path)
+                                    val targetFolder = if (active == null) null
+                                    else TreeDragController.resolveTargetFolder(node.path)
                                     val isHoveredTarget = active != null && active.hovered == node.path
                                     val allowed = if (active != null && targetFolder != null) {
                                         TreeDragController.plan(

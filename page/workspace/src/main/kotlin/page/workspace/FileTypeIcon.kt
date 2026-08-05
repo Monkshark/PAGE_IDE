@@ -11,7 +11,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextOverflow
@@ -19,6 +18,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import page.ui.Glass
+import page.ui.cachedSvgPainter
 import java.nio.file.Path
 
 private val CenterTight = LineHeightStyle(
@@ -32,13 +32,13 @@ fun FileTypeIcon(path: Path, isDirectory: Boolean, size: Dp = 15.dp) {
     val ext = if (isDirectory) "" else path.fileName?.toString()?.substringAfterLast('.', "").orEmpty()
     when {
         res != null -> Image(
-            painter = painterResource(res),
+            painter = cachedSvgPainter(res),
             contentDescription = null,
             modifier = Modifier.size(size),
         )
         ext.isNotEmpty() -> FileExtChip(ext.take(4).lowercase(), size)
         else -> Image(
-            painter = painterResource(FileIcons.documentResource()),
+            painter = cachedSvgPainter(FileIcons.documentResource()),
             contentDescription = null,
             modifier = Modifier.size(size),
         )

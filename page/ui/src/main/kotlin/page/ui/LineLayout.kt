@@ -125,8 +125,11 @@ internal class LineLayout(
         return path
     }
 
-    fun draw(scope: DrawScope) {
-        for (line in 0 until lineCount) {
+    fun draw(scope: DrawScope, firstLine: Int = 0, lastLine: Int = lineCount - 1) {
+        if (lineCount == 0) return
+        val lo = firstLine.coerceIn(0, lineCount - 1)
+        val hi = lastLine.coerceIn(lo, lineCount - 1)
+        for (line in lo..hi) {
             scope.drawText(lines[line], topLeft = Offset(0f, line * lineHeightPx))
         }
     }

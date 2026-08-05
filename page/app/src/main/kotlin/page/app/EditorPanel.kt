@@ -44,6 +44,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.withTimeoutOrNull
@@ -521,6 +522,7 @@ fun EditorPanel(
         snapshotFlow { scrollState.value to horizontalScrollState.value }
             .distinctUntilChanged()
             .drop(1)
+            .debounce(200)
             .collect { (v, h) -> onScrollChange(v, h) }
     }
     var savedScrollOnPress by remember { mutableStateOf(-1) }
@@ -1032,6 +1034,8 @@ fun EditorPanel(
                     },
                     onPickKeyword = onPickKeyword,
                     textStyle = textStyle,
+                    viewportHeightProvider = { scrollState.viewportSize.toFloat() },
+                    scrollOffsetProvider = { scrollState.value.toFloat() },
                 )
             }
             fun triggerDefinitionOrReferences(text: String, offset: Int): Boolean {
@@ -1290,6 +1294,7 @@ fun EditorPanel(
                 },
                 manageHistory = false,
                 viewportHeightProvider = { scrollState.viewportSize.toFloat() },
+                scrollOffsetProvider = { scrollState.value.toFloat() },
                 focusRequestVersion = editorFocusVersion,
                 caretBringIntoViewEnabled = caretBringArmed,
                 decorations = decorations,

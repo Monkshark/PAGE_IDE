@@ -842,6 +842,11 @@ private fun androidx.compose.ui.window.ApplicationScope.AppContent() {
                         onDismiss = { dropResultToast = null },
                     )
                 }
+                page.app.ui.FpsOverlay(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(top = 42.dp, end = 14.dp),
+                )
                 }
             }
         }

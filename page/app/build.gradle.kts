@@ -107,6 +107,7 @@ val klsVersionMarker by tasks.registering {
 compose.desktop {
     application {
         mainClass = "page.app.MainKt"
+        jvmArgs += listOf("-Dskiko.renderApi=DIRECT3D")
 
         nativeDistributions {
             targetFormats(TargetFormat.Msi)
@@ -137,5 +138,8 @@ tasks.register<JavaExec>("runCodeEditorDemo") {
 tasks.withType<JavaExec>().configureEach {
     System.getenv("PAGE_EDITOR_TREESITTER")?.takeIf { it.isNotBlank() }?.let {
         systemProperty("page.editor.treesitter", it)
+    }
+    System.getenv("PAGE_DEBUG_FPS")?.takeIf { it.isNotBlank() }?.let {
+        systemProperty("page.debug.fps", it)
     }
 }
