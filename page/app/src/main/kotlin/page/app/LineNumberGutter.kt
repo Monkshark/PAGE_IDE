@@ -98,6 +98,13 @@ internal fun LineNumberGutter(
     val lineHeightPx = remember(textStyle, density.density, density.fontScale) {
         measurer.measure(AnnotatedString("0"), style = textStyle, softWrap = false).getLineBottom(0)
     }
+    val numberMutedStyle = remember(textStyle, mutedColor) { textStyle.copy(color = mutedColor) }
+    val numberActiveStyle = remember(textStyle, activeColor) { textStyle.copy(color = activeColor) }
+    val foldOpenStyle = numberMutedStyle
+    val foldClosedStyle = remember(textStyle, toggleColor) { textStyle.copy(color = toggleColor) }
+    val glyphCache = remember(textStyle, density.density, mutedColor, activeColor, toggleColor) {
+        HashMap<String, androidx.compose.ui.text.TextLayoutResult>()
+    }
     val gutterWidth = FoldColumnWidth + DotColumnWidth + KeywordColumnWidth +
         numberColumnWidth + NumberEndPadding
 
@@ -155,11 +162,12 @@ internal fun LineNumberGutter(
                 val top = topPad + i * lineH
                 if (entry.foldable) {
                     val symbol = if (entry.folded) "▸" else "▾"
-                    val color = if (entry.folded) toggleColor else mutedColor
-                    val measured = measurer.measure(
-                        AnnotatedString(symbol),
-                        style = textStyle.copy(color = color),
-                    )
+                    val measured = glyphCache.getOrPut("f:${entry.folded}") {
+                        measurer.measure(
+                            AnnotatedString(symbol),
+                            style = if (entry.folded) foldClosedStyle else foldOpenStyle,
+                        )
+                    }
                     drawText(
                         measured,
                         topLeft = Offset(
@@ -184,20 +192,26 @@ internal fun LineNumberGutter(
                 }
                 val keyword = entry.multiKeyword
                 if (keyword != null) {
-                    val measured = measurer.measure(
-                        AnnotatedString(keyword.chosenKeyword.firstOrNull()?.uppercase() ?: "?"),
-                        style = textStyle.copy(color = keyword.chosenColor, fontWeight = FontWeight.Bold),
-                    )
+                    val letter = keyword.chosenKeyword.firstOrNull()?.uppercase() ?: "?"
+                    val measured = glyphCache.getOrPut("k:$letter:${keyword.chosenColor.value}") {
+                        measurer.measure(
+                            AnnotatedString(letter),
+                            style = textStyle.copy(color = keyword.chosenColor, fontWeight = FontWeight.Bold),
+                        )
+                    }
                     drawText(
                         measured,
                         topLeft = Offset(keywordX, top + (lineH - measured.size.height) / 2f),
                     )
                 }
-                val numberColor = if (entry.originalLine == currentOriginalLine) activeColor else mutedColor
-                val measured = measurer.measure(
-                    AnnotatedString((entry.originalLine + 1).toString()),
-                    style = textStyle.copy(color = numberColor),
-                )
+                val isCurrent = entry.originalLine == currentOriginalLine
+                val label = (entry.originalLine + 1).toString()
+                val measured = glyphCache.getOrPut("n:$label:$isCurrent") {
+                    measurer.measure(
+                        AnnotatedString(label),
+                        style = if (isCurrent) numberActiveStyle else numberMutedStyle,
+                    )
+                }
                 drawText(
                     measured,
                     topLeft = Offset(
