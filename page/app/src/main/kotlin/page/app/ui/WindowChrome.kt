@@ -46,6 +46,19 @@ data class WindowChrome(
 
 val LocalWindowChrome = compositionLocalOf<WindowChrome?> { null }
 
+fun applyWorkAreaMaximizedBounds(window: Window) {
+    val frame = window as? Frame ?: return
+    val gc = window.graphicsConfiguration ?: return
+    val b = gc.bounds
+    val insets = java.awt.Toolkit.getDefaultToolkit().getScreenInsets(gc)
+    frame.maximizedBounds = java.awt.Rectangle(
+        b.x + insets.left,
+        b.y + insets.top,
+        b.width - insets.left - insets.right,
+        b.height - insets.top - insets.bottom,
+    )
+}
+
 @Composable
 internal fun WindowControls(chrome: WindowChrome, modifier: Modifier = Modifier) {
     Row(modifier = modifier.fillMaxHeight()) {

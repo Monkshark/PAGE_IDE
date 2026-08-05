@@ -101,6 +101,89 @@ object LanguageRunDefaults {
         return templates.firstOrNull { key in it.extensions }
     }
 
+    private fun buildCppConfig(
+        path: Path,
+        baseName: String,
+        workspaceRoot: Path?,
+        template: LanguageRunTemplate,
+    ): RunConfig? {
+        val win = LspInstaller.isWindows()
+        val cxx = "cpp" in template.extensions || "cc" in template.extensions || "cxx" in template.extensions
+        val resolved = resolveCppCompiler(cxx)
+        if (resolved == null) return cppSetupGuidanceConfig(path, baseName, workspaceRoot)
+        val (bin, needsExternalHeaders) = resolved
+        if (win && needsExternalHeaders && !windowsCppHeadersAvailable()) {
+            return cppSetupGuidanceConfig(path, baseName, workspaceRoot)
+        }
+        val env = emptyMap<String, String>()
+        val outDir = workspaceRoot ?: path.parent ?: path
+        val outFile = outDir.resolve(if (win) "$baseName.exe" else baseName).toAbsolutePath().toString()
+        val cwd = (workspaceRoot ?: path.parent)?.toString()
+        val line = "${shellQuote(bin)} ${shellQuote(path.toString())} -o ${shellQuote(outFile)} && ${shellQuote(outFile)}"
+        val shell = if (win) "cmd" else "sh"
+        val flag = if (win) "/c" else "-c"
+        return RunConfig(
+            id = "auto-cpp-$baseName-${System.nanoTime()}",
+            name = "${template.displayName} · ${path.fileName}",
+            command = shell,
+            args = listOf(flag, line),
+            workingDir = cwd,
+            env = env,
+        )
+    }
+
+    private fun shellQuote(s: String): String =
+        if (s.isEmpty() || s.any { it == ' ' || it == '&' || it == '(' || it == ')' }) "\"$s\"" else s
+
+    /** Resolve a C/C++ compiler; second = needs external headers (clang) vs self-contained (gcc/g++). */
+    private fun resolveCppCompiler(cxx: Boolean): Pair<String, Boolean>? {
+        val win = LspInstaller.isWindows()
+        val clangName = if (cxx) (if (win) "clang++.exe" else "clang++") else (if (win) "clang.exe" else "clang")
+        runCatching { CppToolchainInstaller().llvmHome() }.getOrNull()
+            ?.resolve("bin")?.resolve(clangName)
+            ?.takeIf { java.nio.file.Files.exists(it) }
+            ?.let { return it.toAbsolutePath().toString() to true }
+
+        val mingw = MingwInstaller()
+        val mv = runCatching { mingw.currentInstalledVersion() }.getOrNull()
+        if (mv != null) {
+            val gxx = mingw.installRoot(mv).resolve("bin").resolve(if (cxx) "g++.exe" else "gcc.exe")
+            if (java.nio.file.Files.exists(gxx)) return gxx.toAbsolutePath().toString() to false
+        }
+
+        val clangNames = if (cxx) listOf("clang++", "clang++.exe") else listOf("clang", "clang.exe")
+        SystemInstallDetector.findOnPath(clangNames)?.let { return it.toAbsolutePath().toString() to true }
+
+        val gxxNames = if (cxx) listOf("g++", "g++.exe") else listOf("gcc", "gcc.exe")
+        SystemInstallDetector.findOnPath(gxxNames)?.let { return it.toAbsolutePath().toString() to false }
+
+        return null
+    }
+
+    private fun windowsCppHeadersAvailable(): Boolean {
+        if (runCatching { WindowsSdkInstaller().isInstalled() }.getOrNull() == true) return true
+        if (runCatching { MingwInstaller().isInstalled() }.getOrNull() == true) return true
+        if (MsvcEnv.envVars() != null) return true
+        return false
+    }
+
+    private fun cppSetupGuidanceConfig(path: Path, baseName: String, workspaceRoot: Path?): RunConfig {
+        val cwd = workspaceRoot?.toString() ?: path.parent?.toString()
+        val g1 = "No C/C++ toolchain found on this system."
+        val g2 = "Install one, then Run again:"
+        val g3 = "  1) MinGW-w64 from PAGE Install Manager (lightweight), or"
+        val g4 = "  2) Visual Studio Build Tools with the Desktop development with C++ workload."
+        val line = listOf(g1, g2, g3, g4).joinToString("& ") { "echo $it" } + "& exit /b 1"
+        return RunConfig(
+            id = "cpp-setup-$baseName-${System.nanoTime()}",
+            name = "C/C++ setup required",
+            command = "cmd",
+            args = listOf("/c", line),
+            workingDir = cwd,
+            env = emptyMap(),
+        )
+    }
+
     private fun resolveJdkEnv(template: LanguageRunTemplate): Pair<String, Map<String, String>>? {
         if ("java" in template.extensions) {
             val jdk = runCatching { JdkInstaller() }.getOrNull() ?: return null
@@ -127,16 +210,17 @@ object LanguageRunDefaults {
             return bin.toAbsolutePath().toString() to mapOf("GOROOT" to home.toAbsolutePath().toString())
         }
         if ("c" in template.extensions || "cpp" in template.extensions) {
-            val llvm = runCatching { CppToolchainInstaller() }.getOrNull() ?: return null
-            val home = llvm.llvmHome() ?: return null
-            val name = if ("cpp" in template.extensions || "cc" in template.extensions || "cxx" in template.extensions) {
-                if (LspInstaller.isWindows()) "clang++.exe" else "clang++"
-            } else {
-                if (LspInstaller.isWindows()) "clang.exe" else "clang"
-            }
-            val bin = home.resolve("bin").resolve(name)
-            if (!java.nio.file.Files.exists(bin)) return null
-            return bin.toAbsolutePath().toString() to emptyMap()
+            val cxx = "cpp" in template.extensions || "cc" in template.extensions || "cxx" in template.extensions
+            val win = LspInstaller.isWindows()
+            val name = if (cxx) (if (win) "clang++.exe" else "clang++") else (if (win) "clang.exe" else "clang")
+            val managed = runCatching { CppToolchainInstaller().llvmHome() }.getOrNull()
+                ?.resolve("bin")?.resolve(name)
+                ?.takeIf { java.nio.file.Files.exists(it) }
+            if (managed != null) return managed.toAbsolutePath().toString() to emptyMap()
+            val sysNames = if (cxx) listOf("clang++", "clang++.exe") else listOf("clang", "clang.exe")
+            val sys = SystemInstallDetector.findOnPath(sysNames)
+            if (sys != null) return sys.toAbsolutePath().toString() to emptyMap()
+            return null
         }
         if ("rs" in template.extensions) {
             val rust = runCatching { RustToolchainInstaller() }.getOrNull() ?: return null
@@ -257,6 +341,9 @@ object LanguageRunDefaults {
         val baseName = fileName.substringBeforeLast('.', fileName)
         if ("swift" in template.extensions && LspInstaller.isWindows()) {
             buildSwiftWindowsConfig(path, fileName, baseName, workspaceRoot)?.let { return it }
+        }
+        if ("c" in template.extensions || "cpp" in template.extensions) {
+            buildCppConfig(path, baseName, workspaceRoot, template)?.let { return it }
         }
         val resolvedArgs = template.argTemplate.map { token ->
             when (token) {
