@@ -25,6 +25,36 @@ val fpsOverlayEnabled: Boolean by lazy {
         System.getenv("PAGE_DEBUG_FPS")?.equals("true", ignoreCase = true) == true
 }
 
+@Volatile private var lastTickMs: Long = 0L
+
+private val stallWatchdog: Thread by lazy {
+    Thread {
+        var reportedAt = 0L
+        while (true) {
+            Thread.sleep(40)
+            val tick = lastTickMs
+            if (tick == 0L) continue
+            val stalledMs = System.currentTimeMillis() - tick
+            if (stalledMs > 200 && tick != reportedAt) {
+                reportedAt = tick
+                val ui = Thread.getAllStackTraces().entries
+                    .firstOrNull { it.key.name.startsWith("AWT-EventQueue") }
+                println("[fps] stall ${stalledMs}ms on ${ui?.key?.name}")
+                ui?.value?.take(25)?.forEach { println("    at $it") }
+            }
+        }
+    }.apply { isDaemon = true; name = "fps-stall-watchdog" }
+}
+
+private fun totalGcMillis(): Long =
+    java.lang.management.ManagementFactory.getGarbageCollectorMXBeans()
+        .sumOf { it.collectionTime.coerceAtLeast(0L) }
+
+private fun usedHeapMb(): Long {
+    val rt = Runtime.getRuntime()
+    return (rt.totalMemory() - rt.freeMemory()) / (1024 * 1024)
+}
+
 @Composable
 fun FpsOverlay(modifier: Modifier = Modifier) {
     if (!fpsOverlayEnabled) return
@@ -33,9 +63,13 @@ fun FpsOverlay(modifier: Modifier = Modifier) {
     var windowStart by remember { mutableStateOf(0L) }
     var worstMs by remember { mutableStateOf(0f) }
     var lastFrame by remember { mutableStateOf(0L) }
+    var gcMs by remember { mutableStateOf(0L) }
+    var gcAtWindowStart by remember { mutableStateOf(-1L) }
     LaunchedEffect(Unit) {
+        runCatching { stallWatchdog.start() }
         while (true) {
             withFrameNanos { t ->
+                lastTickMs = System.currentTimeMillis()
                 if (lastFrame != 0L) {
                     val dtMs = (t - lastFrame) / 1_000_000f
                     if (dtMs > worstMs) worstMs = dtMs
@@ -43,9 +77,19 @@ fun FpsOverlay(modifier: Modifier = Modifier) {
                 lastFrame = t
                 frames++
                 if (windowStart == 0L) windowStart = t
+                if (gcAtWindowStart < 0L) gcAtWindowStart = totalGcMillis()
                 val elapsed = t - windowStart
                 if (elapsed >= 500_000_000L) {
                     fps = (frames * 1_000_000_000.0 / elapsed).roundToInt()
+                    val gcNow = totalGcMillis()
+                    gcMs = gcNow - gcAtWindowStart
+                    if (worstMs > 40f) {
+                        println(
+                            "[fps] dip ${fps}fps worst=${worstMs.roundToInt()}ms gc=${gcMs}ms " +
+                                "heap=${usedHeapMb()}MB",
+                        )
+                    }
+                    gcAtWindowStart = gcNow
                     frames = 0
                     windowStart = t
                     worstMs = 0f
@@ -54,7 +98,7 @@ fun FpsOverlay(modifier: Modifier = Modifier) {
         }
     }
     Text(
-        text = "$fps fps · ${worstMs.roundToInt()}ms",
+        text = "$fps fps · ${worstMs.roundToInt()}ms · gc ${gcMs}ms",
         color = Color(0xFF00E5FF),
         fontFamily = FontFamily.Monospace,
         fontWeight = FontWeight.Bold,
