@@ -21,10 +21,31 @@ data class SyntaxPalette(
     val annotation: Color,
     val type: Color,
     val identifier: Color,
+    val function: Color = identifier,
+    val property: Color = identifier,
+    val parameter: Color = identifier,
+    val template: Color = identifier,
 )
 ```
 
 `PUNCT` 슬롯은 없다. 괄호·세미콜론·콤마는 너무 자주 나와 색을 입히면 본문이 시끄럽다 → `colorFor` 가 `null` 을 돌려주고 본문색 그대로 둔다
+
+---
+
+## `SyntaxPreset`
+
+`shared-core/.../SyntaxPreset.kt` 가 팔레트를 얼마나 쓸지 정한다. 팔레트는 역할마다 색을 항상 들고 있고, 프리셋이 그중 몇 개를 쓸지와 강조를 얹을지를 고른다
+
+| 프리셋 | 역할 색 | 강조 |
+| --- | --- | --- |
+| `CALM` | 안 씀 — 호출·멤버가 일반 식별자로 보인다 | 없음 |
+| `BALANCED` | 안 씀 | 호출 기울임 · 멤버 밑줄 · 파라미터 옅게 |
+| `VIVID` | 씀 | 없음 |
+| `EXPRESSIVE` | 씀 | 있음 |
+
+`SyntaxRoles.refine(text, tokens)` 가 렉서가 끝난 뒤 식별자·문자열 토큰을 `FUNCTION`·`PROPERTY`·`PARAMETER`·`TEMPLATE` 로 승격시킨다. 손으로 쓴 렉서든 tree-sitter 든 역할 판별은 이 한 곳에서 나온다
+
+설정 → Editor → Syntax colors 로 고르고 `EditorOptions.syntaxPreset` 에 저장된다
 
 ---
 

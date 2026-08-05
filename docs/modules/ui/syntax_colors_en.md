@@ -21,10 +21,31 @@ data class SyntaxPalette(
     val annotation: Color,
     val type: Color,
     val identifier: Color,
+    val function: Color = identifier,
+    val property: Color = identifier,
+    val parameter: Color = identifier,
+    val template: Color = identifier,
 )
 ```
 
 There is no `PUNCT` slot. Parens, semicolons, and commas are too frequent — coloring them adds noise, so `colorFor` returns `null` and leaves them in the body color.
+
+---
+
+## `SyntaxPreset`
+
+`shared-core/.../SyntaxPreset.kt` decides how much of the palette the editor actually uses. The palette always carries a color per role; the preset picks how many of them show up and whether emphasis is layered on top.
+
+| Preset | Role colors | Emphasis |
+| --- | --- | --- |
+| `CALM` | no — calls and members read as plain identifiers | no |
+| `BALANCED` | no | italic calls, underlined members, dimmer parameters |
+| `VIVID` | yes | no |
+| `EXPRESSIVE` | yes | yes |
+
+`SyntaxRoles.refine(text, tokens)` upgrades identifier and string tokens into `FUNCTION`, `PROPERTY`, `PARAMETER` and `TEMPLATE` after any lexer runs, so both the hand written and tree-sitter backends get roles from one place.
+
+Settings → Editor → Syntax colors selects the preset; `EditorOptions.syntaxPreset` persists it.
 
 ---
 
