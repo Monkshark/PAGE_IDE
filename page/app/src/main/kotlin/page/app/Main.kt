@@ -713,6 +713,7 @@ private fun androidx.compose.ui.window.ApplicationScope.AppContent() {
                 windowState.size = androidx.compose.ui.unit.DpSize(720.dp, 560.dp)
                 windowState.position = androidx.compose.ui.window.WindowPosition.Aligned(Alignment.Center)
             } else {
+                page.app.ui.applyWorkAreaMaximizedBounds(window)
                 windowState.placement = androidx.compose.ui.window.WindowPlacement.Maximized
             }
         }
@@ -721,14 +722,20 @@ private fun androidx.compose.ui.window.ApplicationScope.AppContent() {
             isMaximized = windowState.placement == androidx.compose.ui.window.WindowPlacement.Maximized,
             onMinimize = { windowState.isMinimized = true },
             onToggleMaximize = {
-                windowState.placement =
-                    if (windowState.placement == androidx.compose.ui.window.WindowPlacement.Maximized)
-                        androidx.compose.ui.window.WindowPlacement.Floating
-                    else androidx.compose.ui.window.WindowPlacement.Maximized
+                if (windowState.placement == androidx.compose.ui.window.WindowPlacement.Maximized) {
+                    windowState.placement = androidx.compose.ui.window.WindowPlacement.Floating
+                } else {
+                    page.app.ui.applyWorkAreaMaximizedBounds(window)
+                    windowState.placement = androidx.compose.ui.window.WindowPlacement.Maximized
+                }
             },
             onClose = requestExit,
         )
-        CompositionLocalProvider(page.app.ui.LocalWindowChrome provides windowChrome) {
+        CompositionLocalProvider(
+            page.app.ui.LocalWindowChrome provides windowChrome,
+            androidx.compose.ui.platform.LocalClipboardManager provides
+                page.app.ui.SafeClipboardManager(androidx.compose.ui.platform.LocalClipboardManager.current),
+        ) {
         GlassTheme(palette = palette) {
             Surface(
                 modifier = Modifier.fillMaxSize(),
