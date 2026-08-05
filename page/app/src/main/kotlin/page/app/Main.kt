@@ -616,6 +616,7 @@ private fun androidx.compose.ui.window.ApplicationScope.AppContent() {
         title = windowTitle(focused().book.active?.path),
         icon = painterResource("logo_app_icon.svg"),
         undecorated = true,
+        resizable = false,
         onPreviewKeyEvent = handleShortcut,
         onKeyEvent = handleShortcut,
     ) {
