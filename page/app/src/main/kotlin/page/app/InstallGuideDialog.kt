@@ -620,6 +620,7 @@ internal fun InstallGuideDialog(
                                         label = "Minimize",
                                         primary = false,
                                         enabled = true,
+                                        width = 124.dp,
                                         onClick = onMinimize,
                                     )
                                     Spacer(Modifier.width(8.dp))
@@ -628,6 +629,7 @@ internal fun InstallGuideDialog(
                                     label = "Cancel",
                                     primary = false,
                                     enabled = true,
+                                    width = 124.dp,
                                     onClick = { showCancelConfirm = true },
                                 )
                                 Spacer(Modifier.width(8.dp))
@@ -637,6 +639,7 @@ internal fun InstallGuideDialog(
                                         label = "Use system",
                                         primary = false,
                                         enabled = true,
+                                        width = 124.dp,
                                         onClick = { onInstalled(); onDismiss() },
                                     )
                                     Spacer(Modifier.width(8.dp))
@@ -645,6 +648,7 @@ internal fun InstallGuideDialog(
                                     label = "Cancel",
                                     primary = false,
                                     enabled = true,
+                                    width = 124.dp,
                                     onClick = onDismiss,
                                 )
                                 Spacer(Modifier.width(8.dp))
@@ -654,6 +658,7 @@ internal fun InstallGuideDialog(
                                 primary = true,
                                 enabled = enableInstall,
                                 progress = installProgressFraction(installProgress),
+                                width = 124.dp,
                                 onClick = action,
                             )
                         } else {
