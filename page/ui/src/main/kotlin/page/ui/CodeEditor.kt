@@ -140,6 +140,7 @@ fun CodeEditor(
     manageHistory: Boolean = true,
     viewportHeightProvider: (() -> Float)? = null,
     scrollOffsetProvider: (() -> Float)? = null,
+    scopeGuides: ScopeGuides = ScopeGuides.None,
     focusRequestVersion: Int = 0,
     caretBringIntoViewEnabled: Boolean = true,
     contextMenuActions: List<EditorContextAction> = emptyList(),
@@ -580,6 +581,20 @@ fun CodeEditor(
                         )
                     }
                 }
+            }
+            if (scopeGuides.enabled) {
+                drawScopeGuides(
+                    guides = scopeGuides,
+                    layout = layout,
+                    text = displayText,
+                    caretLine = layout.getLineForOffset(
+                        latestMapping.originalToTransformed(
+                            latestValue.selection.start.coerceIn(0, latestValue.text.length),
+                        ),
+                    ),
+                    firstLine = visibleFirstLine,
+                    lastLine = visibleLastLine,
+                )
             }
             layout.draw(this, visibleFirstLine, visibleLastLine)
             if (ctrlHoverLinkRange != null) {
