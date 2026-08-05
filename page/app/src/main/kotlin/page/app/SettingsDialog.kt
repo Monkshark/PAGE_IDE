@@ -107,11 +107,12 @@ internal fun SettingsPanel(
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var draft by remember(settings) { mutableStateOf(settings) }
+    val opened = remember { settings }
     var selected by remember { mutableStateOf(SettingsCategory.AUTO_SAVE) }
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(Unit) { runCatching { focusRequester.requestFocus() } }
     val colors = Glass.colors
+    val revert = { if (settings != opened) onApply(opened) }
 
     Column(
         modifier = modifier
@@ -123,8 +124,7 @@ internal fun SettingsPanel(
             .onPreviewKeyEvent { event ->
                 if (event.type != KeyEventType.KeyDown) false
                 else when (event.key) {
-                    Key.Escape -> { onClose(); true }
-                    Key.Enter, Key.NumPadEnter -> { onApply(draft); onClose(); true }
+                    Key.Escape, Key.Enter, Key.NumPadEnter -> { onClose(); true }
                     else -> false
                 }
             }
@@ -152,8 +152,8 @@ internal fun SettingsPanel(
             Box(modifier = Modifier.width(1.dp).fillMaxHeight().background(colors.separator))
             SettingsDetailPane(
                 category = selected,
-                draft = draft,
-                onChange = { draft = it },
+                draft = settings,
+                onChange = onApply,
                 modifier = Modifier.weight(1f).fillMaxHeight(),
             )
         }
@@ -163,11 +163,18 @@ internal fun SettingsPanel(
             horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            GlassButton(label = "Cancel", primary = false, onClick = onClose)
-            Spacer(Modifier.width(8.dp))
-            GlassButton(label = "Apply", primary = false, onClick = { onApply(draft) })
-            Spacer(Modifier.width(8.dp))
-            GlassButton(label = "Apply & Close", primary = true, onClick = { onApply(draft); onClose() })
+            if (settings != opened) {
+                Text(
+                    text = "Changes apply as you edit",
+                    color = colors.muted,
+                    fontSize = Glass.type.label,
+                    style = TextStyle(lineHeight = Glass.type.label, lineHeightStyle = CenteredLineHeight),
+                )
+                Spacer(Modifier.width(12.dp))
+                GlassButton(label = "Revert", primary = false, onClick = { revert() })
+                Spacer(Modifier.width(8.dp))
+            }
+            GlassButton(label = "Done", primary = true, onClick = onClose)
         }
     }
 }
@@ -677,11 +684,19 @@ private fun NumberField(label: String, value: Int, min: Int, max: Int, onChange:
 
 @Composable
 private fun PathField(label: String, value: String, onChange: (String) -> Unit) {
+    var text by remember(value) { mutableStateOf(value) }
+    fun commit() {
+        val trimmed = text.trim()
+        text = trimmed
+        if (trimmed != value) onChange(trimmed)
+    }
     FieldRow(label = label, fieldWidth = null) {
         BasicTextField(
-            value = value,
-            onValueChange = onChange,
+            value = text,
+            onValueChange = { text = it },
             singleLine = true,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = { commit() }),
             cursorBrush = SolidColor(Glass.colors.primary),
             textStyle = LocalTextStyle.current.copy(
                 fontSize = Glass.type.ui,
@@ -689,6 +704,7 @@ private fun PathField(label: String, value: String, onChange: (String) -> Unit) 
                 lineHeight = Glass.type.ui,
                 lineHeightStyle = CenteredLineHeight,
             ),
+            modifier = Modifier.onFocusChanged { if (!it.isFocused) commit() },
         )
     }
 }

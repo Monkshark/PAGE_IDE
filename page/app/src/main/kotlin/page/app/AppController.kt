@@ -5,6 +5,8 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import page.app.domain.FileOperationsInteractor
@@ -356,6 +358,7 @@ internal class AppController(
             editorWorkspace.secondaryPane.book.tabs.any(isUnsavedText)
     }
     val requestExit: () -> Unit = {
+        flushSettings()
         when {
             !anyDirty() -> exitApplication()
             appState.pageSettings.autoSave.onClose -> {
@@ -628,15 +631,25 @@ internal class AppController(
         onToggle = { dispatch(IdeEvent.Chrome.ToggleSettings) },
     )
 
+    private var settingsSaveJob: Job? = null
+
     private fun persistSettings(updated: PageSettings) {
         appState.pageSettings = updated
-        AppSettings.saveAutoSave(updated.autoSave)
-        AppSettings.saveEditor(updated.editor)
-        AppSettings.saveLsp(updated.lsp)
-        AppSettings.saveAutoInput(updated.autoInput)
-        AppSettings.saveUi(updated.ui)
-        AppSettings.saveRun(updated.run)
         appState.palette = updated.ui.palette
+        settingsSaveJob?.cancel()
+        settingsSaveJob = appScope.launch {
+            delay(SETTINGS_SAVE_DEBOUNCE_MS)
+            withContext(Dispatchers.IO) { writeSettings(updated) }
+        }
+    }
+
+    private fun writeSettings(settings: PageSettings) {
+        AppSettings.saveAutoSave(settings.autoSave)
+        AppSettings.saveEditor(settings.editor)
+        AppSettings.saveLsp(settings.lsp)
+        AppSettings.saveAutoInput(settings.autoInput)
+        AppSettings.saveUi(settings.ui)
+        AppSettings.saveRun(settings.run)
     }
 
     fun onActiveTabChanged(side: PaneSide) {
@@ -690,5 +703,16 @@ internal class AppController(
             post { applyRename(edit) }
             true
         }
+    }
+
+    private fun flushSettings() {
+        if (settingsSaveJob?.isActive != true) return
+        settingsSaveJob?.cancel()
+        settingsSaveJob = null
+        writeSettings(appState.pageSettings)
+    }
+
+    private companion object {
+        const val SETTINGS_SAVE_DEBOUNCE_MS = 400L
     }
 }
