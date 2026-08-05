@@ -46,4 +46,47 @@ class ScopeGuidesTest {
         val g = guides(rainbow = true).copy(depthColors = emptyList())
         assertEquals(Color.Gray, g.colorAt(0, active = false))
     }
+
+    private val source = listOf(
+        "fun outer() {",
+        "    val a = compute(",
+        "        first,",
+        "        second,",
+        "    )",
+        "    if (a) {",
+        "        run()",
+        "        run()",
+        "    }",
+        "}",
+    ).joinToString("\n")
+
+    private fun pairsOf(text: String) = page.shared.syntax.BracketScan.pairs(text, emptyList())
+
+    @Test
+    fun railSitsAtTheIndentOfTheLineThatOpensTheBlock() {
+        val spans = scopeSpansFor(source, pairsOf(source))
+        val ifSpan = spans.single { it.fromLine == 6 }
+        assertEquals(4, ifSpan.column)
+        assertEquals(7, ifSpan.toLine)
+    }
+
+    @Test
+    fun wrappedArgumentsAlignWithTheirOwnLine() {
+        val spans = scopeSpansFor(source, pairsOf(source))
+        val callSpan = spans.single { it.fromLine == 2 }
+        assertEquals(4, callSpan.column)
+        assertEquals(3, callSpan.toLine)
+    }
+
+    @Test
+    fun topLevelBlockGetsNoRail() {
+        val spans = scopeSpansFor(source, pairsOf(source))
+        assertTrue(spans.none { it.column == 0 })
+    }
+
+    @Test
+    fun bracketsClosingWithinTwoLinesGetNoRail() {
+        val text = "fun a() {\n    b()\n}"
+        assertTrue(scopeSpansFor(text, pairsOf(text)).isEmpty())
+    }
 }

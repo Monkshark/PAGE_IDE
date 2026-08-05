@@ -36,19 +36,44 @@ data class ScopeGuides(
 internal data class ScopeSpan(val column: Int, val fromLine: Int, val toLine: Int, val depth: Int)
 
 internal fun scopeSpansFor(
-    layout: LineLayout,
+    text: CharSequence,
     pairs: List<page.shared.syntax.BracketPair>,
 ): List<ScopeSpan> {
-    if (pairs.isEmpty()) return emptyList()
-    val spans = ArrayList<ScopeSpan>(pairs.size)
-    for (pair in pairs) {
-        val openLine = layout.getLineForOffset(pair.open)
-        val closeLine = layout.getLineForOffset(pair.close)
-        if (closeLine - openLine < 2) continue
-        val column = pair.open - layout.getLineStart(openLine)
-        spans += ScopeSpan(column, openLine + 1, closeLine - 1, pair.depth)
+    if (pairs.isEmpty() || text.isEmpty()) return emptyList()
+    val lineStarts = ArrayList<Int>()
+    lineStarts.add(0)
+    for (i in text.indices) if (text[i] == '\n') lineStarts.add(i + 1)
+
+    fun lineOf(offset: Int): Int {
+        var lo = 0
+        var hi = lineStarts.size - 1
+        while (lo < hi) {
+            val mid = (lo + hi + 1) ushr 1
+            if (lineStarts[mid] <= offset) lo = mid else hi = mid - 1
+        }
+        return lo
     }
-    return spans
+
+    val spans = LinkedHashMap<Triple<Int, Int, Int>, ScopeSpan>()
+    for (pair in pairs) {
+        val openLine = lineOf(pair.open)
+        val closeLine = lineOf(pair.close)
+        if (closeLine - openLine < 2) continue
+        var column = 0
+        var i = lineStarts[openLine]
+        while (i < text.length && (text[i] == ' ' || text[i] == '\t')) {
+            column++
+            i++
+        }
+        if (column == 0) continue
+        if (i >= text.length || text[i] == '\n') continue
+        val key = Triple(column, openLine + 1, closeLine - 1)
+        val existing = spans[key]
+        if (existing == null || pair.depth < existing.depth) {
+            spans[key] = ScopeSpan(column, openLine + 1, closeLine - 1, pair.depth)
+        }
+    }
+    return spans.values.toList()
 }
 
 internal fun DrawScope.drawScopeGuides(
@@ -70,7 +95,7 @@ internal fun DrawScope.drawScopeGuides(
             layout.getLineForOffset(activeOpen) + 1 == span.fromLine &&
             activePair.depth == span.depth
         if (guides.onlyCurrentBlock && !isActive) continue
-        val x = span.column * charWidth + charWidth / 2f
+        val x = span.column * charWidth
         val top = layout.getLineTop(span.fromLine.coerceIn(0, layout.lineCount - 1))
         val bottom = layout.getLineBottom(span.toLine.coerceIn(0, layout.lineCount - 1))
         drawLine(
