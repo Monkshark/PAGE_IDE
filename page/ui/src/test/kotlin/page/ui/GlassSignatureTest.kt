@@ -59,6 +59,45 @@ class GlassSignatureTest {
         }
     }
 
+    private fun assertCeiling(fg: Color, bg: Color, ceiling: Double, label: String) {
+        val ratio = contrast(fg, bg)
+        assertTrue(ratio <= ceiling, "$label 대비 ${"%.2f".format(ratio)} > $ceiling")
+    }
+
+    @Test
+    fun tunedPalettesStayUnderContrastCeiling() {
+        val tuned = listOf(
+            GlassPalette.Signature,
+            GlassPalette.SignatureLight,
+            GlassPalette.Cool,
+            GlassPalette.Frost,
+        )
+        for (palette in tuned) {
+            val c = glassTokensFor(palette).color
+            assertCeiling(c.text, c.background, 10.5, "$palette text")
+            assertCeiling(c.syntax.identifier, c.background, 10.5, "$palette identifier")
+            for ((name, token) in listOf(
+                "keyword" to c.syntax.keyword,
+                "string" to c.syntax.string,
+                "number" to c.syntax.number,
+                "type" to c.syntax.type,
+            )) {
+                assertCeiling(token, c.background, 8.5, "$palette $name")
+            }
+        }
+    }
+
+    @Test
+    fun highContrastPalettesKeepTheirBite() {
+        for (palette in listOf(GlassPalette.Midnight, GlassPalette.Forest, GlassPalette.Warm)) {
+            val c = glassTokensFor(palette).color
+            assertTrue(
+                contrast(c.text, c.background) > 12.0,
+                "$palette 은 고대비 선택지로 남아야 함",
+            )
+        }
+    }
+
     @Test
     fun signatureSyntaxMeetsAAOnBase() {
         val c = glassTokensFor(GlassPalette.Signature).color
