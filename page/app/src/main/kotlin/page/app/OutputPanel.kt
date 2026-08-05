@@ -195,16 +195,16 @@ private fun OutputHeader(
             color = Glass.colors.text,
         )
         Spacer(Modifier.width(12.dp))
-        val label = state.commandLabel
-        if (label != null) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelSmall,
-                fontFamily = FontFamily.Monospace,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        Spacer(Modifier.weight(1f))
+        Text(
+            text = state.commandLabel.orEmpty(),
+            style = MaterialTheme.typography.labelSmall,
+            fontFamily = FontFamily.Monospace,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
+        )
+        Spacer(Modifier.width(8.dp))
         StatusChip(state = state)
         Spacer(Modifier.width(8.dp))
         HeaderAction(
