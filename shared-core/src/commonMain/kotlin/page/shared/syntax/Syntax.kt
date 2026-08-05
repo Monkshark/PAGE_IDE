@@ -10,6 +10,10 @@ enum class TokenKind {
     ANNOTATION,
     TYPE,
     IDENTIFIER,
+    FUNCTION,
+    PROPERTY,
+    PARAMETER,
+    TEMPLATE,
     PUNCT,
 }
 
