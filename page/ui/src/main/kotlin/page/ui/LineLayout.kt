@@ -64,14 +64,33 @@ internal class LineMetrics private constructor(
 
 internal class LineLayout(
     val text: AnnotatedString,
-    private val lines: List<TextLayoutResult>,
     private val metrics: LineMetrics,
+    private val measurer: TextMeasurer,
+    private val style: TextStyle,
+    private val cache: MutableMap<AnnotatedString, TextLayoutResult>,
     val lineHeightPx: Float,
-    private val maxWidthPx: Int,
+    private val estimatedWidthPx: Int,
 ) {
+    private var measuredWidthPx: Int = 0
+
+    private val lines = object {
+        operator fun get(line: Int): TextLayoutResult {
+            val slice = text.subSequence(metrics.lineStart(line), metrics.lineEnd(line))
+            val measured = cache.getOrPut(slice) {
+                measurer.measure(text = slice, style = style, softWrap = false)
+            }
+            if (measured.size.width > measuredWidthPx) measuredWidthPx = measured.size.width
+            return measured
+        }
+    }
+
     val lineCount: Int get() = metrics.lineCount
 
-    val size: IntSize get() = IntSize(maxWidthPx, ceil(lineHeightPx * lineCount).toInt())
+    val size: IntSize
+        get() = IntSize(
+            maxOf(estimatedWidthPx, measuredWidthPx),
+            ceil(lineHeightPx * lineCount).toInt(),
+        )
 
     fun getLineForOffset(offset: Int): Int = metrics.lineForOffset(offset)
 
@@ -144,22 +163,45 @@ internal class LineLayoutCache(private val measurer: TextMeasurer) {
             cache = HashMap()
             lastStyle = style
         }
+        if (cache.size > MAX_CACHED_LINES) cache = HashMap()
         val metrics = LineMetrics.of(text)
-        val next = HashMap<AnnotatedString, TextLayoutResult>(metrics.lineCount * 2)
-        val lines = ArrayList<TextLayoutResult>(metrics.lineCount)
-        var maxWidth = 0
+        val probe = measurer.measure(AnnotatedString("0"), style = style, softWrap = false)
+        val advance = probe.size.width.toFloat()
+        val estimatedWidth = ceil(advance * widestLineUnits(text, metrics)).toInt()
+        return LineLayout(
+            text = text,
+            metrics = metrics,
+            measurer = measurer,
+            style = style,
+            cache = cache,
+            lineHeightPx = probe.getLineBottom(0),
+            estimatedWidthPx = estimatedWidth,
+        )
+    }
+
+    private fun widestLineUnits(text: CharSequence, metrics: LineMetrics): Int {
+        var widest = 0
         for (line in 0 until metrics.lineCount) {
-            val slice = text.subSequence(metrics.lineStart(line), metrics.lineEnd(line))
-            val measured = cache[slice]
-                ?: next[slice]
-                ?: measurer.measure(text = slice, style = style, softWrap = false)
-            next[slice] = measured
-            lines.add(measured)
-            if (measured.size.width > maxWidth) maxWidth = measured.size.width
+            val start = metrics.lineStart(line)
+            val end = metrics.lineEnd(line)
+            var units = 0
+            for (i in start until end) units += if (isWideChar(text[i])) 2 else 1
+            if (units > widest) widest = units
         }
-        cache = next
-        val lineHeight = lines.firstOrNull()?.getLineBottom(0)
-            ?: measurer.measure(AnnotatedString(""), style = style, softWrap = false).getLineBottom(0)
-        return LineLayout(text, lines, metrics, lineHeight, maxWidth)
+        return widest
+    }
+
+    private fun isWideChar(c: Char): Boolean = c.code >= 0x1100 && (
+        c.code <= 0x115F ||
+            c.code in 0x2E80..0xA4CF ||
+            c.code in 0xAC00..0xD7A3 ||
+            c.code in 0xF900..0xFAFF ||
+            c.code in 0xFE30..0xFE6F ||
+            c.code in 0xFF00..0xFF60 ||
+            c.code in 0xFFE0..0xFFE6
+        )
+
+    private companion object {
+        const val MAX_CACHED_LINES = 20_000
     }
 }
