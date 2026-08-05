@@ -14,7 +14,7 @@ Glass 는 PAGE 의 미감 기둥이다. "보기에 즐거운가, 매일 열고 �
 
 <div class="glassdoc">
 <style>
-.glassdoc{--g-bg:#0A0D14;--g-l1:#0E121A;--g-surf:#131823;--g-raised:#1F2735;--g-outline:#232B3A;--g-sep:rgba(255,255,255,.06);--g-edge:rgba(255,255,255,.08);--g-pri:#7D8EDB;--g-soft:rgba(125,142,219,.14);--g-onpri:#0A0D14;--g-acc:#67B9BA;--g-text:#E7EAF3;--g-muted:#8A92A6;--g-faint:#4A5366;--g-err:#F2727F;--g-warn:#E7B45C;--g-ok:#5BD6A0;color:var(--g-text);}
+.glassdoc{--g-bg:#191C22;--g-l1:#1C2028;--g-surf:#212630;--g-raised:#2C3441;--g-outline:#303846;--g-sep:rgba(255,255,255,.06);--g-edge:rgba(255,255,255,.08);--g-pri:#7D8EDB;--g-soft:rgba(125,142,219,.14);--g-onpri:#191C22;--g-acc:#67B9BA;--g-text:#C4C6CE;--g-muted:#8A92A6;--g-faint:#5A6273;--g-err:#F2727F;--g-warn:#E7B45C;--g-ok:#5BD6A0;color:var(--g-text);}
 .glassdoc .gm{font-family:ui-monospace,"JetBrains Mono","Cascadia Code",Consolas,monospace;font-variant-numeric:tabular-nums;}
 .glassdoc .g-h{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--g-acc);margin:26px 0 13px;font-family:ui-monospace,Consolas,monospace;}
 .glassdoc .g-themes{display:grid;grid-template-columns:repeat(auto-fill,minmax(188px,1fr));gap:12px;}
@@ -69,7 +69,7 @@ Glass 는 PAGE 의 미감 기둥이다. "보기에 즐거운가, 매일 열고 �
 .glassdoc .g-lr .ic{width:14px;height:14px;border-radius:3px;background:var(--g-acc);flex:none;}
 .glassdoc .g-lr .su{margin-left:auto;color:var(--g-faint);font-size:12px;}
 .glassdoc .g-code{background:var(--g-surf);border:1px solid var(--g-outline);border-radius:10px;padding:15px 17px;font-size:13px;line-height:1.7;overflow-x:auto;white-space:pre;}
-.glassdoc .g-code .kw{color:#9DA8FF;}.glassdoc .g-code .st{color:#4FD3C7;}.glassdoc .g-code .nu{color:#C9B6FF;}.glassdoc .g-code .co{color:#828DA8;}.glassdoc .g-code .ty{color:#7FD6E0;}.glassdoc .g-code .id{color:#C8D0E6;}
+.glassdoc .g-code .kw{color:#9DA8FF;}.glassdoc .g-code .st{color:#49C4B9;}.glassdoc .g-code .nu{color:#B9A7EB;}.glassdoc .g-code .co{color:#808BA5;}.glassdoc .g-code .ty{color:#71BEC7;}.glassdoc .g-code .id{color:#BEC6DB;}
 .glassdoc .g-types{margin:0;}
 .glassdoc .g-trow{display:flex;align-items:baseline;gap:18px;padding:13px 0;border-bottom:1px solid var(--g-sep);}
 .glassdoc .g-trow:last-child{border-bottom:0;}
@@ -79,10 +79,10 @@ Glass 는 PAGE 의 미감 기둥이다. "보기에 즐거운가, 매일 열고 �
 </style>
 
 <div class="g-themes">
-<div class="g-th def"><div class="g-sw"><i style="background:#0A0D14"></i><i style="background:#131823"></i><i style="background:#7D8EDB"></i><i style="background:#67B9BA"></i></div><div class="g-meta"><span class="g-nm">Signature</span><span class="g-tag gm">default</span></div><div class="g-hx gm"><span><b style="background:#0A0D14"></b>#0A0D14</span><span><b style="background:#7D8EDB"></b>#7D8EDB</span></div></div>
+<div class="g-th def"><div class="g-sw"><i style="background:#191C22"></i><i style="background:#212630"></i><i style="background:#7D8EDB"></i><i style="background:#67B9BA"></i></div><div class="g-meta"><span class="g-nm">Signature</span><span class="g-tag gm">default</span></div><div class="g-hx gm"><span><b style="background:#191C22"></b>#191C22</span><span><b style="background:#7D8EDB"></b>#7D8EDB</span></div></div>
 <div class="g-th"><div class="g-sw"><i style="background:#F4F6FB"></i><i style="background:#F0F3F9"></i><i style="background:#5566C0"></i><i style="background:#2F948A"></i></div><div class="g-meta"><span class="g-nm">Signature Light</span><span class="g-tag gm">light</span></div><div class="g-hx gm"><span><b style="background:#F4F6FB"></b>#F4F6FB</span><span><b style="background:#5566C0"></b>#5566C0</span></div></div>
 <div class="g-th"><div class="g-sw"><i style="background:#1E1F22"></i><i style="background:#26282B"></i><i style="background:#6897BB"></i><i style="background:#6A8759"></i></div><div class="g-meta"><span class="g-nm">Graphite</span><span class="g-tag gm">dark</span></div><div class="g-hx gm"><span><b style="background:#1E1F22"></b>#1E1F22</span><span><b style="background:#6897BB"></b>#6897BB</span></div></div>
-<div class="g-th"><div class="g-sw"><i style="background:#0E1418"></i><i style="background:#161D24"></i><i style="background:#6AA9FF"></i><i style="background:#79D4B8"></i></div><div class="g-meta"><span class="g-nm">Cool</span><span class="g-tag gm">dark</span></div><div class="g-hx gm"><span><b style="background:#0E1418"></b>#0E1418</span><span><b style="background:#6AA9FF"></b>#6AA9FF</span></div></div>
+<div class="g-th"><div class="g-sw"><i style="background:#161C1F"></i><i style="background:#1D242B"></i><i style="background:#6AA9FF"></i><i style="background:#79D4B8"></i></div><div class="g-meta"><span class="g-nm">Cool</span><span class="g-tag gm">dark</span></div><div class="g-hx gm"><span><b style="background:#161C1F"></b>#161C1F</span><span><b style="background:#6AA9FF"></b>#6AA9FF</span></div></div>
 <div class="g-th"><div class="g-sw"><i style="background:#1A1612"></i><i style="background:#221C16"></i><i style="background:#E8C691"></i><i style="background:#C99A6B"></i></div><div class="g-meta"><span class="g-nm">Warm</span><span class="g-tag gm">dark</span></div><div class="g-hx gm"><span><b style="background:#1A1612"></b>#1A1612</span><span><b style="background:#E8C691"></b>#E8C691</span></div></div>
 <div class="g-th"><div class="g-sw"><i style="background:#F2F4F8"></i><i style="background:#FFFFFF"></i><i style="background:#2D5BFF"></i><i style="background:#00A88E"></i></div><div class="g-meta"><span class="g-nm">Frost</span><span class="g-tag gm">light</span></div><div class="g-hx gm"><span><b style="background:#F2F4F8"></b>#F2F4F8</span><span><b style="background:#2D5BFF"></b>#2D5BFF</span></div></div>
 <div class="g-th"><div class="g-sw"><i style="background:#101714"></i><i style="background:#17211D"></i><i style="background:#7CC4A1"></i><i style="background:#C8D58A"></i></div><div class="g-meta"><span class="g-nm">Forest</span><span class="g-tag gm">dark</span></div><div class="g-hx gm"><span><b style="background:#101714"></b>#101714</span><span><b style="background:#7CC4A1"></b>#7CC4A1</span></div></div>
@@ -92,16 +92,16 @@ Glass 는 PAGE 의 미감 기둥이다. "보기에 즐거운가, 매일 열고 �
 
 <div class="g-h">Color roles · Signature</div>
 <div class="g-roles">
-<div class="g-role"><i style="background:#0A0D14"></i><div><div class="g-rn">background</div><div class="g-rh gm">#0A0D14</div></div></div>
-<div class="g-role"><i style="background:#0E121A"></i><div><div class="g-rn">surface L1</div><div class="g-rh gm">#0E121A</div></div></div>
-<div class="g-role"><i style="background:#131823"></i><div><div class="g-rn">surface</div><div class="g-rh gm">#131823</div></div></div>
-<div class="g-role"><i style="background:#1F2735"></i><div><div class="g-rn">raised</div><div class="g-rh gm">#1F2735</div></div></div>
-<div class="g-role"><i style="background:#232B3A"></i><div><div class="g-rn">outline</div><div class="g-rh gm">#232B3A</div></div></div>
+<div class="g-role"><i style="background:#191C22"></i><div><div class="g-rn">background</div><div class="g-rh gm">#191C22</div></div></div>
+<div class="g-role"><i style="background:#1C2028"></i><div><div class="g-rn">surface L1</div><div class="g-rh gm">#1C2028</div></div></div>
+<div class="g-role"><i style="background:#212630"></i><div><div class="g-rn">surface</div><div class="g-rh gm">#212630</div></div></div>
+<div class="g-role"><i style="background:#2C3441"></i><div><div class="g-rn">raised</div><div class="g-rh gm">#2C3441</div></div></div>
+<div class="g-role"><i style="background:#303846"></i><div><div class="g-rn">outline</div><div class="g-rh gm">#303846</div></div></div>
 <div class="g-role"><i style="background:#7D8EDB"></i><div><div class="g-rn">primary</div><div class="g-rh gm">#7D8EDB</div></div></div>
 <div class="g-role"><i style="background:#67B9BA"></i><div><div class="g-rn">accent</div><div class="g-rh gm">#67B9BA</div></div></div>
-<div class="g-role"><i style="background:#E7EAF3"></i><div><div class="g-rn">text</div><div class="g-rh gm">#E7EAF3</div></div></div>
+<div class="g-role"><i style="background:#C4C6CE"></i><div><div class="g-rn">text</div><div class="g-rh gm">#C4C6CE</div></div></div>
 <div class="g-role"><i style="background:#8A92A6"></i><div><div class="g-rn">muted</div><div class="g-rh gm">#8A92A6</div></div></div>
-<div class="g-role"><i style="background:#4A5366"></i><div><div class="g-rn">faint</div><div class="g-rh gm">#4A5366</div></div></div>
+<div class="g-role"><i style="background:#5A6273"></i><div><div class="g-rn">faint</div><div class="g-rh gm">#5A6273</div></div></div>
 <div class="g-role"><i style="background:#F2727F"></i><div><div class="g-rn">error</div><div class="g-rh gm">#F2727F</div></div></div>
 <div class="g-role"><i style="background:#E7B45C"></i><div><div class="g-rn">warn</div><div class="g-rh gm">#E7B45C</div></div></div>
 <div class="g-role"><i style="background:#5BD6A0"></i><div><div class="g-rn">success</div><div class="g-rh gm">#5BD6A0</div></div></div>

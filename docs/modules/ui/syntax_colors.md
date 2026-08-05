@@ -32,8 +32,8 @@ data class SyntaxPalette(
 
 <div class="glassdoc">
 <style>
-.glassdoc .synx{border:1px solid #232B3A;border-radius:12px;overflow:hidden;background:#131823;}
-.glassdoc .synx .r{display:flex;align-items:center;gap:12px;padding:11px 15px;border-bottom:1px solid rgba(255,255,255,.06);font-size:13px;color:#E7EAF3;}
+.glassdoc .synx{border:1px solid #303846;border-radius:12px;overflow:hidden;background:#212630;}
+.glassdoc .synx .r{display:flex;align-items:center;gap:12px;padding:11px 15px;border-bottom:1px solid rgba(255,255,255,.06);font-size:13px;color:#C4C6CE;}
 .glassdoc .synx .r:last-child{border-bottom:0;}
 .glassdoc .synx i{width:15px;height:15px;border-radius:4px;border:1px solid rgba(255,255,255,.1);flex:none;}
 .glassdoc .synx .k{width:96px;flex:none;font-family:ui-monospace,Consolas,monospace;}
@@ -42,14 +42,14 @@ data class SyntaxPalette(
 </style>
 <div class="synx">
 <div class="r"><i style="background:#9DA8FF"></i><span class="k" style="color:#9DA8FF">keyword</span><span class="h">#9DA8FF</span><span class="s"><b style="color:#9DA8FF">class</b> · fun · val · return</span></div>
-<div class="r"><i style="background:#4FD3C7"></i><span class="k" style="color:#4FD3C7">string</span><span class="h">#4FD3C7</span><span class="s"><b style="color:#4FD3C7">"hello"</b> · 'a' · """multi"""</span></div>
-<div class="r"><i style="background:#C9B6FF"></i><span class="k" style="color:#C9B6FF">number</span><span class="h">#C9B6FF</span><span class="s"><b style="color:#C9B6FF">42</b> · 3.14f · 0xFF · 1e10</span></div>
-<div class="r"><i style="background:#828DA8"></i><span class="k" style="color:#828DA8">comment</span><span class="h">#828DA8</span><span class="s"><b style="color:#828DA8">// line</b> · /* block */</span></div>
+<div class="r"><i style="background:#49C4B9"></i><span class="k" style="color:#49C4B9">string</span><span class="h">#49C4B9</span><span class="s"><b style="color:#49C4B9">"hello"</b> · 'a' · """multi"""</span></div>
+<div class="r"><i style="background:#B9A7EB"></i><span class="k" style="color:#B9A7EB">number</span><span class="h">#B9A7EB</span><span class="s"><b style="color:#B9A7EB">42</b> · 3.14f · 0xFF · 1e10</span></div>
+<div class="r"><i style="background:#808BA5"></i><span class="k" style="color:#808BA5">comment</span><span class="h">#808BA5</span><span class="s"><b style="color:#808BA5">// line</b> · /* block */</span></div>
 <div class="r"><i style="background:#6E8FA8"></i><span class="k" style="color:#6E8FA8">docComment</span><span class="h">#6E8FA8</span><span class="s"><b style="color:#6E8FA8">/** kdoc */</b> · @param</span></div>
 <div class="r"><i style="background:#F08FC8"></i><span class="k" style="color:#F08FC8">todoTag</span><span class="h">#F08FC8</span><span class="s"><b style="color:#F08FC8">TODO</b> · FIXME · XXX</span></div>
 <div class="r"><i style="background:#B79CFF"></i><span class="k" style="color:#B79CFF">annotation</span><span class="h">#B79CFF</span><span class="s"><b style="color:#B79CFF">@Composable</b> · @Override</span></div>
-<div class="r"><i style="background:#7FD6E0"></i><span class="k" style="color:#7FD6E0">type</span><span class="h">#7FD6E0</span><span class="s"><b style="color:#7FD6E0">String</b> · MutableList</span></div>
-<div class="r"><i style="background:#C8D0E6"></i><span class="k" style="color:#C8D0E6">identifier</span><span class="h">#C8D0E6</span><span class="s"><b style="color:#C8D0E6">count</b> · userName · items</span></div>
+<div class="r"><i style="background:#71BEC7"></i><span class="k" style="color:#71BEC7">type</span><span class="h">#71BEC7</span><span class="s"><b style="color:#71BEC7">String</b> · MutableList</span></div>
+<div class="r"><i style="background:#BEC6DB"></i><span class="k" style="color:#BEC6DB">identifier</span><span class="h">#BEC6DB</span><span class="s"><b style="color:#BEC6DB">count</b> · userName · items</span></div>
 </div>
 </div>
 

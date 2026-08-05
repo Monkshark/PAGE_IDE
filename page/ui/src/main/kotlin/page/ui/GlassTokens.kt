@@ -190,14 +190,14 @@ private val DefaultElevation = GlassElevation(
 
 private val CoolSyntax = SyntaxPalette(
     keyword = Color(0xFFFF7B72),
-    string = Color(0xFFA5D6FF),
-    number = Color(0xFF79C0FF),
-    comment = Color(0xFF8B949E),
+    string = Color(0xFF8CB5D8),
+    number = Color(0xFF73B7F3),
+    comment = Color(0xFF838B95),
     docComment = Color(0xFF7CA1A8),
     todoTag = Color(0xFFFF7AC0),
-    annotation = Color(0xFFD2A8FF),
-    type = Color(0xFFFFA657),
-    identifier = Color(0xFFFFD580),
+    annotation = Color(0xFFC8A0F3),
+    type = Color(0xFFF29D52),
+    identifier = Color(0xFFE7C174),
 )
 
 private val WarmSyntax = SyntaxPalette(
@@ -214,14 +214,14 @@ private val WarmSyntax = SyntaxPalette(
 
 private val FrostSyntax = SyntaxPalette(
     keyword = Color(0xFFCF222E),
-    string = Color(0xFF0A3069),
+    string = Color(0xFF2A4B7D),
     number = Color(0xFF0550AE),
     comment = Color(0xFF6E7781),
     docComment = Color(0xFF5F7C8C),
     todoTag = Color(0xFFC7155F),
     annotation = Color(0xFF8250DF),
     type = Color(0xFF953800),
-    identifier = Color(0xFF1F2328),
+    identifier = Color(0xFF393D41),
 )
 
 private val GraphiteSyntax = SyntaxPalette(
@@ -254,15 +254,15 @@ private val GraphiteColors = glassColors(
 )
 
 private val CoolColors = glassColors(
-    background = Color(0xFF0E1418),
-    surface = Color(0xFF161D24),
-    surfaceRaised = Color(0xFF1C2630),
-    outline = Color(0xFF2C3540),
+    background = Color(0xFF161C1F),
+    surface = Color(0xFF1D242B),
+    surfaceRaised = Color(0xFF232D37),
+    outline = Color(0xFF333B46),
     primary = Color(0xFF6AA9FF),
     onPrimary = Color(0xFF0A1126),
     accent = Color(0xFF79D4B8),
-    text = Color(0xFFE6EDF3),
-    muted = Color(0xFF8FA0B5),
+    text = Color(0xFFC0C6CB),
+    muted = Color(0xFF8493A7),
     error = Color(0xFFFF7B72),
     warn = Color(0xFFE3B341),
     success = Color(0xFF5BD6A0),
@@ -295,7 +295,7 @@ private val FrostColors = glassColors(
     primary = Color(0xFF2D5BFF),
     onPrimary = Color(0xFFFFFFFF),
     accent = Color(0xFF00A88E),
-    text = Color(0xFF1A2330),
+    text = Color(0xFF353D48),
     muted = Color(0xFF5C6878),
     error = Color(0xFFD63B3B),
     warn = Color(0xFFC68A00),
@@ -393,39 +393,39 @@ private val SandColors = glassColors(
 
 private val SignatureSyntax = SyntaxPalette(
     keyword = Color(0xFF9DA8FF),
-    string = Color(0xFF4FD3C7),
-    number = Color(0xFFC9B6FF),
-    comment = Color(0xFF828DA8),
+    string = Color(0xFF49C4B9),
+    number = Color(0xFFB9A7EB),
+    comment = Color(0xFF808BA5),
     docComment = Color(0xFF6E8FA8),
     todoTag = Color(0xFFF08FC8),
     annotation = Color(0xFFB79CFF),
-    type = Color(0xFF7FD6E0),
-    identifier = Color(0xFFC8D0E6),
+    type = Color(0xFF71BEC7),
+    identifier = Color(0xFFBEC6DB),
 )
 
 private val SignatureColors = glassColors(
-    background = Color(0xFF0A0D14),
-    surface = Color(0xFF131823),
-    surfaceRaised = Color(0xFF1F2735),
-    outline = Color(0xFF232B3A),
+    background = Color(0xFF191C22),
+    surface = Color(0xFF212630),
+    surfaceRaised = Color(0xFF2C3441),
+    outline = Color(0xFF303846),
     primary = Color(0xFF7D8EDB),
-    onPrimary = Color(0xFF0A0D14),
+    onPrimary = Color(0xFF191C22),
     accent = Color(0xFF67B9BA),
-    text = Color(0xFFE7EAF3),
+    text = Color(0xFFC4C6CE),
     muted = Color(0xFF8A92A6),
     error = Color(0xFFF2727F),
     warn = Color(0xFFE7B45C),
     success = Color(0xFF5BD6A0),
     syntax = SignatureSyntax,
     isLight = false,
-    surfaceL1 = Color(0xFF0E121A),
-    surfaceL2 = Color(0xFF131823),
-    surfaceL3 = Color(0xFF181E2A),
-    surfaceOverlay = Color(0xE0131823),
+    surfaceL1 = Color(0xFF1C2028),
+    surfaceL2 = Color(0xFF212630),
+    surfaceL3 = Color(0xFF262C37),
+    surfaceOverlay = Color(0xE0212630),
     highlightEdge = Color(0x12FFFFFF),
     separator = Color(0x0DFFFFFF),
     primarySoft = Color(0x247D8EDB),
-    faint = Color(0xFF4A5366),
+    faint = Color(0xFF5A6273),
     danger = Color(0xFFF2727F),
 )
 
@@ -437,7 +437,7 @@ private val SignatureLightColors = glassColors(
     primary = Color(0xFF5566C0),
     onPrimary = Color(0xFFFFFFFF),
     accent = Color(0xFF2F948A),
-    text = Color(0xFF1A2030),
+    text = Color(0xFF383D4B),
     muted = Color(0xFF5A6478),
     error = Color(0xFFD6485A),
     warn = Color(0xFFB5811F),
