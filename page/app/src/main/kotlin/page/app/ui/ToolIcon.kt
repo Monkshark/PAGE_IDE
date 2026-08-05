@@ -65,7 +65,7 @@ fun ToolIcon(id: String, displayName: String, size: Dp = 16.dp) {
     val res = toolIconResource(id, displayName)
     if (res != null) {
         Image(
-            painter = painterResource(res),
+            painter = page.ui.cachedSvgPainter(res),
             contentDescription = null,
             modifier = Modifier.size(size),
         )
