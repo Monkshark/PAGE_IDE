@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.nio.file.Path
@@ -15,6 +16,7 @@ class TerminalController(
     private val grid = TerminalGrid(cols = 120, rows = 40)
     private val parser = AnsiParser()
     private var session: TerminalSession? = null
+    @Volatile private var starting = false
     private var wantsAlive: Boolean = false
     private val restartTimestamps: ArrayDeque<Long> = ArrayDeque()
 
@@ -54,7 +56,7 @@ class TerminalController(
         private set
 
     fun start(cols: Int = 120, rows: Int = 40) {
-        if (session != null) return
+        if (session != null || starting) return
         wantsAlive = true
         lastExitCode = null
         launchSession(cols, rows)
@@ -80,35 +82,45 @@ class TerminalController(
     }
 
     private fun launchSession(cols: Int = 120, rows: Int = 40) {
-        try {
-            session = TerminalSession.start(
-                workingDir = workspaceRoot,
-                cols = cols,
-                rows = rows,
-                scope = scope,
-                shell = shell,
-                elevated = elevated,
-                onOutput = { chunk ->
-                    parser.parse(chunk, grid)
-                    syncState()
-                },
-                onClosed = { code ->
-                    alive = false
-                    lastExitCode = code
-                    session = null
-                    if (wantsAlive) tryAutoRestart()
-                },
-            )
-            alive = true
-        } catch (e: Throwable) {
-            val msg = "${e.javaClass.simpleName}: ${e.message}\r\n"
-            val hint = if (elevated) {
-                "Admin mode requires gsudo. Install via 'winget install gsudo' and try again.\r\n"
-            } else ""
-            parser.parse(msg + hint, grid)
-            syncState()
-            alive = false
-            wantsAlive = false
+        starting = true
+        scope.launch(Dispatchers.IO) {
+            try {
+                val started = TerminalSession.start(
+                    workingDir = workspaceRoot,
+                    cols = cols,
+                    rows = rows,
+                    scope = scope,
+                    shell = shell,
+                    elevated = elevated,
+                    onOutput = { chunk ->
+                        parser.parse(chunk, grid)
+                        syncState()
+                    },
+                    onClosed = { code ->
+                        alive = false
+                        lastExitCode = code
+                        session = null
+                        if (wantsAlive) tryAutoRestart()
+                    },
+                )
+                if (wantsAlive) {
+                    session = started
+                    alive = true
+                } else {
+                    runCatching { started.close() }
+                }
+            } catch (e: Throwable) {
+                val msg = "${e.javaClass.simpleName}: ${e.message}\r\n"
+                val hint = if (elevated) {
+                    "Admin mode requires gsudo. Install via 'winget install gsudo' and try again.\r\n"
+                } else ""
+                parser.parse(msg + hint, grid)
+                syncState()
+                alive = false
+                wantsAlive = false
+            } finally {
+                starting = false
+            }
         }
     }
 
@@ -132,7 +144,7 @@ class TerminalController(
         restartTimestamps.addLast(now)
         scope.launch {
             delay(500)
-            if (wantsAlive && session == null) launchSession()
+            if (wantsAlive && session == null && !starting) launchSession()
         }
     }
 
