@@ -3,9 +3,16 @@ package page.app
 import page.runtime.*
 import page.workspace.*
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -48,10 +55,16 @@ import androidx.compose.ui.draganddrop.DragAndDropEvent
 import androidx.compose.ui.draganddrop.DragAndDropTarget
 import androidx.compose.ui.draganddrop.awtTransferable
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -187,6 +200,73 @@ fun WelcomeScreen(
                 Spacer(Modifier.weight(1f))
                 DocsLink()
             }
+        }
+        val chrome = page.app.ui.LocalWindowChrome.current
+        if (chrome != null) {
+            Row(
+                modifier = Modifier.fillMaxWidth().height(36.dp).align(Alignment.TopCenter),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(
+                    modifier = Modifier.weight(1f).fillMaxHeight()
+                        .titleBarDrag(chrome.window, chrome.onToggleMaximize),
+                )
+                page.app.ui.WindowControls(chrome, Modifier.fillMaxHeight())
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
+@Composable
+fun OpeningScreen(name: String, modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier.fillMaxSize().background(Glass.colors.background),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            val spin = rememberInfiniteTransition(label = "opening")
+            val angle by spin.animateFloat(
+                initialValue = 0f,
+                targetValue = 360f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(1000, easing = LinearEasing),
+                    repeatMode = RepeatMode.Restart,
+                ),
+                label = "spin",
+            )
+            val ringColor = Glass.colors.accent
+            Box(
+                modifier = Modifier.size(104.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Canvas(modifier = Modifier.fillMaxSize().rotate(angle)) {
+                    val stroke = 3.dp.toPx()
+                    drawArc(
+                        color = ringColor,
+                        startAngle = 0f,
+                        sweepAngle = 300f,
+                        useCenter = false,
+                        topLeft = Offset(stroke / 2f, stroke / 2f),
+                        size = Size(size.width - stroke, size.height - stroke),
+                        style = Stroke(width = stroke, cap = StrokeCap.Round),
+                    )
+                }
+                Image(
+                    painter = painterResource("logo_transparent.svg"),
+                    contentDescription = null,
+                    modifier = Modifier.size(62.dp),
+                )
+            }
+            Spacer(Modifier.height(22.dp))
+            Text(
+                text = if (name.isNotBlank()) "Opening $name…" else "Opening…",
+                fontFamily = EditorFontFamily,
+                fontSize = 12.sp,
+                color = Glass.colors.muted,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
         val chrome = page.app.ui.LocalWindowChrome.current
         if (chrome != null) {

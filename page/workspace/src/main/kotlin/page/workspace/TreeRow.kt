@@ -129,7 +129,7 @@ fun TreeRow(
     })
 
     val createParent = if (node.isDirectory) node.path else node.path.parent
-    val pasteTarget = createParent?.takeIf { Files.isDirectory(it) }
+    val pasteTarget = createParent
 
     val onNodeDropState = rememberUpdatedState(onNodeDrop)
     val rowDropTarget = remember(node.path, dragState) {
