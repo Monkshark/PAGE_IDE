@@ -1,10 +1,5 @@
 package page.shared.syntax
 
-/**
- * Upgrades plain identifier and string tokens into finer roles so themes can style calls, members,
- * parameters and string templates apart. Runs on the token list, which keeps it independent of the
- * lexer backend (hand written or tree-sitter) and of the language in front of it.
- */
 object SyntaxRoles {
 
     fun refine(text: String, tokens: List<Token>): List<Token> {
@@ -29,10 +24,6 @@ object SyntaxRoles {
         return TokenKind.IDENTIFIER
     }
 
-    /**
-     * A parameter is an identifier that is being introduced rather than used: it sits right after an
-     * opening paren or a comma inside a signature, or ahead of the `->` of a lambda header.
-     */
     private fun isParameter(text: String, tokens: List<Token>, index: Int): Boolean {
         val token = tokens[index]
         val before = prevNonSpace(text, token.start)

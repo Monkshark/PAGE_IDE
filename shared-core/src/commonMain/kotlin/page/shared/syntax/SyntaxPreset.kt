@@ -6,21 +6,13 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 
-/**
- * How much the editor separates token roles. The palette always carries a color per role; the preset
- * decides how many of those colors are used and whether emphasis is layered on top.
- */
 enum class SyntaxPreset(val label: String) {
-    /** Colors as they were before roles existed: calls and members read as plain identifiers. */
     CALM("Calm"),
 
-    /** One color set, roles told apart by italic, underline and a dimmer parameter tone. */
     BALANCED("Balanced"),
 
-    /** A color per role. */
     VIVID("Vivid"),
 
-    /** A color per role, plus the emphasis from Balanced. */
     EXPRESSIVE("Expressive");
 
     val usesRoleColors: Boolean get() = this == VIVID || this == EXPRESSIVE

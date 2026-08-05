@@ -3,10 +3,6 @@ package page.app
 import page.shared.syntax.Token
 import page.shared.syntax.TokenKind
 
-/**
- * Finds the other places the identifier under the caret appears, so the editor can tint them. Only
- * code tokens count — the same word inside a string or a comment is not the same symbol.
- */
 object IdentifierOccurrences {
 
     private val CODE_KINDS = setOf(
