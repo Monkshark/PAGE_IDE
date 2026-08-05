@@ -584,14 +584,13 @@ fun CodeEditor(
                 }
             }
             if (scopeGuides.enabled && bracketPairs.isNotEmpty()) {
-                val caretOffset = latestMapping.originalToTransformed(
-                    latestValue.selection.start.coerceIn(0, latestValue.text.length),
-                )
+                val caret = latestValue.selection.start.coerceIn(0, latestValue.text.length)
                 drawScopeGuides(
                     guides = scopeGuides,
                     layout = layout,
                     pairs = bracketPairs,
-                    activePair = page.shared.syntax.BracketScan.enclosing(bracketPairs, caretOffset),
+                    activePair = page.shared.syntax.BracketScan.enclosing(bracketPairs, caret),
+                    mapOffset = { latestMapping.originalToTransformed(it) },
                     firstLine = visibleFirstLine,
                     lastLine = visibleLastLine,
                 )

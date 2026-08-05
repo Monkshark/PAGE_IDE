@@ -38,6 +38,7 @@ internal data class ScopeSpan(val column: Int, val fromLine: Int, val toLine: In
 internal fun scopeSpansFor(
     text: CharSequence,
     pairs: List<page.shared.syntax.BracketPair>,
+    mapOffset: (Int) -> Int = { it },
 ): List<ScopeSpan> {
     if (pairs.isEmpty() || text.isEmpty()) return emptyList()
     val lineStarts = ArrayList<Int>()
@@ -56,8 +57,10 @@ internal fun scopeSpansFor(
 
     val spans = LinkedHashMap<Triple<Int, Int, Int>, ScopeSpan>()
     for (pair in pairs) {
-        val openLine = lineOf(pair.open)
-        val closeLine = lineOf(pair.close)
+        val open = mapOffset(pair.open).coerceIn(0, text.length)
+        val close = mapOffset(pair.close).coerceIn(open, text.length)
+        val openLine = lineOf(open)
+        val closeLine = lineOf(close)
         if (closeLine - openLine < 2) continue
         var column = 0
         var i = lineStarts[openLine]
@@ -81,18 +84,19 @@ internal fun DrawScope.drawScopeGuides(
     layout: LineLayout,
     pairs: List<page.shared.syntax.BracketPair>,
     activePair: page.shared.syntax.BracketPair?,
+    mapOffset: (Int) -> Int,
     firstLine: Int,
     lastLine: Int,
 ) {
-    val spans = layout.scopeSpans(pairs)
+    val spans = layout.scopeSpans(pairs, mapOffset)
     if (spans.isEmpty()) return
     val charWidth = layout.columnWidthPx
     if (charWidth <= 0f) return
-    val activeOpen = activePair?.open
+    val activeOpenLine = activePair?.let { layout.getLineForOffset(mapOffset(it.open)) }
     for (span in spans) {
         if (span.toLine < firstLine || span.fromLine > lastLine) continue
-        val isActive = activeOpen != null &&
-            layout.getLineForOffset(activeOpen) + 1 == span.fromLine &&
+        val isActive = activeOpenLine != null &&
+            activeOpenLine + 1 == span.fromLine &&
             activePair.depth == span.depth
         if (guides.onlyCurrentBlock && !isActive) continue
         val x = span.column * charWidth

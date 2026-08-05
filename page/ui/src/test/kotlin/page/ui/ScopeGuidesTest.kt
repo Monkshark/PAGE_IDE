@@ -89,4 +89,21 @@ class ScopeGuidesTest {
         val text = "fun a() {\n    b()\n}"
         assertTrue(scopeSpansFor(text, pairsOf(text)).isEmpty())
     }
+
+    @Test
+    fun railsFollowOffsetsShiftedByInlayHints() {
+        val code = "fun outer() {\n    if (a) {\n        run()\n        run()\n    }\n}"
+        val pairs = pairsOf(code)
+        val hint = " Boolean"
+        val hintAt = code.indexOf("(a)") + 2
+        val shown = code.substring(0, hintAt) + hint + code.substring(hintAt)
+
+        val plain = scopeSpansFor(code, pairs).single { it.fromLine == 2 }
+        val shifted = scopeSpansFor(shown, pairs) { offset ->
+            if (offset >= hintAt) offset + hint.length else offset
+        }.single { it.fromLine == 2 }
+
+        assertEquals(plain.column, shifted.column)
+        assertEquals(plain.toLine, shifted.toLine)
+    }
 }

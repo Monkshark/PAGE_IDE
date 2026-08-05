@@ -92,9 +92,12 @@ internal class LineLayout(
 
     private var scopeSpanCache: Pair<List<page.shared.syntax.BracketPair>, List<ScopeSpan>>? = null
 
-    internal fun scopeSpans(pairs: List<page.shared.syntax.BracketPair>): List<ScopeSpan> {
+    internal fun scopeSpans(
+        pairs: List<page.shared.syntax.BracketPair>,
+        mapOffset: (Int) -> Int,
+    ): List<ScopeSpan> {
         scopeSpanCache?.let { (cached, spans) -> if (cached === pairs) return spans }
-        val spans = scopeSpansFor(text, pairs)
+        val spans = scopeSpansFor(text, pairs, mapOffset)
         scopeSpanCache = pairs to spans
         return spans
     }
