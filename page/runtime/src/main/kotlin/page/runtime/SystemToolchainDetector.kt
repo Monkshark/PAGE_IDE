@@ -14,12 +14,20 @@ data class SystemToolchain(
 
 object SystemToolchainDetector {
 
+    @Volatile private var cached: List<SystemToolchain>? = null
+
     fun detect(): List<SystemToolchain> {
-        val os = LspInstaller.osKey()
-        return when (os) {
-            "windows" -> detectWindows()
-            "macos" -> detectMacos()
-            else -> detectLinux()
+        cached?.let { return it }
+        synchronized(this) {
+            cached?.let { return it }
+            val os = LspInstaller.osKey()
+            val result = when (os) {
+                "windows" -> detectWindows()
+                "macos" -> detectMacos()
+                else -> detectLinux()
+            }
+            cached = result
+            return result
         }
     }
 
