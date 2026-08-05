@@ -407,6 +407,13 @@ private fun EditorSection(o: EditorOptions, onChange: (EditorOptions) -> Unit) {
         }
     }
     Spacer(Modifier.height(18.dp))
+    CheckRow(
+        label = "Rainbow brackets",
+        description = "Tint each bracket pair and its guide by nesting depth.",
+        checked = o.rainbowBrackets,
+        onToggle = { onChange(o.copy(rainbowBrackets = !o.rainbowBrackets)) },
+    )
+    Spacer(Modifier.height(18.dp))
     SectionLabel("Scope guides")
     Spacer(Modifier.height(3.dp))
     Hint("Vertical lines that connect a block to its closing brace.")

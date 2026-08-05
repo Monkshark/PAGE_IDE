@@ -256,6 +256,10 @@ fun EditorPanel(
         else BracketMatch.find(value.text, value.selection.start)
     }
 
+    val bracketPairs = remember(value.text, tokens) {
+        page.shared.syntax.BracketScan.pairs(value.text, tokens)
+    }
+
     val identifierOccurrences = remember(
         value.text, value.selection.start, value.selection.end, tokens,
         pageSettings.editor.highlightIdentifierUnderCaret,
@@ -482,6 +486,7 @@ fun EditorPanel(
                 bracketBg = bracketBg,
                 occurrences = identifierOccurrences,
                 occurrenceBg = occurrenceBg,
+                rainbowPairs = if (pageSettings.editor.rainbowBrackets) bracketPairs else emptyList(),
                 unnecessaryRanges = unnecessaryRanges,
                 unnecessaryStyle = SpanStyle(color = unnecessaryColor),
                 foldSegments = foldSegments,
@@ -1315,10 +1320,12 @@ fun EditorPanel(
                 scopeGuides = page.ui.ScopeGuides(
                     enabled = pageSettings.editor.scopeGuides != ScopeGuideMode.OFF,
                     onlyCurrentBlock = pageSettings.editor.scopeGuides == ScopeGuideMode.CURRENT,
+                    rainbow = pageSettings.editor.rainbowBrackets,
                     color = Glass.colors.muted.copy(alpha = 0.22f),
                     activeColor = Glass.colors.primary.copy(alpha = 0.55f),
-                    indentWidth = pageSettings.editor.tabSize,
+                    depthColors = palette.bracketDepths,
                 ),
+                bracketPairs = bracketPairs,
                 focusRequestVersion = editorFocusVersion,
                 caretBringIntoViewEnabled = caretBringArmed,
                 decorations = decorations,
@@ -1614,6 +1621,7 @@ private class CombinedHighlightTransformation(
     private val bracketBg: androidx.compose.ui.graphics.Color,
     private val occurrences: List<IntRange> = emptyList(),
     private val occurrenceBg: androidx.compose.ui.graphics.Color = androidx.compose.ui.graphics.Color.Unspecified,
+    private val rainbowPairs: List<page.shared.syntax.BracketPair> = emptyList(),
     private val unnecessaryRanges: List<IntRange> = emptyList(),
     private val unnecessaryStyle: SpanStyle = SpanStyle(),
     private val foldSegments: List<FoldRegions.Segment>,
@@ -1793,6 +1801,15 @@ private class CombinedHighlightTransformation(
             if (start == end) return@forEachIndexed
             val bg = if (index == activeIndex) activeBg else matchBg
             builder.addStyle(SpanStyle(background = bg), start, end)
+        }
+        for (pair in rainbowPairs) {
+            val color = palette.bracketAt(pair.depth)
+            for (off in listOf(pair.open, pair.close)) {
+                val start = off.coerceIn(0, text.length)
+                val end = (off + 1).coerceIn(start, text.length)
+                if (start == end) continue
+                builder.addStyle(SpanStyle(color = color), start, end)
+            }
         }
         if (occurrenceBg != androidx.compose.ui.graphics.Color.Unspecified) {
             for (range in occurrences) {

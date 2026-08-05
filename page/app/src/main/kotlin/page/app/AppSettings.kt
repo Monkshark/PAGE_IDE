@@ -35,6 +35,7 @@ data class EditorOptions(
     val syntaxPreset: SyntaxPreset = SyntaxPreset.VIVID,
     val scopeGuides: ScopeGuideMode = ScopeGuideMode.ALL,
     val highlightIdentifierUnderCaret: Boolean = true,
+    val rainbowBrackets: Boolean = true,
 ) {
     companion object { val DEFAULT = EditorOptions() }
 }
@@ -95,6 +96,7 @@ object AppSettings {
     private const val KEY_ED_SYNTAX_PRESET = "editor.syntaxPreset"
     private const val KEY_ED_SCOPE_GUIDES = "editor.scopeGuides"
     private const val KEY_ED_HL_IDENTIFIER = "editor.highlightIdentifierUnderCaret"
+    private const val KEY_ED_RAINBOW = "editor.rainbowBrackets"
 
     private const val KEY_LSP_INLAY = "lsp.showInlayHints"
     private const val KEY_LSP_MIDWORD = "lsp.triggerCompletionMidWord"
@@ -158,6 +160,7 @@ object AppSettings {
                 ?.let { v -> runCatching { ScopeGuideMode.valueOf(v) }.getOrNull() } ?: default.scopeGuides,
             highlightIdentifierUnderCaret =
                 p.getBoolean(KEY_ED_HL_IDENTIFIER, default.highlightIdentifierUnderCaret),
+            rainbowBrackets = p.getBoolean(KEY_ED_RAINBOW, default.rainbowBrackets),
         )
     }
     fun saveEditor(o: EditorOptions) = writeProperties(mapOf(
@@ -170,6 +173,7 @@ object AppSettings {
         KEY_ED_SYNTAX_PRESET to o.syntaxPreset.name,
         KEY_ED_SCOPE_GUIDES to o.scopeGuides.name,
         KEY_ED_HL_IDENTIFIER to o.highlightIdentifierUnderCaret.toString(),
+        KEY_ED_RAINBOW to o.rainbowBrackets.toString(),
     ))
 
     fun loadLsp(default: LspOptions = LspOptions.DEFAULT): LspOptions {
