@@ -339,6 +339,7 @@ private fun androidx.compose.ui.window.ApplicationScope.AppContent() {
             sessionLoaded = true
             workspaceState.openingPath = null
         }
+        currentLspRouter.prewarmWorkspace()
     }
 
     val onFoldChange: (Path, Set<Int>) -> Unit = { path, lines ->

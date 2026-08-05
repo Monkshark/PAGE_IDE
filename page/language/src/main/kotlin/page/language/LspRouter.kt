@@ -8,6 +8,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import page.lsp.Diagnostic
 import page.lsp.LanguageBackend
 import page.lsp.LanguageRegistry
@@ -59,6 +60,31 @@ class LspRouter(
             }
         }
         return true
+    }
+
+    fun prewarmWorkspace() {
+        val root = workspaceRoot ?: return
+        parentScope.launch(Dispatchers.IO) {
+            val dominant = runCatching { dominantBackendId(root) }.getOrNull() ?: return@launch
+            if (prewarm(dominant)) println("[lsp] prewarming $dominant for $root")
+        }
+    }
+
+    internal fun dominantBackendId(root: Path): String? {
+        val counts = HashMap<String, Int>()
+        java.nio.file.Files.walk(root, PREWARM_SCAN_DEPTH).use { stream ->
+            stream
+                .filter { java.nio.file.Files.isRegularFile(it) }
+                .filter { path ->
+                    root.relativize(path).none { it.toString() in PREWARM_EXCLUDES }
+                }
+                .limit(PREWARM_SCAN_LIMIT)
+                .forEach { path ->
+                    val id = LspBackends.forFile(path, root)?.id ?: return@forEach
+                    counts[id] = (counts[id] ?: 0) + 1
+                }
+        }
+        return counts.maxByOrNull { it.value }?.key
     }
 
     fun backendFor(path: Path): LanguageBackend? = LspBackends.forFile(path, workspaceRoot)
@@ -131,6 +157,13 @@ class LspRouter(
     }
 
     companion object {
+        private const val PREWARM_SCAN_DEPTH = 12
+        private const val PREWARM_SCAN_LIMIT = 3000L
+        private val PREWARM_EXCLUDES = setOf(
+            "build", "out", "dist", "target", "bin", "node_modules", "vendor",
+            ".git", ".gradle", ".idea", ".kotlin", ".dart_tool", ".venv", "venv",
+        )
+
         fun backendIdsForExtensions(extensions: List<String>): Set<String> =
             extensions.flatMap { ext -> LspBackends.allForExtension(ext).map { it.id } }.toSet()
     }

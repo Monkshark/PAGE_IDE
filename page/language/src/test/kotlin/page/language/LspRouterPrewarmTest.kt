@@ -9,6 +9,7 @@ import page.lsp.LspClient
 import java.nio.file.Path
 import kotlin.test.AfterTest
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -97,6 +98,27 @@ class LspRouterPrewarmTest {
         router.endLanguageDelete("delete-guard")
         assertTrue(router.prewarm("delete-guard"))
         assertNotNull(router.controllerById("delete-guard"))
+    }
+
+    @Test
+    fun dominantBackendIdFindsDeeplyNestedSources() {
+        val root = java.nio.file.Files.createTempDirectory("prewarm-scan")
+        val deep = root.resolve("page/app/src/main/kotlin/page/app")
+        java.nio.file.Files.createDirectories(deep)
+        java.nio.file.Files.writeString(deep.resolve("Main.kt"), "fun main() {}")
+        java.nio.file.Files.writeString(deep.resolve("Other.kt"), "val x = 1")
+
+        assertEquals("kotlin", router().dominantBackendId(root))
+    }
+
+    @Test
+    fun dominantBackendIdIgnoresBuildOutput() {
+        val root = java.nio.file.Files.createTempDirectory("prewarm-excludes")
+        val generated = root.resolve("build/generated/source")
+        java.nio.file.Files.createDirectories(generated)
+        repeat(5) { java.nio.file.Files.writeString(generated.resolve("Gen$it.kt"), "val g = $it") }
+
+        assertNull(router().dominantBackendId(root))
     }
 
     @Test
