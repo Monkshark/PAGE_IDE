@@ -100,6 +100,8 @@ import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.window.rememberCursorPositionProvider
 import kotlinx.coroutines.delay
+import kotlin.math.ceil
+import kotlin.math.floor
 import page.editor.EditHistory
 import page.editor.EditSnapshot
 import page.editor.PageScroll
@@ -137,6 +139,7 @@ fun CodeEditor(
     signatureHelpAnchorOffset: Int? = null,
     manageHistory: Boolean = true,
     viewportHeightProvider: (() -> Float)? = null,
+    scrollOffsetProvider: (() -> Float)? = null,
     focusRequestVersion: Int = 0,
     caretBringIntoViewEnabled: Boolean = true,
     contextMenuActions: List<EditorContextAction> = emptyList(),
@@ -199,6 +202,7 @@ fun CodeEditor(
     val latestMapping by rememberUpdatedState(mapping)
     val latestLayout by rememberUpdatedState(layout)
     val latestViewportHeight by rememberUpdatedState(viewportHeightProvider)
+    val latestScrollOffset by rememberUpdatedState(scrollOffsetProvider)
     val preferredX = remember { mutableStateOf<Float?>(null) }
     val dragMoveTarget = remember { mutableStateOf<Int?>(null) }
     var hoverPosition by remember { mutableStateOf<Offset?>(null) }
@@ -506,13 +510,37 @@ fun CodeEditor(
                     }
                 },
         ) {
+            val lineHeightPx = layout.lineHeightPx
+            val scrollProvider = latestScrollOffset
+            var visibleFirstLine = 0
+            var visibleLastLine = layout.lineCount - 1
+            if (scrollProvider != null && lineHeightPx > 0f) {
+                val scrollY = scrollProvider.invoke()
+                val viewH = latestViewportHeight?.invoke()?.takeIf { it > 0f } ?: size.height
+                val localTop = scrollY - contentPadding.calculateTopPadding().toPx()
+                val overscan = 4
+                visibleFirstLine = (floor(localTop / lineHeightPx).toInt() - overscan)
+                    .coerceIn(0, (layout.lineCount - 1).coerceAtLeast(0))
+                visibleLastLine = (ceil((localTop + viewH) / lineHeightPx).toInt() + overscan)
+                    .coerceIn(visibleFirstLine, (layout.lineCount - 1).coerceAtLeast(0))
+            }
+            fun rangeVisible(transStart: Int, transEnd: Int): Boolean {
+                if (scrollProvider == null) return true
+                val startLine = layout.getLineForOffset(transStart)
+                val endLine = layout.getLineForOffset(transEnd)
+                return endLine >= visibleFirstLine && startLine <= visibleLastLine
+            }
             val sel = latestValue.selection
             if (!sel.collapsed) {
                 val transStart = latestMapping.originalToTransformed(sel.min)
                 val transEnd = latestMapping.originalToTransformed(sel.max)
                 if (transStart < transEnd) {
-                    val path = layout.getSelectionPath(transStart, transEnd)
-                    drawPath(path = path, color = selectionColor)
+                    val clampedStart = maxOf(transStart, layout.getLineStart(visibleFirstLine))
+                    val clampedEnd = minOf(transEnd, layout.getLineEnd(visibleLastLine))
+                    if (clampedStart < clampedEnd) {
+                        val path = layout.getSelectionPath(clampedStart, clampedEnd)
+                        drawPath(path = path, color = selectionColor)
+                    }
                 }
             }
             if (decorations.isNotEmpty()) {
@@ -528,6 +556,7 @@ fun CodeEditor(
                         deco.endOffset.coerceIn(0, value.text.length),
                     )
                     if (transStart < 0 || transEnd > displayText.length) continue
+                    if (!rangeVisible(transStart, transEnd)) continue
                     val rangeStart = layout.getCursorRect(transStart)
                     val rangeEnd = layout.getCursorRect(transEnd)
                     val left = rangeStart.left
@@ -552,7 +581,7 @@ fun CodeEditor(
                     }
                 }
             }
-            layout.draw(this)
+            layout.draw(this, visibleFirstLine, visibleLastLine)
             if (ctrlHoverLinkRange != null) {
                 val linkStart = ctrlHoverLinkRange.first.coerceIn(0, value.text.length)
                 val linkEnd = (ctrlHoverLinkRange.last + 1).coerceIn(linkStart, value.text.length)
@@ -583,6 +612,7 @@ fun CodeEditor(
                     )
                     if (transStart >= transEnd) continue
                     if (transStart < 0 || transEnd > displayText.length) continue
+                    if (!rangeVisible(transStart, transEnd)) continue
                     when (deco.style) {
                         EditorDecoration.Style.WAVY_UNDERLINE -> drawWavyUnderline(
                             layout = layout,

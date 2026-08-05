@@ -1290,6 +1290,7 @@ fun EditorPanel(
                 },
                 manageHistory = false,
                 viewportHeightProvider = { scrollState.viewportSize.toFloat() },
+                scrollOffsetProvider = { scrollState.value.toFloat() },
                 focusRequestVersion = editorFocusVersion,
                 caretBringIntoViewEnabled = caretBringArmed,
                 decorations = decorations,
