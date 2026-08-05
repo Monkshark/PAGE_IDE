@@ -28,7 +28,7 @@ tasks.test {
     useJUnitPlatform()
 }
 
-val klsVersion = "1.3.13-page-3"
+val klsVersion = "1.3.13-page-4"
 val klsDownloadUrl = "https://github.com/Monkshark/kotlin-language-server/releases/download/$klsVersion/server.zip"
 val klsLocalZip: String? = (findProperty("page.lsp.kotlin.localZip") as? String)
     ?: System.getenv("PAGE_LSP_KOTLIN_LOCAL_ZIP")
@@ -141,5 +141,8 @@ tasks.withType<JavaExec>().configureEach {
     }
     System.getenv("PAGE_DEBUG_FPS")?.takeIf { it.isNotBlank() }?.let {
         systemProperty("page.debug.fps", it)
+    }
+    System.getenv("PAGE_LSP_KOTLIN_PATH")?.takeIf { it.isNotBlank() }?.let {
+        systemProperty("page.lsp.kotlin.path", it)
     }
 }
