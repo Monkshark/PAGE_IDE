@@ -12,4 +12,8 @@ data class SyntaxPalette(
     val annotation: Color,
     val type: Color,
     val identifier: Color,
+    val function: Color = identifier,
+    val property: Color = identifier,
+    val parameter: Color = identifier,
+    val template: Color = identifier,
 )
