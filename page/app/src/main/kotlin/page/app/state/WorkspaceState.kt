@@ -16,6 +16,7 @@ internal class WorkspaceState(
     private val store: IdeStore = IdeStore(),
 ) {
     var rootDir by mutableStateOf<Path?>(null)
+    var openingPath by mutableStateOf<Path?>(null)
     var expanded: Set<Path>
         get() = store.tree.expanded
         set(value) = store.updateTree { it.copy(expanded = value) }

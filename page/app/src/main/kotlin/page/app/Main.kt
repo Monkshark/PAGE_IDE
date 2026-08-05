@@ -144,7 +144,7 @@ private fun androidx.compose.ui.window.ApplicationScope.AppContent() {
     val windowState = rememberWindowState(
         placement = androidx.compose.ui.window.WindowPlacement.Floating,
         position = androidx.compose.ui.window.WindowPosition.Aligned(Alignment.Center),
-        width = 720.dp,
+        width = 520.dp,
         height = 560.dp,
     )
     val undoTrackerPrimary = remember { UndoGroupTracker() }
@@ -330,10 +330,15 @@ private fun androidx.compose.ui.window.ApplicationScope.AppContent() {
         val root = rootDir
         if (root == null) {
             sessionLoaded = true
+            workspaceState.openingPath = null
             return@LaunchedEffect
         }
-        sessionCoordinator.restore(root)
-        sessionLoaded = true
+        try {
+            sessionCoordinator.restore(root)
+        } finally {
+            sessionLoaded = true
+            workspaceState.openingPath = null
+        }
     }
 
     val onFoldChange: (Path, Set<Int>) -> Unit = { path, lines ->
@@ -705,13 +710,14 @@ private fun androidx.compose.ui.window.ApplicationScope.AppContent() {
             fm.addKeyEventDispatcher(dispatcher)
             onDispose { fm.removeKeyEventDispatcher(dispatcher) }
         }
-        val showWelcome = rootDir == null &&
+        val openingPath = workspaceState.openingPath
+        val showWelcome = openingPath == null && rootDir == null &&
             primaryPane.book.tabs.isEmpty() &&
             secondaryPane.book.tabs.isEmpty()
         LaunchedEffect(showWelcome) {
             if (showWelcome) {
                 windowState.placement = androidx.compose.ui.window.WindowPlacement.Floating
-                windowState.size = androidx.compose.ui.unit.DpSize(720.dp, 560.dp)
+                windowState.size = androidx.compose.ui.unit.DpSize(520.dp, 560.dp)
                 windowState.position = androidx.compose.ui.window.WindowPosition.Aligned(Alignment.Center)
             } else {
                 page.app.ui.applyWorkAreaMaximizedBounds(window)
@@ -743,7 +749,9 @@ private fun androidx.compose.ui.window.ApplicationScope.AppContent() {
                 color = MaterialTheme.colorScheme.background,
             ) {
                 Box(modifier = Modifier.fillMaxSize()) {
-                if (showWelcome) {
+                if (openingPath != null) {
+                    OpeningScreen(name = openingPath.fileName?.toString() ?: openingPath.toString())
+                } else if (showWelcome) {
                     val recents = remember(showWelcome) { RecentProjects.load() }
                     WelcomeScreen(
                         onOpenFolder = { frameRef.value?.let { openFolder(it) } },

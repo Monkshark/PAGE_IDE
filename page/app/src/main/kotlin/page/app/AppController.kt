@@ -145,12 +145,14 @@ internal class AppController(
 
     private val openWorkspaceFolder: (Path) -> Unit = { picked ->
         PerfRegistry.instance?.begin(StartupPhases.WORKSPACE_OPEN)
-        RecentProjects.push(picked)
-        workspaceState.rootDir = picked
-        workspaceState.expanded = setOf(picked)
+        workspaceState.openingPath = picked
         appScope.launch {
-            val chain = withContext(Dispatchers.IO) { page.editor.FileTree.singleChildChain(picked) }
-            if (workspaceState.rootDir == picked) {
+            val chain = withContext(Dispatchers.IO) {
+                RecentProjects.push(picked)
+                page.editor.FileTree.singleChildChain(picked)
+            }
+            if (workspaceState.openingPath == picked) {
+                workspaceState.rootDir = picked
                 workspaceState.expanded = setOf(picked) + chain
             }
             PerfRegistry.instance?.end(StartupPhases.WORKSPACE_OPEN)
