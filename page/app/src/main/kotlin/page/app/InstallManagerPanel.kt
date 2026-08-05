@@ -3,9 +3,15 @@ package page.app
 import page.runtime.*
 import page.workspace.*
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,6 +28,10 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.LocalTextStyle
@@ -72,6 +82,7 @@ data class ManagerEntry(
 )
 
 private fun ManagerEntry.pathBinaries(): List<String> {
+    if (id == "flutter") return listOf("flutter", "flutter.bat", "dart", "dart.exe")
     val win = LspInstaller.isWindows()
     return if (category == ManagerCategory.RUNTIME) SystemInstallDetector.runtimeNames(id)
     else if (win) windowsBinaries.ifEmpty { binaries } else binaries
@@ -149,6 +160,7 @@ private fun ManagerSidebar(
     modifier: Modifier = Modifier,
 ) {
     var systemPresent by remember { mutableStateOf<Set<String>>(emptySet()) }
+    var query by remember { mutableStateOf("") }
     LaunchedEffect(entries) {
         systemPresent = withContext(Dispatchers.IO) {
             entries.filter { it.systemPresent() }.map { it.id }.toSet()
@@ -169,10 +181,14 @@ private fun ManagerSidebar(
             page.app.ui.PanelCloseButton(onClose = onClose)
         }
         Box(Modifier.fillMaxWidth().height(1.dp).background(Glass.colors.separator))
+        SidebarSearch(query = query, onChange = { query = it })
         val scrollState = rememberScrollState()
         Column(modifier = Modifier.verticalScroll(scrollState).weight(1f).padding(vertical = 4.dp)) {
             for (category in ManagerCategory.entries) {
-                val categoryEntries = entries.filter { it.category == category }
+                val categoryEntries = entries.filter {
+                    it.category == category &&
+                        (query.isBlank() || it.displayName.contains(query, ignoreCase = true))
+                }
                 if (categoryEntries.isEmpty()) continue
                 Text(
                     text = category.label.uppercase(),
@@ -184,24 +200,46 @@ private fun ManagerSidebar(
                 )
                 for (entry in categoryEntries) {
                     val isSelected = entry.id == selectedId
-                    val bg = if (isSelected) Glass.colors.primarySoft else Color.Transparent
                     val installer = remember(entry.id) { LspInstallers.forId(entry.id) }
                     val installed = remember(entry.id) { installer?.isInstalled() == true }
+                    val accent = Glass.colors.primary
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(26.dp)
-                            .padding(horizontal = 6.dp, vertical = 1.dp)
+                            .height(30.dp)
+                            .padding(horizontal = 8.dp, vertical = 1.dp)
                             .clip(RoundedCornerShape(Glass.radius.sm))
-                            .background(bg)
+                            .background(if (isSelected) Glass.colors.primarySoft else Color.Transparent)
+                            .drawBehind {
+                                if (isSelected) {
+                                    val h = size.height
+                                    drawRoundRect(
+                                        color = accent,
+                                        topLeft = Offset(0f, h * 0.22f),
+                                        size = Size(2.5.dp.toPx(), h * 0.56f),
+                                        cornerRadius = CornerRadius(2f, 2f),
+                                    )
+                                }
+                            }
                             .clickable { onSelect(entry.id) }
-                            .padding(horizontal = 8.dp),
+                            .padding(start = 9.dp, end = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(9.dp),
                     ) {
+                        page.app.ui.ToolIcon(entry.id, entry.displayName, 15.dp)
                         Text(
                             text = entry.displayName,
                             color = if (isSelected) Glass.colors.primary else Glass.colors.text,
-                            fontSize = 12.sp,
+                            style = LocalTextStyle.current.copy(
+                                fontSize = 12.sp,
+                                lineHeight = 12.sp,
+                                lineHeightStyle = LineHeightStyle(
+                                    alignment = LineHeightStyle.Alignment.Center,
+                                    trim = LineHeightStyle.Trim.Both,
+                                ),
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                             modifier = Modifier.weight(1f),
                         )
                         if (installed) {
@@ -243,7 +281,13 @@ private fun ManagerDetailPane(
     }
 
     LaunchedEffect(entry.id) {
-        sysDetail = withContext(Dispatchers.IO) { entry.systemDetail() }
+        sysDetail = null
+        val fastPath = withContext(Dispatchers.IO) {
+            entry.pathBinaries().takeIf { it.isNotEmpty() }?.let { SystemInstallDetector.findOnPath(it) }
+        }
+        if (fastPath != null) sysDetail = SystemInstall(fastPath, null)
+        val full = withContext(Dispatchers.IO) { entry.systemDetail() }
+        if (full != null) sysDetail = full
     }
 
     fun refreshVersions() {
@@ -277,44 +321,66 @@ private fun ManagerDetailPane(
         ),
     )
 
-    Column(modifier = modifier.padding(20.dp).widthIn(max = 560.dp)) {
-        Text(
-            text = entry.displayName,
-            color = Glass.colors.text,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.SemiBold,
-        )
-        sysDetail?.let { info ->
-            Spacer(Modifier.height(7.dp))
-            SystemNote(info)
+    Column(
+        modifier = modifier
+            .verticalScroll(rememberScrollState())
+            .padding(24.dp)
+            .widthIn(max = 560.dp),
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(34.dp)
+                    .clip(RoundedCornerShape(Glass.radius.sm))
+                    .background(Glass.colors.surfaceL3),
+                contentAlignment = Alignment.Center,
+            ) { page.app.ui.ToolIcon(entry.id, entry.displayName, 19.dp) }
+            Text(
+                text = entry.displayName,
+                color = Glass.colors.text,
+                fontSize = 16.5.sp,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f),
+            )
+            StatusPill(installed = installedVersions.isNotEmpty(), version = activeVersion, onSystem = sysDetail != null)
         }
-        Spacer(Modifier.height(16.dp))
+        toolDescription(entry)?.let { desc ->
+            Spacer(Modifier.height(9.dp))
+            Text(text = desc, color = Glass.colors.muted, fontSize = 12.sp, lineHeight = 17.sp)
+        }
 
         if (installedVersions.isNotEmpty()) {
+            Spacer(Modifier.height(20.dp))
             Text(
-                text = "INSTALLED",
+                text = "Installed versions",
                 color = Glass.colors.faint,
-                fontSize = 9.5.sp,
+                fontSize = 10.sp,
                 fontWeight = FontWeight.SemiBold,
                 letterSpacing = 0.6.sp,
             )
-            Spacer(Modifier.height(6.dp))
-            val scroll = rememberScrollState()
-            Column(modifier = Modifier.verticalScroll(scroll)) {
-                for (v in installedVersions) {
+            Spacer(Modifier.height(8.dp))
+            val cardShape = RoundedCornerShape(Glass.radius.sm)
+            Column(
+                modifier = Modifier
+                    .clip(cardShape)
+                    .background(Glass.colors.surfaceL2)
+                    .border(1.dp, Glass.colors.separator, cardShape),
+            ) {
+                installedVersions.forEachIndexed { idx, v ->
+                    if (idx > 0) Box(Modifier.fillMaxWidth().height(1.dp).background(Glass.colors.separator))
                     val isCurrent = v == activeVersion
                     val isConfirming = confirmDeleteVersion == v
-                    val bg = if (isConfirming) Glass.colors.danger.copy(alpha = 0.10f)
-                    else if (isCurrent) Glass.colors.primarySoft
-                    else Color.Transparent
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(30.dp)
-                            .padding(vertical = 1.dp)
-                            .clip(RoundedCornerShape(Glass.radius.sm))
-                            .background(bg)
-                            .padding(horizontal = 10.dp),
+                            .height(34.dp)
+                            .background(if (isConfirming) Glass.colors.danger.copy(alpha = 0.08f) else Color.Transparent)
+                            .padding(horizontal = 12.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         if (isConfirming) {
@@ -335,11 +401,15 @@ private fun ManagerDetailPane(
                                 style = centeredStyle.copy(fontFamily = FontFamily.Monospace),
                             )
                             if (isCurrent) {
-                                Spacer(Modifier.width(8.dp))
+                                Spacer(Modifier.width(9.dp))
                                 Text(
                                     text = "current",
                                     color = Glass.colors.primary,
                                     style = centeredStyle.copy(fontSize = 10.sp),
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(Glass.radius.xs))
+                                        .background(Glass.colors.primarySoft)
+                                        .padding(horizontal = 7.dp, vertical = 2.dp),
                                 )
                             }
                             Spacer(Modifier.weight(1f))
@@ -371,40 +441,132 @@ private fun ManagerDetailPane(
                     }
                 }
             }
-            Spacer(Modifier.height(16.dp))
         }
 
+        sysDetail?.let { info ->
+            Spacer(Modifier.height(12.dp))
+            SystemNote(info)
+        }
+
+        Spacer(Modifier.height(20.dp))
         Text(
-            text = "INSTALL NEW VERSION",
+            text = "Add version",
             color = Glass.colors.faint,
-            fontSize = 9.5.sp,
+            fontSize = 10.sp,
             fontWeight = FontWeight.SemiBold,
             letterSpacing = 0.6.sp,
         )
         Spacer(Modifier.height(8.dp))
-        Row(
-            modifier = Modifier
-                .height(30.dp)
-                .clip(RoundedCornerShape(Glass.radius.sm))
-                .background(Glass.colors.primary)
-                .clickable { onInstallRequested(entry.id) }
-                .padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(7.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = "Open installer",
-                color = Glass.colors.onPrimary,
-                style = LocalTextStyle.current.copy(
-                    fontSize = 12.sp,
-                    lineHeight = 12.sp,
-                    fontWeight = FontWeight.Medium,
-                    lineHeightStyle = LineHeightStyle(
-                        alignment = LineHeightStyle.Alignment.Center,
-                        trim = LineHeightStyle.Trim.Both,
-                    ),
+        DetailPrimaryButton(label = "Install new version…") { onInstallRequested(entry.id) }
+    }
+}
+
+@Composable
+private fun StatusPill(installed: Boolean, version: String?, onSystem: Boolean) {
+    val shape = RoundedCornerShape(50)
+    val (text, color) = when {
+        installed -> ("Installed" + (version?.let { " · $it" } ?: "")) to Glass.colors.success
+        onSystem -> "On system" to Glass.colors.accent
+        else -> return
+    }
+    Text(
+        text = text,
+        color = color,
+        style = LocalTextStyle.current.copy(
+            fontSize = 10.5.sp,
+            lineHeight = 10.5.sp,
+            fontWeight = FontWeight.SemiBold,
+            lineHeightStyle = LineHeightStyle(
+                alignment = LineHeightStyle.Alignment.Center,
+                trim = LineHeightStyle.Trim.Both,
+            ),
+        ),
+        modifier = Modifier
+            .clip(shape)
+            .background(color.copy(alpha = 0.14f))
+            .padding(horizontal = 9.dp, vertical = 4.dp),
+    )
+}
+
+@Composable
+private fun DetailPrimaryButton(label: String, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .height(31.dp)
+            .clip(RoundedCornerShape(Glass.radius.sm))
+            .background(Glass.colors.primary)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 15.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = label,
+            color = Glass.colors.onPrimary,
+            style = LocalTextStyle.current.copy(
+                fontSize = 12.sp,
+                lineHeight = 12.sp,
+                fontWeight = FontWeight.Medium,
+                lineHeightStyle = LineHeightStyle(
+                    alignment = LineHeightStyle.Alignment.Center,
+                    trim = LineHeightStyle.Trim.Both,
                 ),
+            ),
+        )
+    }
+}
+
+private fun toolDescription(entry: ManagerEntry): String? = when (entry.id) {
+    "jdk" -> "Eclipse Temurin — prebuilt OpenJDK runtime. Runs Java and the JDT language server."
+    "node" -> "Node.js runtime — runs JavaScript/TypeScript tooling and language servers."
+    "python-runtime" -> "Python interpreter — runs Python and Python-based language servers."
+    "go-sdk" -> "Go SDK — the Go compiler and toolchain."
+    "rust-runtime" -> "Rust toolchain — the Rust compiler (rustc) and cargo."
+    "cpp-toolchain" -> "LLVM/Clang — the Clang C/C++ compiler and tools."
+    "mingw-toolchain" -> "MinGW-w64 (UCRT64) — GCC C/C++ compiler with bundled headers."
+    "dotnet-runtime" -> ".NET SDK — the C# compiler and runtime."
+    "windows-sdk" -> "Windows SDK (MSVC + xwin) — headers and libraries for native builds."
+    else -> when (entry.category) {
+        ManagerCategory.LSP -> "Language server for ${entry.displayName}."
+        ManagerCategory.RUNTIME -> null
+    }
+}
+
+@Composable
+private fun SidebarSearch(query: String, onChange: (String) -> Unit) {
+    val colors = Glass.colors
+    val shape = RoundedCornerShape(Glass.radius.sm)
+    Row(
+        modifier = Modifier
+            .padding(horizontal = 12.dp, vertical = 10.dp)
+            .fillMaxWidth()
+            .height(28.dp)
+            .clip(shape)
+            .background(colors.surface)
+            .border(1.dp, colors.outline, shape)
+            .padding(horizontal = 9.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Canvas(Modifier.size(12.dp)) {
+            val w = this.size.width
+            val r = w * 0.32f
+            val c = Offset(w * 0.42f, w * 0.42f)
+            val sw = w * 0.12f
+            drawCircle(colors.faint, r, c, style = Stroke(sw))
+            drawLine(colors.faint, Offset(c.x + r * 0.7f, c.y + r * 0.7f), Offset(w * 0.92f, w * 0.92f), sw, StrokeCap.Round)
+        }
+        Spacer(Modifier.width(7.dp))
+        Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+            BasicTextField(
+                value = query,
+                onValueChange = onChange,
+                singleLine = true,
+                cursorBrush = SolidColor(colors.primary),
+                textStyle = TextStyle(color = colors.text, fontSize = 11.5.sp),
+                modifier = Modifier.fillMaxWidth(),
             )
+            if (query.isEmpty()) {
+                Text("Search tools…", color = colors.faint, fontSize = 11.5.sp)
+            }
         }
     }
 }
