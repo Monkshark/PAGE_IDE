@@ -74,6 +74,7 @@ object PageRuntimeEnv {
         val current = env[pathKey].orEmpty()
         env[pathKey] = (prependBins + current).joinToString(sep)
         applyWindowsSdkEnv(env, sep)
+        applySystemMsvcEnv(env, sep)
         applySwiftSdkEnv(env)
         runCatching { ensureSwiftCInterop() }
         runCatching { ensureClangdConfigForMingw() }
@@ -127,6 +128,28 @@ object PageRuntimeEnv {
             val existing = env[key]
             env[key] = if (existing.isNullOrBlank()) value else value + sep + existing
         }
+    }
+
+    private fun applySystemMsvcEnv(env: MutableMap<String, String>, sep: String) {
+        if (!LspInstaller.isWindows()) return
+        if (runCatching { WindowsSdkInstaller().envVars() }.getOrNull() != null) return
+        val msvc = MsvcEnv.envVars() ?: return
+        val pathKey = env.keys.firstOrNull { it.equals("PATH", ignoreCase = true) } ?: "PATH"
+        for ((key, value) in msvc) {
+            if (key.equals("PATH", ignoreCase = true)) {
+                env[pathKey] = mergePathPrepend(value, env[pathKey].orEmpty(), sep)
+            } else {
+                val existing = env[key]
+                env[key] = if (existing.isNullOrBlank()) value else value + sep + existing
+            }
+        }
+    }
+
+    internal fun mergePathPrepend(added: String, current: String, sep: String): String {
+        val currentEntries = current.split(sep).filter { it.isNotBlank() }
+        val currentLower = currentEntries.map { it.lowercase() }.toSet()
+        val newEntries = added.split(sep).filter { it.isNotBlank() && it.lowercase() !in currentLower }
+        return (newEntries + currentEntries).joinToString(sep)
     }
 
     private const val PAGE_MANAGED_MARKER = "# PAGE-managed clangd config (auto-generated)"
