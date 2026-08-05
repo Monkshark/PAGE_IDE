@@ -152,6 +152,10 @@ class LspController(
         if (startAttempted) return
         startAttempted = true
         activeBackend = backend
+        scope.launch { startBackend(backend) }
+    }
+
+    private fun startBackend(backend: LanguageBackend) {
         startActivityJanitor()
         val resolveStartedMs = System.currentTimeMillis()
         println("[lsp] resolving ${backend.displayName} (workspace=$workspaceRoot)")
