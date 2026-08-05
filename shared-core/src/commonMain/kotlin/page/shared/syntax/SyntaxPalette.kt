@@ -16,4 +16,8 @@ data class SyntaxPalette(
     val property: Color = identifier,
     val parameter: Color = identifier,
     val template: Color = identifier,
-)
+) {
+    val bracketDepths: List<Color> = listOf(function, property, keyword, template, type, annotation)
+
+    fun bracketAt(depth: Int): Color = bracketDepths[depth.mod(bracketDepths.size)]
+}
