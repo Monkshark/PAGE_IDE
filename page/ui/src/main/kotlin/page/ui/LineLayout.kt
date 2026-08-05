@@ -86,17 +86,16 @@ internal class LineLayout(
 
     val lineCount: Int get() = metrics.lineCount
 
-    /** Advance of a single character; the editor font is monospaced, so one probe covers all columns. */
     val columnWidthPx: Float by lazy {
         measurer.measure(AnnotatedString("0"), style = style, softWrap = false).size.width.toFloat()
     }
 
-    private var scopeSpanCache: Pair<Int, List<ScopeSpan>>? = null
+    private var scopeSpanCache: Pair<List<page.shared.syntax.BracketPair>, List<ScopeSpan>>? = null
 
-    internal fun scopeSpans(source: String, indentWidth: Int): List<ScopeSpan> {
-        scopeSpanCache?.let { (width, spans) -> if (width == indentWidth) return spans }
-        val spans = scopeSpansFor(source, indentWidth)
-        scopeSpanCache = indentWidth to spans
+    internal fun scopeSpans(pairs: List<page.shared.syntax.BracketPair>): List<ScopeSpan> {
+        scopeSpanCache?.let { (cached, spans) -> if (cached === pairs) return spans }
+        val spans = scopeSpansFor(this, pairs)
+        scopeSpanCache = pairs to spans
         return spans
     }
 

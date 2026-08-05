@@ -141,6 +141,7 @@ fun CodeEditor(
     viewportHeightProvider: (() -> Float)? = null,
     scrollOffsetProvider: (() -> Float)? = null,
     scopeGuides: ScopeGuides = ScopeGuides.None,
+    bracketPairs: List<page.shared.syntax.BracketPair> = emptyList(),
     focusRequestVersion: Int = 0,
     caretBringIntoViewEnabled: Boolean = true,
     contextMenuActions: List<EditorContextAction> = emptyList(),
@@ -582,16 +583,15 @@ fun CodeEditor(
                     }
                 }
             }
-            if (scopeGuides.enabled) {
+            if (scopeGuides.enabled && bracketPairs.isNotEmpty()) {
+                val caretOffset = latestMapping.originalToTransformed(
+                    latestValue.selection.start.coerceIn(0, latestValue.text.length),
+                )
                 drawScopeGuides(
                     guides = scopeGuides,
                     layout = layout,
-                    text = displayText,
-                    caretLine = layout.getLineForOffset(
-                        latestMapping.originalToTransformed(
-                            latestValue.selection.start.coerceIn(0, latestValue.text.length),
-                        ),
-                    ),
+                    pairs = bracketPairs,
+                    activePair = page.shared.syntax.BracketScan.enclosing(bracketPairs, caretOffset),
                     firstLine = visibleFirstLine,
                     lastLine = visibleLastLine,
                 )
