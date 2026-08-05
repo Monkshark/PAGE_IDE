@@ -328,6 +328,14 @@ internal fun InstallGuideDialog(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
+                        Box(
+                            modifier = Modifier
+                                .size(30.dp)
+                                .clip(RoundedCornerShape(Glass.radius.sm))
+                                .background(Glass.colors.surfaceL3),
+                            contentAlignment = Alignment.Center,
+                        ) { page.app.ui.ToolIcon(definition.id, definition.displayName, 17.dp) }
+                        Spacer(Modifier.width(11.dp))
                         Text(
                             text = "Install ${definition.displayName}",
                             color = Glass.colors.text,
