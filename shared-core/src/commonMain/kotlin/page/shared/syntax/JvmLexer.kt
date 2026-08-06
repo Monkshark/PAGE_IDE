@@ -66,6 +66,7 @@ internal abstract class JvmLexer(
                     when {
                         word in keywords -> out += Token(TokenKind.KEYWORD, start until i)
                         startsWithUpperCase(word) -> out += Token(TokenKind.TYPE, start until i)
+                        else -> out += Token(TokenKind.IDENTIFIER, start until i)
                     }
                 }
                 else -> i++

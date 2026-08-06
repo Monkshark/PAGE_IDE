@@ -21,10 +21,39 @@ data class SyntaxPalette(
     val annotation: Color,
     val type: Color,
     val identifier: Color,
+    val function: Color = identifier,
+    val property: Color = identifier,
+    val parameter: Color = identifier,
+    val template: Color = identifier,
 )
 ```
 
 `PUNCT` 슬롯은 없다. 괄호·세미콜론·콤마는 너무 자주 나와 색을 입히면 본문이 시끄럽다 → `colorFor` 가 `null` 을 돌려주고 본문색 그대로 둔다
+
+---
+
+## `SyntaxPreset`
+
+`shared-core/.../SyntaxPreset.kt` 가 팔레트를 얼마나 쓸지 정한다. 팔레트는 역할마다 색을 항상 들고 있고, 프리셋이 그중 몇 개를 쓸지와 강조를 얹을지를 고른다
+
+| 프리셋 | 역할 색 | 강조 |
+| --- | --- | --- |
+| `CALM` | 안 씀 — 호출·멤버가 일반 식별자로 보인다 | 없음 |
+| `BALANCED` | 안 씀 | 호출 기울임 · 멤버 밑줄 · 파라미터 옅게 |
+| `VIVID` | 씀 | 없음 |
+| `EXPRESSIVE` | 씀 | 있음 |
+
+`SyntaxRoles.refine(text, tokens)` 가 렉서가 끝난 뒤 식별자·문자열 토큰을 `FUNCTION`·`PROPERTY`·`PARAMETER`·`TEMPLATE` 로 승격시킨다. 손으로 쓴 렉서든 tree-sitter 든 역할 판별은 이 한 곳에서 나온다
+
+설정 → Editor → Syntax colors 로 고르고 `EditorOptions.syntaxPreset` 에 저장된다
+
+---
+
+## 무지개 괄호
+
+`BracketScan.pairs(text, tokens)` 가 파일을 한 번 훑어 괄호를 중첩 깊이와 함께 짝짓는다. 문자열·주석 안의 괄호는 건너뛴다. `SyntaxPalette.bracketAt(depth)` 는 팔레트 자기 색을 순환시켜, 고정된 무지개색이 아니라 테마마다 제 색으로 물든다
+
+스코프 선도 같은 짝에서 나온다. 여는 괄호에서 짝까지 세로선을 긋기 때문에 인자가 줄바꿈돼도 열이 어긋나지 않는다. 설정 → Editor → Rainbow brackets · Scope guides 로 조절한다
 
 ---
 
@@ -41,15 +70,15 @@ data class SyntaxPalette(
 .glassdoc .synx .s{color:#8A92A6;font-family:ui-monospace,Consolas,monospace;}
 </style>
 <div class="synx">
-<div class="r"><i style="background:#9DA8FF"></i><span class="k" style="color:#9DA8FF">keyword</span><span class="h">#9DA8FF</span><span class="s"><b style="color:#9DA8FF">class</b> · fun · val · return</span></div>
-<div class="r"><i style="background:#49C4B9"></i><span class="k" style="color:#49C4B9">string</span><span class="h">#49C4B9</span><span class="s"><b style="color:#49C4B9">"hello"</b> · 'a' · """multi"""</span></div>
-<div class="r"><i style="background:#B9A7EB"></i><span class="k" style="color:#B9A7EB">number</span><span class="h">#B9A7EB</span><span class="s"><b style="color:#B9A7EB">42</b> · 3.14f · 0xFF · 1e10</span></div>
-<div class="r"><i style="background:#808BA5"></i><span class="k" style="color:#808BA5">comment</span><span class="h">#808BA5</span><span class="s"><b style="color:#808BA5">// line</b> · /* block */</span></div>
+<div class="r"><i style="background:#8E9CFF"></i><span class="k" style="color:#8E9CFF">keyword</span><span class="h">#8E9CFF</span><span class="s"><b style="color:#8E9CFF">class</b> · fun · val · return</span></div>
+<div class="r"><i style="background:#63C2A6"></i><span class="k" style="color:#63C2A6">string</span><span class="h">#63C2A6</span><span class="s"><b style="color:#63C2A6">"hello"</b> · 'a' · """multi"""</span></div>
+<div class="r"><i style="background:#9AB0EB"></i><span class="k" style="color:#9AB0EB">number</span><span class="h">#9AB0EB</span><span class="s"><b style="color:#9AB0EB">42</b> · 3.14f · 0xFF · 1e10</span></div>
+<div class="r"><i style="background:#7F8AA4"></i><span class="k" style="color:#7F8AA4">comment</span><span class="h">#7F8AA4</span><span class="s"><b style="color:#7F8AA4">// line</b> · /* block */</span></div>
 <div class="r"><i style="background:#6E8FA8"></i><span class="k" style="color:#6E8FA8">docComment</span><span class="h">#6E8FA8</span><span class="s"><b style="color:#6E8FA8">/** kdoc */</b> · @param</span></div>
 <div class="r"><i style="background:#F08FC8"></i><span class="k" style="color:#F08FC8">todoTag</span><span class="h">#F08FC8</span><span class="s"><b style="color:#F08FC8">TODO</b> · FIXME · XXX</span></div>
-<div class="r"><i style="background:#B79CFF"></i><span class="k" style="color:#B79CFF">annotation</span><span class="h">#B79CFF</span><span class="s"><b style="color:#B79CFF">@Composable</b> · @Override</span></div>
-<div class="r"><i style="background:#71BEC7"></i><span class="k" style="color:#71BEC7">type</span><span class="h">#71BEC7</span><span class="s"><b style="color:#71BEC7">String</b> · MutableList</span></div>
-<div class="r"><i style="background:#BEC6DB"></i><span class="k" style="color:#BEC6DB">identifier</span><span class="h">#BEC6DB</span><span class="s"><b style="color:#BEC6DB">count</b> · userName · items</span></div>
+<div class="r"><i style="background:#B49BE8"></i><span class="k" style="color:#B49BE8">annotation</span><span class="h">#B49BE8</span><span class="s"><b style="color:#B49BE8">@Composable</b> · @Override</span></div>
+<div class="r"><i style="background:#6BBEC2"></i><span class="k" style="color:#6BBEC2">type</span><span class="h">#6BBEC2</span><span class="s"><b style="color:#6BBEC2">String</b> · MutableList</span></div>
+<div class="r"><i style="background:#C4C6CE"></i><span class="k" style="color:#C4C6CE">identifier</span><span class="h">#C4C6CE</span><span class="s"><b style="color:#C4C6CE">count</b> · userName · items</span></div>
 </div>
 </div>
 

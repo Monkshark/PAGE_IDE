@@ -3,6 +3,7 @@ package page.app
 import page.runtime.*
 import page.workspace.*
 
+import page.shared.syntax.SyntaxPreset
 import page.ui.GlassPalette
 import java.nio.file.Files
 import java.nio.file.Path
@@ -18,6 +19,12 @@ data class AutoSaveOptions(
     companion object { val DEFAULT = AutoSaveOptions() }
 }
 
+enum class ScopeGuideMode(val label: String) {
+    OFF("Off"),
+    CURRENT("Current block"),
+    ALL("All levels"),
+}
+
 data class EditorOptions(
     val fontSize: Int = 14,
     val tabSize: Int = 4,
@@ -25,6 +32,11 @@ data class EditorOptions(
     val showLineNumbers: Boolean = true,
     val showMinimap: Boolean = false,
     val highlightCurrentLine: Boolean = true,
+    val syntaxPreset: SyntaxPreset = SyntaxPreset.VIVID,
+    val scopeGuides: ScopeGuideMode = ScopeGuideMode.ALL,
+    val highlightIdentifierUnderCaret: Boolean = true,
+    val rainbowBrackets: Boolean = true,
+    val dimUnusedSymbols: Boolean = true,
 ) {
     companion object { val DEFAULT = EditorOptions() }
 }
@@ -82,6 +94,11 @@ object AppSettings {
     private const val KEY_ED_LINE_NUMBERS = "editor.showLineNumbers"
     private const val KEY_ED_MINIMAP = "editor.showMinimap"
     private const val KEY_ED_HL_LINE = "editor.highlightCurrentLine"
+    private const val KEY_ED_SYNTAX_PRESET = "editor.syntaxPreset"
+    private const val KEY_ED_SCOPE_GUIDES = "editor.scopeGuides"
+    private const val KEY_ED_HL_IDENTIFIER = "editor.highlightIdentifierUnderCaret"
+    private const val KEY_ED_RAINBOW = "editor.rainbowBrackets"
+    private const val KEY_ED_DIM_UNUSED = "editor.dimUnusedSymbols"
 
     private const val KEY_LSP_INLAY = "lsp.showInlayHints"
     private const val KEY_LSP_MIDWORD = "lsp.triggerCompletionMidWord"
@@ -139,6 +156,14 @@ object AppSettings {
             showLineNumbers = p.getBoolean(KEY_ED_LINE_NUMBERS, default.showLineNumbers),
             showMinimap = p.getBoolean(KEY_ED_MINIMAP, default.showMinimap),
             highlightCurrentLine = p.getBoolean(KEY_ED_HL_LINE, default.highlightCurrentLine),
+            syntaxPreset = p.getProperty(KEY_ED_SYNTAX_PRESET)
+                ?.let { v -> runCatching { SyntaxPreset.valueOf(v) }.getOrNull() } ?: default.syntaxPreset,
+            scopeGuides = p.getProperty(KEY_ED_SCOPE_GUIDES)
+                ?.let { v -> runCatching { ScopeGuideMode.valueOf(v) }.getOrNull() } ?: default.scopeGuides,
+            highlightIdentifierUnderCaret =
+                p.getBoolean(KEY_ED_HL_IDENTIFIER, default.highlightIdentifierUnderCaret),
+            rainbowBrackets = p.getBoolean(KEY_ED_RAINBOW, default.rainbowBrackets),
+            dimUnusedSymbols = p.getBoolean(KEY_ED_DIM_UNUSED, default.dimUnusedSymbols),
         )
     }
     fun saveEditor(o: EditorOptions) = writeProperties(mapOf(
@@ -148,6 +173,11 @@ object AppSettings {
         KEY_ED_LINE_NUMBERS to o.showLineNumbers.toString(),
         KEY_ED_MINIMAP to o.showMinimap.toString(),
         KEY_ED_HL_LINE to o.highlightCurrentLine.toString(),
+        KEY_ED_SYNTAX_PRESET to o.syntaxPreset.name,
+        KEY_ED_SCOPE_GUIDES to o.scopeGuides.name,
+        KEY_ED_HL_IDENTIFIER to o.highlightIdentifierUnderCaret.toString(),
+        KEY_ED_RAINBOW to o.rainbowBrackets.toString(),
+        KEY_ED_DIM_UNUSED to o.dimUnusedSymbols.toString(),
     ))
 
     fun loadLsp(default: LspOptions = LspOptions.DEFAULT): LspOptions {

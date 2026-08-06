@@ -1616,7 +1616,8 @@ class LspController(
             println("[lsp] publishDiagnostics $uri — 0 diagnostic(s)")
         }
         if (mapped.isNotEmpty()) {
-            println("[lsp] publishDiagnostics $uri — ${mapped.size} diagnostic(s)")
+            val unnecessaryCount = mapped.count { it.unnecessary }
+            println("[lsp] publishDiagnostics $uri — ${mapped.size} diagnostic(s), $unnecessaryCount unnecessary")
             mapped.take(5).forEach { d ->
                 val msgPreview = d.message.take(60).replace('\n', ' ')
                 val tags = buildString {

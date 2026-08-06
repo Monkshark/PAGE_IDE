@@ -140,6 +140,8 @@ fun CodeEditor(
     manageHistory: Boolean = true,
     viewportHeightProvider: (() -> Float)? = null,
     scrollOffsetProvider: (() -> Float)? = null,
+    scopeGuides: ScopeGuides = ScopeGuides.None,
+    bracketPairs: List<page.shared.syntax.BracketPair> = emptyList(),
     focusRequestVersion: Int = 0,
     caretBringIntoViewEnabled: Boolean = true,
     contextMenuActions: List<EditorContextAction> = emptyList(),
@@ -580,6 +582,18 @@ fun CodeEditor(
                         )
                     }
                 }
+            }
+            if (scopeGuides.enabled && bracketPairs.isNotEmpty()) {
+                val caret = latestValue.selection.start.coerceIn(0, latestValue.text.length)
+                drawScopeGuides(
+                    guides = scopeGuides,
+                    layout = layout,
+                    pairs = bracketPairs,
+                    activePair = page.shared.syntax.BracketScan.enclosing(bracketPairs, caret),
+                    mapOffset = { latestMapping.originalToTransformed(it) },
+                    firstLine = visibleFirstLine,
+                    lastLine = visibleLastLine,
+                )
             }
             layout.draw(this, visibleFirstLine, visibleLastLine)
             if (ctrlHoverLinkRange != null) {
