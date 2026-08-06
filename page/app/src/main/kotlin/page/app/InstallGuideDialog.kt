@@ -105,6 +105,8 @@ internal fun InstallGuideDialog(
     var showHeavyConfirm by remember(installer) { mutableStateOf(false) }
     var heavyConfirmAccepted by remember(installer) { mutableStateOf(false) }
     var outputLines by remember(installer) { mutableStateOf<List<String>>(emptyList()) }
+    var loggedDownloadBucket by remember(installer) { mutableStateOf(-1) }
+    var loggedExtracting by remember(installer) { mutableStateOf(false) }
     var installJob by remember(installer) { mutableStateOf<Job?>(null) }
     var showCancelConfirm by remember(installer) { mutableStateOf(false) }
     val cancelled = remember(installer) { AtomicBoolean(false) }
@@ -184,7 +186,9 @@ internal fun InstallGuideDialog(
         if (InstallProgressRegistry.get(active.languageId) != null) return
         cancelled.set(false)
         installProgress = LspInstaller.Progress.Downloading(0, -1)
-        outputLines = emptyList()
+        outputLines = listOf("> Installing ${active.displayName}" + (selectedVersion?.let { " $it" } ?: ""))
+        loggedDownloadBucket = -1
+        loggedExtracting = false
         InstallProgressRegistry.start(active.languageId, active.displayName, cancelled = cancelled)
         installJob = launchScope.launch {
             withContext(Dispatchers.IO) {
@@ -192,8 +196,26 @@ internal fun InstallGuideDialog(
                     if (cancelled.get()) return@install
                     installProgress = p
                     InstallProgressRegistry.update(active.languageId, p)
-                    if (p is LspInstaller.Progress.CommandOutput) {
-                        outputLines = (outputLines + p.line).takeLast(2000)
+                    when (p) {
+                        is LspInstaller.Progress.CommandOutput ->
+                            outputLines = (outputLines + p.line).takeLast(2000)
+                        is LspInstaller.Progress.Downloading -> {
+                            val bucket = downloadBucket(p)
+                            if (bucket > loggedDownloadBucket) {
+                                loggedDownloadBucket = bucket
+                                outputLines = (outputLines + downloadLine(active.displayName, p)).takeLast(2000)
+                            }
+                        }
+                        is LspInstaller.Progress.Extracting -> {
+                            if (!loggedExtracting) {
+                                loggedExtracting = true
+                                outputLines = (outputLines + "> ${p.message}").takeLast(2000)
+                            }
+                        }
+                        is LspInstaller.Progress.Done ->
+                            outputLines = (outputLines + "> Installed at ${p.executable}").takeLast(2000)
+                        is LspInstaller.Progress.Failed ->
+                            outputLines = (outputLines + "> Failed: ${p.error.message ?: p.error::class.simpleName}").takeLast(2000)
                     }
                 }
                 if (!cancelled.get() && LspInstaller.isWindows() && active.languageId == "clangd") {
@@ -1438,5 +1460,19 @@ private fun HeavyConfirmOverlay(
                 }
             }
         }
+    }
+}
+
+private fun downloadBucket(p: LspInstaller.Progress.Downloading): Int =
+    if (p.total > 0) ((p.bytesRead * 10) / p.total).toInt() else (p.bytesRead / (4L * 1024 * 1024)).toInt()
+
+private fun downloadLine(name: String, p: LspInstaller.Progress.Downloading): String {
+    val mb = p.bytesRead / 1024.0 / 1024.0
+    return if (p.total > 0) {
+        val totalMb = p.total / 1024.0 / 1024.0
+        val pct = ((p.bytesRead * 100) / p.total).toInt()
+        String.format("> Downloading %s… %.1f / %.1f MB (%d%%)", name, mb, totalMb, pct)
+    } else {
+        String.format("> Downloading %s… %.1f MB", name, mb)
     }
 }
