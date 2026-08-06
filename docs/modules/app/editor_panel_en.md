@@ -160,6 +160,7 @@ Each row carries a `context` saying where the key is heard — `Global` rows run
 
 Key matching itself now goes through `isPrimaryPressed()`: `Ctrl` on Windows and Linux, `Cmd` on macOS — including the editor's `Ctrl+A/C/X/V`, word motion, `Ctrl+Click`, and the file tree's copy and paste.
 The **Keymap** screen in Settings and the macOS menu bar read the same table. The sheet lists everything under `Anywhere` / `While editing` / `In the file tree`; the menu bar takes only `Global` rows that have a body and groups them into File · Edit · Navigate · Code · View · PAGE. It renders on macOS only, and `apple.laf.useScreenMenuBar` puts it in the system bar at the top of the screen.
+On Windows and Linux the same table also becomes the title-bar menu. `File Edit Navigate Code View PAGE` take the place of the `PAGE` wordmark (the mark stays), and below 900 dp of window width they collapse into a single `Menu` button. macOS keeps the wordmark because its menus live in the system bar instead. All three surfaces read the same grouping from `ActionMenus`.
 
 ---
 
