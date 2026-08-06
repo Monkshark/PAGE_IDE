@@ -12,6 +12,7 @@ import page.editor.EditHistory
 import page.editor.EditSnapshot
 import page.editor.FileDocument
 import page.editor.OpenTab
+import page.lsp.ReferenceLocation
 import page.lsp.RenameApply
 import page.lsp.RenameWorkspaceEdit
 import page.lsp.pickSingleOtherReference
@@ -27,6 +28,7 @@ internal class LspEditorInterconnector(
     private val applyExternalChange: (String, String) -> Unit,
     private val getReferences: () -> ReferencesQueryState?,
     private val setReferences: (ReferencesQueryState?) -> Unit,
+    private val localUsages: (symbol: String, originUri: String) -> List<ReferenceLocation> = { _, _ -> emptyList() },
 ) {
     fun jumpToProblem(picked: Path, line: Int, character: Int) {
         val pane = focused()
@@ -54,26 +56,20 @@ internal class LspEditorInterconnector(
         )
         val ctrl = controllerFor(p)
         if (ctrl == null) {
-            setReferences(getReferences()?.copy(isLoading = false, errorMessage = "No LSP for this file type"))
+            publishLocalUsages(symbol, origin, surface)
             return
         }
         ctrl.references(p, line, char, includeDeclaration = true, symbolName = symbol)
             .whenComplete { results, err ->
                 if (err != null) {
-                    setReferences(
-                        ReferencesQueryState(
-                            symbolName = symbol,
-                            originUri = origin,
-                            results = emptyList(),
-                            isLoading = false,
-                            errorMessage = err.message?.lineSequence()?.firstOrNull()?.take(160)
-                                ?: "Find references failed",
-                            surface = surface,
-                        )
-                    )
+                    publishLocalUsages(symbol, origin, surface)
                     return@whenComplete
                 }
                 val list = results.orEmpty()
+                if (list.isEmpty()) {
+                    publishLocalUsages(symbol, origin, surface)
+                    return@whenComplete
+                }
                 val autoJump = pickSingleOtherReference(list, origin, line, char)
                 if (autoJump != null) {
                     setReferences(null)
@@ -105,6 +101,18 @@ internal class LspEditorInterconnector(
                     )
                 }
             }
+    }
+
+    private fun publishLocalUsages(symbol: String, origin: String, surface: ReferencesSurface) {
+        setReferences(
+            ReferencesQueryState(
+                symbolName = symbol,
+                originUri = origin,
+                results = localUsages(symbol, origin),
+                isLoading = false,
+                surface = surface,
+            )
+        )
     }
 
     fun applyRename(edit: RenameWorkspaceEdit) {

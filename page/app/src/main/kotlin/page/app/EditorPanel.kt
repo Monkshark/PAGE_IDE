@@ -1085,20 +1085,27 @@ fun EditorPanel(
                 return declarationCache
             }
             fun triggerDefinitionOrReferences(text: String, offset: Int): Boolean {
-                val defCb = onRequestDefinition ?: return false
-                val nav = onGoToDefinition ?: return false
                 val word = wordRangeAt(text, offset) ?: return false
                 val symbolName = text.substring(word.first, word.second)
                 if (isInStringOrComment(tokens, text, offset) || !isRenamableIdentifier(symbolName)) return false
                 val pos = TextBuffer(text).lineColOf(offset)
                 val selfUri = activePath?.toUri()?.toString()
                 val refCb = onRequestReferences
+                val declaredHere = declarationsIn(text)[symbolName] == word.first
+                val defCb = onRequestDefinition
+                val nav = onGoToDefinition
+                if (declaredHere || defCb == null || nav == null) {
+                    if (refCb == null) return false
+                    refCb(pos.line, pos.col, symbolName, ReferencesSurface.Popup)
+                    return true
+                }
                 defCb(pos.line, pos.col).whenComplete { targets, _ ->
                     val first = targets?.firstOrNull()
                     val atDeclaration = first != null && refCb != null && selfUri != null &&
                         first.uri == selfUri && definitionTargetContains(first, pos.line, pos.col)
                     if (atDeclaration) refCb!!(pos.line, pos.col, symbolName, ReferencesSurface.Popup)
                     else if (first != null) nav(first)
+                    else if (refCb != null) refCb(pos.line, pos.col, symbolName, ReferencesSurface.Popup)
                 }
                 return true
             }
@@ -1140,7 +1147,8 @@ fun EditorPanel(
                     if (word == null) null
                     else {
                         val name = text.substring(word.first, word.second)
-                        if (declarationsIn(text)[name] == word.first) "Find usages" else "Go to declaration"
+                        val declaredHere = declarationsIn(text)[name] == word.first
+                        if (declaredHere || onRequestDefinition == null) "Find usages" else "Go to declaration"
                     }
                 },
                 caretPopup = references?.let { query ->
@@ -1155,19 +1163,16 @@ fun EditorPanel(
                     }
                 },
                 onResolveCtrlHoverLink = { origOff ->
-                    if (onRequestDefinition == null) null
+                    val text = latestValue.text
+                    val word = wordRangeAt(text, origOff)
+                    if (word == null) null
                     else {
-                        val text = latestValue.text
-                        val word = wordRangeAt(text, origOff)
-                        if (word == null) null
-                        else {
-                            val symbolName = text.substring(word.first, word.second)
-                            if (
-                                !isInStringOrComment(tokens, text, origOff) &&
-                                isRenamableIdentifier(symbolName)
-                            ) word.first until word.second
-                            else null
-                        }
+                        val symbolName = text.substring(word.first, word.second)
+                        if (
+                            !isInStringOrComment(tokens, text, origOff) &&
+                            isRenamableIdentifier(symbolName)
+                        ) word.first until word.second
+                        else null
                     }
                 },
                 ctrlHoverLinkColor = MaterialTheme.colorScheme.primary,
