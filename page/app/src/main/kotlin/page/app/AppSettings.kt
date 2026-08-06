@@ -32,7 +32,7 @@ data class EditorOptions(
     val showLineNumbers: Boolean = true,
     val showMinimap: Boolean = false,
     val highlightCurrentLine: Boolean = true,
-    val syntaxPreset: SyntaxPreset = SyntaxPreset.VIVID,
+    val syntaxPreset: SyntaxPreset = SyntaxPreset.CALM,
     val scopeGuides: ScopeGuideMode = ScopeGuideMode.ALL,
     val highlightIdentifierUnderCaret: Boolean = true,
     val rainbowBrackets: Boolean = true,
