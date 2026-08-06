@@ -2,7 +2,17 @@ package page.workspace
 
 import page.runtime.*
 
-import androidx.compose.foundation.ContextMenuArea
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.isSecondaryPressed
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
+import page.ui.CompactMenuContainer
+import page.ui.CompactMenuItem
 import androidx.compose.foundation.ContextMenuItem
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -167,8 +177,7 @@ fun TreeRow(
             }
         }
     }
-    ContextMenuArea(
-        items = {
+    val contextItems: () -> List<ContextMenuItem> = {
             val effective: Set<Path> = if (node.path in selection) selection else setOf(node.path)
             val multi = effective.size > 1
             val copyable: Set<Path> = effective.filter { !isRoot || it != node.path }.toSet()
@@ -202,6 +211,20 @@ fun TreeRow(
                     add(ContextMenuItem("Show in Explorer") { onReveal(node.path) })
                     add(ContextMenuItem("Copy path") { onCopyPath(node.path) })
                     add(ContextMenuItem("Copy relative path") { onCopyRelativePath(node.path) })
+                }
+            }
+    }
+    var menuAt by remember(node.path) { mutableStateOf<IntOffset?>(null) }
+    Box(
+        modifier = Modifier.pointerInput(Unit) {
+            awaitPointerEventScope {
+                while (true) {
+                    val event = awaitPointerEvent(PointerEventPass.Initial)
+                    if (event.type != PointerEventType.Press) continue
+                    if (!event.buttons.isSecondaryPressed) continue
+                    val at = event.changes.firstOrNull()?.position ?: continue
+                    menuAt = IntOffset(at.x.toInt(), at.y.toInt())
+                    event.changes.forEach { it.consume() }
                 }
             }
         },
@@ -292,6 +315,26 @@ fun TreeRow(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
+        }
+        val anchor = menuAt
+        if (anchor != null) {
+            Popup(
+                offset = anchor,
+                onDismissRequest = { menuAt = null },
+                properties = PopupProperties(focusable = true),
+            ) {
+                CompactMenuContainer {
+                    for (item in contextItems()) {
+                        CompactMenuItem(
+                            label = item.label,
+                            onClick = {
+                                menuAt = null
+                                item.onClick()
+                            },
+                        )
+                    }
+                }
+            }
         }
     }
 }
