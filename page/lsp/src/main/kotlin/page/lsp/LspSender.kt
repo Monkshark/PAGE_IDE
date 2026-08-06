@@ -11,6 +11,8 @@ internal class LspSender(private val name: String = "lsp-sender") {
         0, 1, 10, TimeUnit.SECONDS, LinkedBlockingQueue(),
     ) { r -> Thread(r, name).apply { isDaemon = true } }
 
+    fun pending(): Int = executor.queue.size
+
     private fun warnBacklog() {
         val depth = executor.queue.size
         if (depth >= 4) println("[lsp] $name backlog: $depth message(s) queued — server may not be draining stdin")

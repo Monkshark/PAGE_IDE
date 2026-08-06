@@ -245,7 +245,7 @@ internal fun IdeMainLayout(
     val onToggleSettings = settings.onToggle
     var dragSourcePane: PaneSide? by remember { mutableStateOf(null) }
     val shellActivePath = editor.focused().book.active?.path
-    val shellCtrl = shellActivePath?.let { lspRouter.controllerFor(it) }
+    val shellCtrl = shellActivePath?.let { lspRouter.existingControllerFor(it) }
     val installGuideOpen by (shellCtrl?.installGuideOpen ?: kotlinx.coroutines.flow.MutableStateFlow(false)).collectAsState()
     var runtimeDialogOpen by remember { mutableStateOf<String?>(null) }
     var installManagerOpen by remember { mutableStateOf<String?>(null) }

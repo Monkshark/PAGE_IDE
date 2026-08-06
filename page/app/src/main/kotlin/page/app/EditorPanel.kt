@@ -128,6 +128,8 @@ private const val ASYNC_TOKENIZE_THRESHOLD = 20_000
 
 private data class TokenizedText(val text: String, val tokens: List<Token>)
 
+private const val FOLD_DETECT_DEBOUNCE_MS = 120L
+
 @Composable
 fun EditorPanel(
     value: TextFieldValue,
@@ -388,8 +390,13 @@ fun EditorPanel(
     val foldExtension = remember(activePath) {
         activePath?.fileName?.toString()?.substringAfterLast('.', "")?.takeIf { it.isNotEmpty() }
     }
-    val foldRegions = remember(value.text, foldExtension) {
-        LanguageFolders.forExtension(foldExtension).detect(value.text)
+    val foldRegions by produceState(emptyList<FoldRegions.Region>(), value.text, foldExtension) {
+        val text = value.text
+        val extension = foldExtension
+        kotlinx.coroutines.delay(FOLD_DETECT_DEBOUNCE_MS)
+        this.value = withContext(Dispatchers.Default) {
+            LanguageFolders.forExtension(extension).detect(text)
+        }
     }
     var foldedRegions by remember(activePath) { mutableStateOf<Set<FoldRegions.Region>>(emptySet()) }
     var initialFoldApplied by remember(activePath) { mutableStateOf(false) }

@@ -73,7 +73,7 @@ internal fun lspStatusLineText(lspRouter: LspRouter, activePath: Path?): Pair<St
     if (langId == null && !isKotlin) return null
     val resolvedId = langId ?: "kotlin"
     val resolvedName = (displayName ?: "Kotlin").substringBefore(" (")
-    val ctrl = activePath?.let { lspRouter.controllerFor(it) }
+    val ctrl = activePath?.let { lspRouter.existingControllerFor(it) }
     val installer = LspInstallers.forId(resolvedId) ?: return when {
         isKotlin && ctrl?.status?.value == LspController.Status.MISSING ->
             "LSP · kotlin-language-server missing" to resolvedId

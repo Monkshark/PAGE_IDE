@@ -38,7 +38,13 @@ object LspInstallers {
         "windows-sdk" to { WindowsSdkInstaller() },
     )
 
-    fun forId(languageId: String): LspInstaller? = registry[languageId]?.invoke()
+    private val instances = java.util.concurrent.ConcurrentHashMap<String, LspInstaller>()
+
+    fun forId(languageId: String): LspInstaller? {
+        instances[languageId]?.let { return it }
+        val created = registry[languageId]?.invoke() ?: return null
+        return instances.putIfAbsent(languageId, created) ?: created
+    }
 
     fun supports(languageId: String): Boolean = registry.containsKey(languageId)
 
