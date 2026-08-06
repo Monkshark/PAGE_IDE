@@ -19,25 +19,32 @@ object UnusedSymbols {
     ): List<IntRange> {
         if (text.isEmpty() || tokens.isEmpty()) return emptyList()
         val importLines = importLines(text)
-        val counts = wordCounts(text, importLines)
+        val uses = wordUses(text, importLines)
         val ranges = ArrayList<IntRange>()
-        ranges += unusedImports(text, importLines, counts)
-        ranges += unusedLocals(text, tokens, pairs, counts)
+        ranges += unusedImports(text, importLines, uses)
+        ranges += unusedLocals(text, tokens, pairs, uses)
         return ranges
     }
 
-    private fun wordCounts(text: String, importLines: List<IntRange>): Map<String, Int> {
-        val counts = HashMap<String, Int>()
+    private fun wordUses(text: String, importLines: List<IntRange>): Map<String, MutableList<Int>> {
+        val uses = HashMap<String, MutableList<Int>>()
         var i = 0
         while (i < text.length) {
             if (!isNameStart(text[i])) { i++; continue }
             val start = i
             while (i < text.length && isNamePart(text[i])) i++
             if (importLines.any { start >= it.first && start <= it.last }) continue
-            val name = text.substring(start, i)
-            counts[name] = (counts[name] ?: 0) + 1
+            uses.getOrPut(text.substring(start, i)) { ArrayList() }.add(start)
         }
-        return counts
+        return uses
+    }
+
+    private fun lineRangeAt(text: String, offset: Int): IntRange {
+        var start = offset.coerceIn(0, text.length)
+        while (start > 0 && text[start - 1] != '\n') start--
+        var end = offset.coerceIn(0, text.length)
+        while (end < text.length && text[end] != '\n') end++
+        return start until end
     }
 
     private fun isNameStart(c: Char): Boolean = c.isLetter() || c == '_'
@@ -47,14 +54,14 @@ object UnusedSymbols {
     private fun unusedImports(
         text: String,
         importLines: List<IntRange>,
-        counts: Map<String, Int>,
+        uses: Map<String, MutableList<Int>>,
     ): List<IntRange> {
         val ranges = ArrayList<IntRange>()
         for (line in importLines) {
             val raw = text.substring(line.first, line.last + 1)
             val symbol = importedSymbol(raw) ?: continue
             if (symbol == "*") continue
-            if ((counts[symbol] ?: 0) > 0) continue
+            if (uses[symbol]?.isNotEmpty() == true) continue
             val leading = raw.length - raw.trimStart().length
             val start = line.first + leading
             val end = line.first + raw.trimEnd().length
@@ -67,7 +74,7 @@ object UnusedSymbols {
         text: String,
         tokens: List<Token>,
         pairs: List<BracketPair>,
-        counts: Map<String, Int>,
+        uses: Map<String, MutableList<Int>>,
     ): List<IntRange> {
         if (pairs.isEmpty()) return emptyList()
         val closers = HashMap<Int, Int>(pairs.size)
@@ -86,7 +93,9 @@ object UnusedSymbols {
             val enclosing = BracketScan.enclosing(pairs, token.start) ?: continue
             if (declaresType(text, enclosing.open, closers)) continue
             val name = nameOf(text, token) ?: continue
-            if ((counts[name] ?: 0) != 1) continue
+            val declarationLine = lineRangeAt(text, token.start)
+            val usedElsewhere = uses[name].orEmpty().any { it !in declarationLine }
+            if (usedElsewhere) continue
             ranges += token.start until token.endExclusive
         }
         return ranges

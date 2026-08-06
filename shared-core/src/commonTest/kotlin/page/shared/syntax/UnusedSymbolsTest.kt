@@ -89,6 +89,20 @@ class UnusedSymbolsTest {
     }
 
     @Test
+    fun delegateRepeatingItsOwnNameIsStillUnused() {
+        val text = """
+            fun run() {
+                var todoHeight by layoutUiState::todoHeight
+                var todoOpen by layoutUiState::todoOpen
+                println(todoOpen)
+            }
+        """.trimIndent()
+        val found = analyze(text)
+        assertTrue(found.contains("todoHeight"), "delegate never read, got ${'$'}found")
+        assertTrue(!found.contains("todoOpen"), "todoOpen is read, got ${'$'}found")
+    }
+
+    @Test
     fun classPropertyIsLeftAlone() {
         val text = """
             class Holder(
