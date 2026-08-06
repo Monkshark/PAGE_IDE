@@ -1,6 +1,8 @@
 package page.app
 
 import androidx.compose.ui.input.key.KeyEvent
+import page.app.input.ActionDispatcher
+import page.app.input.ActionHost
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import kotlinx.coroutines.CoroutineScope
@@ -15,7 +17,6 @@ import page.app.filetree.FileTreeActionExecutor
 import page.app.filetree.FileTreeContextController
 import page.app.filetree.FileTreeDropController
 import page.app.filetree.RenameRemapController
-import page.app.input.ShortcutDispatchController
 import page.app.lsp.LspEditorInterconnector
 import page.app.lsp.WorkspaceEditController
 import page.app.mvi.AppState
@@ -483,52 +484,62 @@ internal class AppController(
     val openSettings: () -> Unit = { appState.settingsDialogOpen = true }
     var onFocusActiveInAtlas: () -> Unit = {}
 
-    private val shortcutDispatchController = ShortcutDispatchController(
-        hasSearch = { focused().search != null },
-        cyclePalette = cyclePalette,
-        openFolder = { frameProvider()?.let { openFolder(it) } },
-        openFile = { frameProvider()?.let { openFile(it) } },
-        openSettings = openSettings,
-        saveFile = { frameProvider()?.let { saveFile(it) } },
-        closeActiveTab = closeActiveTab,
-        toggleProblems = { layoutUiState.problemsOpen = !layoutUiState.problemsOpen },
-        toggleTodo = { layoutUiState.todoOpen = !layoutUiState.todoOpen },
-        toggleFindInFiles = toggleFindInFiles,
-        openSearch = openSearch,
-        openReplace = openReplace,
-        openQuickOpen = openQuickOpen,
-        openWorkspaceSymbol = openWorkspaceSymbol,
-        openDocumentSymbol = openDocumentSymbol,
-        toggleSplitOrientation = {
-            editorWorkspace.splitOrientation = if (editorWorkspace.splitOrientation == SplitOrientation.HORIZONTAL)
-                SplitOrientation.VERTICAL else SplitOrientation.HORIZONTAL
-        },
-        toggleSplit = { editorWorkspace.splitEnabled = !editorWorkspace.splitEnabled },
-        requestUndo = {
+    private val actionHost = object : ActionHost {
+        override val hasSearch: Boolean get() = focused().search != null
+
+        override fun openFile() { frameProvider()?.let { this@AppController.openFile(it) } }
+        override fun openFolder() { frameProvider()?.let { this@AppController.openFolder(it) } }
+        override fun saveFile() { frameProvider()?.let { this@AppController.saveFile(it) } }
+        override fun closeActiveTab() = this@AppController.closeActiveTab()
+        override fun openSettings() = this@AppController.openSettings()
+        override fun refreshTree() { workspaceState.treeRevision++ }
+
+        override fun requestUndo() {
             val undoOp = fileOpHistory.peek()
             if (workspaceState.fileTreeFocused && undoOp != null) {
                 appState.fileOpConfirm = FileOpConfirmState(isRedo = false, op = undoOp)
             } else {
                 doUndo()
             }
-        },
-        requestRedo = {
+        }
+
+        override fun requestRedo() {
             val redoOp = fileOpHistory.peekRedo()
             if (workspaceState.fileTreeFocused && redoOp != null) {
                 appState.fileOpConfirm = FileOpConfirmState(isRedo = true, op = redoOp)
             } else {
                 doRedo()
             }
-        },
-        triggerFormat = triggerFormat,
-        triggerCodeAction = triggerCodeAction,
-        activateAdjacentTab = { delta -> editorWorkspace.activateAdjacentTab(delta) },
-        jumpProblemRelative = jumpProblemRelative,
-        refreshTree = { workspaceState.treeRevision++ },
-        closeSearch = { closeSearch(editorWorkspace.focusedPane) },
-        focusActiveInAtlas = { onFocusActiveInAtlas() },
-    )
-    val handleShortcut: (KeyEvent) -> Boolean = { event -> shortcutDispatchController.handle(event) }
+        }
+
+        override fun openSearch() = this@AppController.openSearch()
+        override fun openReplace() = this@AppController.openReplace()
+        override fun closeSearch() = this@AppController.closeSearch(editorWorkspace.focusedPane)
+
+        override fun openQuickOpen() = this@AppController.openQuickOpen()
+        override fun openWorkspaceSymbol() = this@AppController.openWorkspaceSymbol()
+        override fun openDocumentSymbol() = this@AppController.openDocumentSymbol()
+        override fun toggleFindInFiles() = this@AppController.toggleFindInFiles()
+        override fun jumpProblemRelative(forward: Boolean) = this@AppController.jumpProblemRelative(forward)
+        override fun activateAdjacentTab(delta: Int) = editorWorkspace.activateAdjacentTab(delta)
+
+        override fun triggerFormat() = this@AppController.triggerFormat()
+        override fun triggerCodeAction() = this@AppController.triggerCodeAction()
+
+        override fun toggleProblems() { layoutUiState.problemsOpen = !layoutUiState.problemsOpen }
+        override fun toggleTodo() { layoutUiState.todoOpen = !layoutUiState.todoOpen }
+        override fun toggleSplit() { editorWorkspace.splitEnabled = !editorWorkspace.splitEnabled }
+        override fun toggleSplitOrientation() {
+            editorWorkspace.splitOrientation =
+                if (editorWorkspace.splitOrientation == SplitOrientation.HORIZONTAL) SplitOrientation.VERTICAL
+                else SplitOrientation.HORIZONTAL
+        }
+
+        override fun cyclePalette() = this@AppController.cyclePalette()
+        override fun focusActiveInAtlas() = onFocusActiveInAtlas()
+    }
+
+    val handleShortcut: (KeyEvent) -> Boolean = { event -> ActionDispatcher.handle(event, actionHost) }
 
     fun fileTreePanelActions(): FileTreePanelActions = FileTreePanelActions(
         onToggle = { p, recursive -> dispatch(IdeEvent.FileTree.Toggle(p, recursive)) },
