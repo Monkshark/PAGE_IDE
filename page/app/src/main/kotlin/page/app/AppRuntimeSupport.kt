@@ -62,7 +62,8 @@ internal fun resolveLanguageForPath(path: Path): page.lsp.LanguageDefinition? {
 }
 
 @androidx.compose.runtime.Composable
-internal fun lspStatusLineText(lspRouter: LspRouter, activePath: Path?): String? {
+internal fun lspStatusLineText(lspRouter: LspRouter, activePath: Path?): Pair<String, String>? {
+    @Suppress("UNUSED_EXPRESSION") InstallState.revision
     val routedBackend = activePath?.let { lspRouter.backendFor(it) }
     val definition = routedBackend?.let { LanguageRegistry.byId(it.id) }
         ?: activePath?.let(::resolveLanguageForPath)
@@ -74,8 +75,10 @@ internal fun lspStatusLineText(lspRouter: LspRouter, activePath: Path?): String?
     val resolvedName = (displayName ?: "Kotlin").substringBefore(" (")
     val ctrl = activePath?.let { lspRouter.controllerFor(it) }
     val installer = LspInstallers.forId(resolvedId) ?: return when {
-        isKotlin && ctrl?.status?.value == LspController.Status.MISSING -> "LSP · kotlin-language-server missing"
-        isKotlin && ctrl?.status?.value == LspController.Status.FAILED -> "LSP · failed to start"
+        isKotlin && ctrl?.status?.value == LspController.Status.MISSING ->
+            "LSP · kotlin-language-server missing" to resolvedId
+        isKotlin && ctrl?.status?.value == LspController.Status.FAILED ->
+            "LSP · failed to start" to resolvedId
         else -> null
     }
     val installed = installer.installedVersion()
@@ -88,7 +91,7 @@ internal fun lspStatusLineText(lspRouter: LspRouter, activePath: Path?): String?
         null -> if (installed != null) " · not started" else ""
     }
     val core = if (installed != null) "$resolvedName $installed" else "$resolvedName (not installed)"
-    return "$core$suffix"
+    return "$core$suffix" to resolvedId
 }
 
 internal fun dartSiblingLspStatus(lspRouter: LspRouter, activePath: Path?): Pair<String, String>? {

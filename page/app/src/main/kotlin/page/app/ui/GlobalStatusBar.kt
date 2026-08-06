@@ -79,7 +79,8 @@ internal fun GlobalStatusBar(
     val errorCount = diagnostics.count { it.severity == DiagnosticSeverity.ERROR }
     val warningCount = diagnostics.count { it.severity == DiagnosticSeverity.WARNING }
 
-    val lspStatusText = if (active != null) lspStatusLineText(lspRouter, active.path) else null
+    val lspStatus = if (active != null) lspStatusLineText(lspRouter, active.path) else null
+    val lspStatusText = lspStatus?.first
     val siblingLsp = if (active != null) dartSiblingLspStatus(lspRouter, active.path) else null
 
     val activeExt = remember(active?.path) {
@@ -156,7 +157,14 @@ internal fun GlobalStatusBar(
                     )
                 }
                 if (showLifecycle) {
-                    LspLifecycleItem(text = lspStatusText!!, onClick = { activeCtrl?.openInstallGuide() })
+                    val lspId = lspStatus!!.second
+                    LspLifecycleItem(
+                        text = lspStatusText!!,
+                        onClick = {
+                            val ctrl = activeCtrl
+                            if (ctrl != null) ctrl.openInstallGuide() else onRuntimeClick?.invoke(lspId)
+                        },
+                    )
                 }
                 if (siblingLsp != null) {
                     val (siblingText, siblingId) = siblingLsp

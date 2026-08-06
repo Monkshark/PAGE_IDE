@@ -270,6 +270,7 @@ internal fun InstallGuideDialog(
         val label = selectedVersion ?: return
         val active = installer ?: return
         if (!active.applyVersion(label)) return
+        InstallState.changed()
         onInstalled()
         onDismiss()
     }
