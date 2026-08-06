@@ -1,6 +1,7 @@
 package page.editor
 
 import page.shared.syntax.SymbolNames
+import page.shared.syntax.SymbolScan
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.isRegularFile
@@ -14,24 +15,24 @@ object SymbolUsageScanner {
         ".git", ".gradle", ".idea", ".kotlin", ".dart_tool", ".venv", "venv", "__pycache__",
     )
 
-    fun namesIn(text: String): Set<String> = SymbolNames.distinctIn(text)
+    fun symbolsIn(text: String): SymbolScan = SymbolNames.scan(text)
 
-    fun scanFile(path: Path): Set<String> {
-        if (!path.isRegularFile()) return emptySet()
-        if (SyntaxLexers.forPath(path) == null) return emptySet()
-        val size = try { Files.size(path) } catch (e: Exception) { return emptySet() }
-        if (size > MAX_FILE_BYTES) return emptySet()
-        val text = try { Files.readString(path) } catch (e: Exception) { return emptySet() }
-        return namesIn(text)
+    fun scanFile(path: Path): SymbolScan {
+        if (!path.isRegularFile()) return EMPTY
+        if (SyntaxLexers.forPath(path) == null) return EMPTY
+        val size = try { Files.size(path) } catch (e: Exception) { return EMPTY }
+        if (size > MAX_FILE_BYTES) return EMPTY
+        val text = try { Files.readString(path) } catch (e: Exception) { return EMPTY }
+        return symbolsIn(text)
     }
 
     fun scanWorkspace(
         root: Path,
-        previous: Map<String, FileNames> = emptyMap(),
+        previous: Map<String, FileSymbols> = emptyMap(),
         limit: Int = 4000,
-    ): Map<String, FileNames> {
+    ): Map<String, FileSymbols> {
         if (!Files.isDirectory(root)) return emptyMap()
-        val out = HashMap<String, FileNames>()
+        val out = HashMap<String, FileSymbols>()
         Files.walk(root).use { stream ->
             for (path in stream) {
                 if (out.size >= limit) break
@@ -41,16 +42,20 @@ object SymbolUsageScanner {
                 val stamp = stampOf(path)
                 val uri = canonicalUsageUri(path.toUri().toString())
                 val cached = previous[uri]
-                val names = if (cached != null && cached.stamp == stamp && stamp != 0L) {
-                    cached.names
-                } else {
-                    scanFile(path)
+                if (cached != null && cached.stamp == stamp && stamp != 0L) {
+                    out[uri] = cached
+                    continue
                 }
-                if (names.isNotEmpty()) out[uri] = FileNames(names, stamp)
+                val scan = scanFile(path)
+                if (scan.refs.isNotEmpty() || scan.defs.isNotEmpty()) {
+                    out[uri] = FileSymbols(scan.refs, scan.defs, stamp)
+                }
             }
         }
         return out
     }
+
+    private val EMPTY = SymbolScan(emptySet(), emptyMap())
 
     private fun stampOf(path: Path): Long = try {
         Files.getLastModifiedTime(path).toMillis()

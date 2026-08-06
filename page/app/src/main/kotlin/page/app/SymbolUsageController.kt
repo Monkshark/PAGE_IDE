@@ -15,6 +15,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import page.editor.FileSymbols
 import page.editor.SymbolUsageIndex
 import page.editor.SymbolUsageScanner
 import java.nio.file.Path
@@ -59,7 +60,8 @@ class SymbolUsageController(
         perFileDebounce[uri]?.cancel()
         perFileDebounce[uri] = scope.launch(Dispatchers.Default) {
             delay(UPDATE_DEBOUNCE_MS)
-            index.setFile(uri, SymbolUsageScanner.namesIn(text))
+            val scan = SymbolUsageScanner.symbolsIn(text)
+            index.setFile(uri, FileSymbols(scan.refs, scan.defs))
         }
     }
 

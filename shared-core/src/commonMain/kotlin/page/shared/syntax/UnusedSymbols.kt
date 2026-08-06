@@ -77,8 +77,10 @@ object UnusedSymbols {
             if (keyword !in DECLARATION_KEYWORDS) continue
             val enclosing = BracketScan.enclosing(pairs, token.start) ?: continue
             val name = nameOf(text, token) ?: continue
+            val modifiers = precedingModifiers(text, tokens, i)
+            if ("override" in modifiers) continue
             val isMember = declaresType(text, enclosing.open, closers)
-            val fileScoped = isPrivate(text, tokens, i)
+            val fileScoped = "private" in modifiers
             if (isMember && !fileScoped && usedElsewhere(name)) continue
             val declarationLine = lineRangeAt(text, token.start)
             val usedElsewhere = uses[name].orEmpty().any { it !in declarationLine }
@@ -88,25 +90,26 @@ object UnusedSymbols {
         return ranges
     }
 
-    private fun isPrivate(text: String, tokens: List<Token>, declarationIndex: Int): Boolean {
+    private fun precedingModifiers(text: String, tokens: List<Token>, declarationIndex: Int): Set<String> {
+        val found = HashSet<String>()
         var i = declarationIndex - 1
         while (i >= 0) {
             val token = tokens[i]
-            if (token.kind != TokenKind.KEYWORD) return false
+            if (token.kind != TokenKind.KEYWORD) break
             val word = text.substring(
                 token.start.coerceIn(0, text.length),
                 token.endExclusive.coerceIn(0, text.length),
             )
-            if (word == "private") return true
-            if (word !in MODIFIERS) return false
+            if (word !in MODIFIERS) break
+            found += word
             i--
         }
-        return false
+        return found
     }
 
     private val MODIFIERS = setOf(
         "val", "var", "override", "open", "final", "abstract", "internal", "public", "protected",
-        "lateinit", "const", "suspend", "inline", "companion", "static", "readonly",
+        "private", "lateinit", "const", "suspend", "inline", "companion", "static", "readonly",
     )
 
     private const val HEADER_LOOKBEHIND = 600

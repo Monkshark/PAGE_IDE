@@ -2,7 +2,11 @@ package page.editor
 
 import java.util.concurrent.CopyOnWriteArrayList
 
-data class FileNames(val names: Set<String>, val stamp: Long = 0L)
+data class FileSymbols(
+    val refs: Set<String>,
+    val defs: Map<String, Int> = emptyMap(),
+    val stamp: Long = 0L,
+)
 
 fun canonicalUsageUri(uri: String): String {
     val prefix = "file:///"
@@ -19,8 +23,9 @@ fun canonicalUsageUri(uri: String): String {
 
 class SymbolUsageIndex {
 
-    private val perFile = HashMap<String, FileNames>()
-    private val fileCounts = HashMap<String, Int>()
+    private val perFile = HashMap<String, FileSymbols>()
+    private val referers = HashMap<String, HashSet<String>>()
+    private val definers = HashMap<String, HashMap<String, Int>>()
     private val listeners = CopyOnWriteArrayList<(SymbolUsageIndex) -> Unit>()
     private val lock = Any()
 
@@ -32,17 +37,18 @@ class SymbolUsageIndex {
         listeners -= listener
     }
 
-    fun setFile(rawUri: String, names: Set<String>) {
+    fun setFile(rawUri: String, symbols: FileSymbols) {
         val uri = canonicalUsageUri(rawUri)
         val changed = synchronized(lock) {
             val previous = perFile[uri]
-            if (previous?.names == names) return
-            previous?.names?.forEach { release(it) }
-            if (names.isEmpty()) {
+            if (previous?.refs == symbols.refs && previous.defs == symbols.defs) return
+            if (previous != null) detach(uri, previous)
+            if (symbols.refs.isEmpty() && symbols.defs.isEmpty()) {
                 perFile.remove(uri)
             } else {
-                perFile[uri] = FileNames(names, previous?.stamp ?: 0L)
-                names.forEach { retain(it) }
+                val kept = if (previous != null) symbols.copy(stamp = previous.stamp) else symbols
+                perFile[uri] = kept
+                attach(uri, kept)
             }
             true
         }
@@ -53,50 +59,75 @@ class SymbolUsageIndex {
         val uri = canonicalUsageUri(rawUri)
         val changed = synchronized(lock) {
             val previous = perFile.remove(uri) ?: return
-            previous.names.forEach { release(it) }
+            detach(uri, previous)
             true
         }
         if (changed) notifyListeners()
     }
 
-    fun replaceAll(byFile: Map<String, FileNames>) {
+    fun replaceAll(byFile: Map<String, FileSymbols>) {
         val changed = synchronized(lock) {
-            val next = HashMap<String, FileNames>(byFile.size)
-            for ((rawUri, entry) in byFile) {
-                if (entry.names.isEmpty()) continue
-                next[canonicalUsageUri(rawUri)] = entry
+            val next = HashMap<String, FileSymbols>(byFile.size)
+            for ((rawUri, symbols) in byFile) {
+                if (symbols.refs.isEmpty() && symbols.defs.isEmpty()) continue
+                next[canonicalUsageUri(rawUri)] = symbols
             }
             if (next == perFile) return
             perFile.clear()
-            fileCounts.clear()
+            referers.clear()
+            definers.clear()
             perFile.putAll(next)
-            next.values.forEach { entry -> entry.names.forEach { retain(it) } }
+            next.forEach { (uri, symbols) -> attach(uri, symbols) }
             true
         }
         if (changed) notifyListeners()
     }
 
-    fun entries(): Map<String, FileNames> = synchronized(lock) { HashMap(perFile) }
+    fun entries(): Map<String, FileSymbols> = synchronized(lock) { HashMap(perFile) }
 
     fun usedOutside(rawUri: String, name: String): Boolean = synchronized(lock) {
-        val total = fileCounts[name] ?: return false
-        val here = if (perFile[canonicalUsageUri(rawUri)]?.names?.contains(name) == true) 1 else 0
-        total - here > 0
+        val files = referers[name] ?: return false
+        when (files.size) {
+            0 -> false
+            1 -> canonicalUsageUri(rawUri) !in files
+            else -> true
+        }
+    }
+
+    fun referencesOf(name: String): Set<String> = synchronized(lock) {
+        referers[name]?.toSet() ?: emptySet()
+    }
+
+    fun definitionsOf(name: String): Map<String, Int> = synchronized(lock) {
+        definers[name]?.toMap() ?: emptyMap()
+    }
+
+    fun definedIn(rawUri: String): Map<String, Int> = synchronized(lock) {
+        perFile[canonicalUsageUri(rawUri)]?.defs ?: emptyMap()
     }
 
     fun knows(rawUri: String): Boolean = synchronized(lock) { perFile.containsKey(canonicalUsageUri(rawUri)) }
 
     fun fileCount(): Int = synchronized(lock) { perFile.size }
 
-    fun nameCount(): Int = synchronized(lock) { fileCounts.size }
+    fun nameCount(): Int = synchronized(lock) { referers.size + definers.keys.count { it !in referers } }
 
-    private fun retain(name: String) {
-        fileCounts[name] = (fileCounts[name] ?: 0) + 1
+    private fun attach(uri: String, symbols: FileSymbols) {
+        symbols.refs.forEach { referers.getOrPut(it) { HashSet() } += uri }
+        symbols.defs.forEach { (name, offset) -> definers.getOrPut(name) { HashMap() }[uri] = offset }
     }
 
-    private fun release(name: String) {
-        val next = (fileCounts[name] ?: 0) - 1
-        if (next <= 0) fileCounts.remove(name) else fileCounts[name] = next
+    private fun detach(uri: String, symbols: FileSymbols) {
+        symbols.refs.forEach { name ->
+            val files = referers[name] ?: return@forEach
+            files -= uri
+            if (files.isEmpty()) referers.remove(name)
+        }
+        symbols.defs.keys.forEach { name ->
+            val sites = definers[name] ?: return@forEach
+            sites -= uri
+            if (sites.isEmpty()) definers.remove(name)
+        }
     }
 
     private fun notifyListeners() {
