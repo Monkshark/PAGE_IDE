@@ -408,6 +408,13 @@ private fun EditorSection(o: EditorOptions, onChange: (EditorOptions) -> Unit) {
     }
     Spacer(Modifier.height(18.dp))
     CheckRow(
+        label = "Dim unused symbols",
+        description = "Fade locals and imports that nothing else in the file refers to.",
+        checked = o.dimUnusedSymbols,
+        onToggle = { onChange(o.copy(dimUnusedSymbols = !o.dimUnusedSymbols)) },
+    )
+    Spacer(Modifier.height(8.dp))
+    CheckRow(
         label = "Rainbow brackets",
         description = "Tint each bracket pair and its guide by nesting depth.",
         checked = o.rainbowBrackets,

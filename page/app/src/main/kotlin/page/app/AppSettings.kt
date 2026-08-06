@@ -36,6 +36,7 @@ data class EditorOptions(
     val scopeGuides: ScopeGuideMode = ScopeGuideMode.ALL,
     val highlightIdentifierUnderCaret: Boolean = true,
     val rainbowBrackets: Boolean = true,
+    val dimUnusedSymbols: Boolean = true,
 ) {
     companion object { val DEFAULT = EditorOptions() }
 }
@@ -97,6 +98,7 @@ object AppSettings {
     private const val KEY_ED_SCOPE_GUIDES = "editor.scopeGuides"
     private const val KEY_ED_HL_IDENTIFIER = "editor.highlightIdentifierUnderCaret"
     private const val KEY_ED_RAINBOW = "editor.rainbowBrackets"
+    private const val KEY_ED_DIM_UNUSED = "editor.dimUnusedSymbols"
 
     private const val KEY_LSP_INLAY = "lsp.showInlayHints"
     private const val KEY_LSP_MIDWORD = "lsp.triggerCompletionMidWord"
@@ -161,6 +163,7 @@ object AppSettings {
             highlightIdentifierUnderCaret =
                 p.getBoolean(KEY_ED_HL_IDENTIFIER, default.highlightIdentifierUnderCaret),
             rainbowBrackets = p.getBoolean(KEY_ED_RAINBOW, default.rainbowBrackets),
+            dimUnusedSymbols = p.getBoolean(KEY_ED_DIM_UNUSED, default.dimUnusedSymbols),
         )
     }
     fun saveEditor(o: EditorOptions) = writeProperties(mapOf(
@@ -174,6 +177,7 @@ object AppSettings {
         KEY_ED_SCOPE_GUIDES to o.scopeGuides.name,
         KEY_ED_HL_IDENTIFIER to o.highlightIdentifierUnderCaret.toString(),
         KEY_ED_RAINBOW to o.rainbowBrackets.toString(),
+        KEY_ED_DIM_UNUSED to o.dimUnusedSymbols.toString(),
     ))
 
     fun loadLsp(default: LspOptions = LspOptions.DEFAULT): LspOptions {

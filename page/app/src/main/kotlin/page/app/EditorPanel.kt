@@ -301,8 +301,13 @@ fun EditorPanel(
             EditorDecoration(startOff, endOff, color, style)
         }
     }
-    val unnecessaryRanges = remember(value.text, diagnostics, showInlineDiagnostics) {
-        if (!showInlineDiagnostics) emptyList()
+    val unusedRanges = remember(value.text, tokens, bracketPairs, pageSettings.editor.dimUnusedSymbols) {
+        if (!pageSettings.editor.dimUnusedSymbols) emptyList()
+        else page.shared.syntax.UnusedSymbols.find(value.text, tokens, bracketPairs)
+    }
+
+    val unnecessaryRanges = remember(value.text, diagnostics, showInlineDiagnostics, unusedRanges) {
+        unusedRanges + if (!showInlineDiagnostics) emptyList()
         else diagnostics.filter { it.unnecessary }.mapNotNull { d ->
             val rawStart = lineColToOffset(value.text, d.start.line, d.start.character)
             val rawEnd = lineColToOffset(value.text, d.end.line, d.end.character)
