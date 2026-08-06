@@ -73,12 +73,16 @@ internal class LineLayout(
 ) {
     private var measuredWidthPx: Int = 0
 
+    private val byLine = HashMap<Int, TextLayoutResult>()
+
     private val lines = object {
         operator fun get(line: Int): TextLayoutResult {
+            byLine[line]?.let { return it }
             val slice = text.subSequence(metrics.lineStart(line), metrics.lineEnd(line))
             val measured = cache.getOrPut(slice) {
                 measurer.measure(text = slice, style = style, softWrap = false)
             }
+            byLine[line] = measured
             if (measured.size.width > measuredWidthPx) measuredWidthPx = measured.size.width
             return measured
         }
