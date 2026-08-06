@@ -259,8 +259,18 @@ private fun androidx.compose.ui.window.ApplicationScope.AppContent() {
     fun focused(): EditorPaneState = editorWorkspace.focused()
 
     val fileTreeWatcher = rememberFileTreeWatcherController()
-    fileTreeWatcher.WatchLoop(rootDir = rootDir, expanded = expanded, onTreeChanged = { onIdeEvent(IdeEvent.Tree.BumpRevision) })
-    val withFileTreeWatcherClosed: (() -> Unit) -> Unit = { block -> fileTreeWatcher.withClosed(block) }
+    fileTreeWatcher.WatchLoop(
+        rootDir = rootDir,
+        expanded = expanded,
+        onTreeChanged = {
+            onIdeEvent(IdeEvent.Tree.BumpRevision)
+            symbolUsage.refreshWorkspaceAsync()
+        },
+    )
+    val withFileTreeWatcherClosed: (() -> Unit) -> Unit = { block ->
+        fileTreeWatcher.withClosed(block)
+        symbolUsage.refreshWorkspaceAsync()
+    }
     val copyToClipboard: (String) -> Unit = { text ->
         runCatching {
             val selection = java.awt.datatransfer.StringSelection(text)
@@ -669,7 +679,9 @@ private fun androidx.compose.ui.window.ApplicationScope.AppContent() {
         DisposableEffect(window) {
             val frame = window
             val focusListener = object : java.awt.event.WindowFocusListener {
-                override fun windowGainedFocus(e: java.awt.event.WindowEvent?) {}
+                override fun windowGainedFocus(e: java.awt.event.WindowEvent?) {
+                    symbolUsage.refreshWorkspaceAsync()
+                }
                 override fun windowLostFocus(e: java.awt.event.WindowEvent?) {
                     if (autoSaveOptionsRef.value.onFocusLost) saveAllDirtyRef.value()
                 }

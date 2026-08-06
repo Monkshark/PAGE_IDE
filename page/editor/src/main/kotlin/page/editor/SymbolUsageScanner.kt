@@ -25,19 +25,37 @@ object SymbolUsageScanner {
         return namesIn(text)
     }
 
-    fun scanWorkspace(root: Path, limit: Int = 4000): Map<String, Set<String>> {
+    fun scanWorkspace(
+        root: Path,
+        previous: Map<String, FileNames> = emptyMap(),
+        limit: Int = 4000,
+    ): Map<String, FileNames> {
         if (!Files.isDirectory(root)) return emptyMap()
-        val out = HashMap<String, Set<String>>()
+        val out = HashMap<String, FileNames>()
         Files.walk(root).use { stream ->
             for (path in stream) {
                 if (out.size >= limit) break
                 if (!path.isRegularFile()) continue
                 if (isExcluded(root, path)) continue
-                val names = scanFile(path)
-                if (names.isNotEmpty()) out[path.toUri().toString()] = names
+                if (SyntaxLexers.forPath(path) == null) continue
+                val stamp = stampOf(path)
+                val uri = canonicalUsageUri(path.toUri().toString())
+                val cached = previous[uri]
+                val names = if (cached != null && cached.stamp == stamp && stamp != 0L) {
+                    cached.names
+                } else {
+                    scanFile(path)
+                }
+                if (names.isNotEmpty()) out[uri] = FileNames(names, stamp)
             }
         }
         return out
+    }
+
+    private fun stampOf(path: Path): Long = try {
+        Files.getLastModifiedTime(path).toMillis()
+    } catch (e: Exception) {
+        0L
     }
 
     private fun isExcluded(root: Path, path: Path): Boolean = runCatching {

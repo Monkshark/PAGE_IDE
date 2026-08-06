@@ -46,10 +46,36 @@ class SymbolUsageIndexTest {
     fun replaceAllRebuildsCounts() {
         val index = SymbolUsageIndex()
         index.setFile("a.kt", setOf("old"))
-        index.replaceAll(mapOf("c.kt" to setOf("fresh")))
+        index.replaceAll(mapOf("c.kt" to FileNames(setOf("fresh"))))
         assertFalse(index.usedOutside("a.kt", "old"))
         assertTrue(index.usedOutside("a.kt", "fresh"))
         assertTrue(index.fileCount() == 1)
+    }
+
+    @Test
+    fun rescanReusesNamesWhenStampIsUnchanged() {
+        val index = SymbolUsageIndex()
+        index.replaceAll(mapOf("a.kt" to FileNames(setOf("kept"), stamp = 7L)))
+        assertTrue(index.entries()["a.kt"]?.stamp == 7L)
+        index.setFile("a.kt", setOf("kept", "typed"))
+        assertTrue(index.entries()["a.kt"]?.stamp == 7L)
+    }
+
+    @Test
+    fun replaceAllDropsFilesThatVanished() {
+        val index = SymbolUsageIndex()
+        index.replaceAll(mapOf("a.kt" to FileNames(setOf("shared")), "b.kt" to FileNames(setOf("shared"))))
+        index.replaceAll(mapOf("a.kt" to FileNames(setOf("shared"))))
+        assertFalse(index.usedOutside("a.kt", "shared"))
+        assertTrue(index.fileCount() == 1)
+    }
+
+    @Test
+    fun uriFormsAndDriveCaseMatchTheSameFile() {
+        val index = SymbolUsageIndex()
+        index.setFile("file:///C:/proj/a.kt", setOf("only"))
+        assertTrue(index.knows("file:/c:/proj/a.kt"))
+        assertFalse(index.usedOutside("file:/C:/proj/a.kt", "only"))
     }
 
     @Test

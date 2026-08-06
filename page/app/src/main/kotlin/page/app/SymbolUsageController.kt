@@ -11,7 +11,10 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import page.editor.SymbolUsageIndex
 import page.editor.SymbolUsageScanner
 import java.nio.file.Path
@@ -25,6 +28,9 @@ class SymbolUsageController(
     val revision: State<Int> get() = revisionState
     private val listener: (SymbolUsageIndex) -> Unit = { revisionState.value = revisionState.value + 1 }
     private val perFileDebounce = HashMap<String, Job>()
+    private val scanLock = Mutex()
+    private var refreshJob: Job? = null
+    private var sweepJob: Job? = null
 
     init {
         index.addListener(listener)
@@ -34,7 +40,17 @@ class SymbolUsageController(
         val root = workspaceRoot ?: return
         scope.launch(Dispatchers.IO) {
             delay(SCAN_START_DELAY_MS)
-            index.replaceAll(SymbolUsageScanner.scanWorkspace(root))
+            rescan(root)
+            startSweep(root)
+        }
+    }
+
+    fun refreshWorkspaceAsync() {
+        val root = workspaceRoot ?: return
+        refreshJob?.cancel()
+        refreshJob = scope.launch(Dispatchers.IO) {
+            delay(REFRESH_DEBOUNCE_MS)
+            rescan(root)
         }
     }
 
@@ -64,9 +80,25 @@ class SymbolUsageController(
         scope.cancel()
     }
 
+    private suspend fun rescan(root: Path) = scanLock.withLock {
+        index.replaceAll(SymbolUsageScanner.scanWorkspace(root, index.entries()))
+    }
+
+    private fun startSweep(root: Path) {
+        if (sweepJob?.isActive == true) return
+        sweepJob = scope.launch(Dispatchers.IO) {
+            while (isActive) {
+                delay(SWEEP_INTERVAL_MS)
+                rescan(root)
+            }
+        }
+    }
+
     private companion object {
         const val SCAN_START_DELAY_MS = 2_500L
         const val UPDATE_DEBOUNCE_MS = 250L
+        const val REFRESH_DEBOUNCE_MS = 800L
+        const val SWEEP_INTERVAL_MS = 120_000L
     }
 }
 
