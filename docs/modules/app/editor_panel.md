@@ -159,6 +159,7 @@ onValueChange(final)
 액션 행은 `context` 로 어디서 듣는 키인지 구분한다 — `Global` 은 `ActionDispatcher` 가 직접 실행하고, `Editor`·`FileTree` 는 각 화면이 자기 상태(자동완성 팝업, 스니펫 탭스톱, 트리 선택)와 함께 처리한다. 후자는 `run` 이 없어 실행 대상은 아니지만 라벨·바인딩은 카탈로그가 들고 있어서 팔레트·컨텍스트 메뉴·플랫폼 표기가 같은 표를 본다
 
 키 매칭 자체도 `isPrimaryPressed()` 로 통일했다. Windows·Linux 는 `Ctrl`, macOS 는 `Cmd` — 에디터의 `Ctrl+A/C/X/V`·단어 이동·`Ctrl+Click` 과 파일트리의 복사·붙여넣기까지 포함
+설정의 **Keymap** 화면과 macOS 메뉴바도 같은 표에서 나온다. 치트시트는 `Anywhere` / `While editing` / `In the file tree` 로 나눠 전부 나열하고, 메뉴바는 `Global` 이면서 실행 본문이 있는 행만 File·Edit·Navigate·Code·View·PAGE 메뉴로 묶는다. 메뉴바는 macOS 에서만 그려지며 `apple.laf.useScreenMenuBar` 로 시스템 상단 바에 붙는다
 
 ---
 

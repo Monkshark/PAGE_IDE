@@ -132,6 +132,23 @@ class ActionCatalogTest {
     }
 
     @Test
+    fun `the mac menu bar can render every global action it offers`() {
+        val menuActions = ActionCatalog.all.filter { it.context == ActionContext.Global && it.run != null }
+        assertTrue(menuActions.isNotEmpty())
+        for (spec in menuActions) {
+            val binding = spec.bindingFor(mac = true)
+            assertNotNull(binding, "${spec.id} would land in the menu bar without a key")
+            assertTrue(binding.key != androidx.compose.ui.input.key.Key.Unknown, "${spec.id} has an unknown key")
+        }
+    }
+
+    @Test
+    fun `the keymap sheet covers every context`() {
+        val contexts = ActionCatalog.all.map { it.context }.toSet()
+        assertEquals(ActionContext.entries.toSet(), contexts, "a context with no rows would render an empty sheet")
+    }
+
+    @Test
     fun `ids are unique`() {
         val ids = ActionCatalog.all.map { it.id }
         assertTrue(ids.size == ids.toSet().size, "duplicate action id in the catalog")

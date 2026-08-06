@@ -17,6 +17,7 @@ import page.app.mvi.IdeDispatcher
 import page.app.mvi.IdeEffectHandler
 import page.app.mvi.IdeEvent
 import page.app.mvi.IdeStore
+import page.app.ui.SystemMenuBar
 import page.app.ui.IdeMainLayout
 import page.app.ui.PaletteToast
 import page.app.ui.dialog.AppDialogs
@@ -131,6 +132,10 @@ import java.nio.file.Path
 fun main() {
     if (System.getProperty("skiko.renderApi").isNullOrBlank() && System.getenv("SKIKO_RENDER_API").isNullOrBlank()) {
         System.setProperty("skiko.renderApi", "OPENGL")
+    }
+    if (page.ui.Platform.isMac) {
+        System.setProperty("apple.laf.useScreenMenuBar", "true")
+        System.setProperty("apple.awt.application.name", "PAGE")
     }
     PerfRegistry.start(StartupKind.COLD).begin(StartupPhases.COMPOSE_INIT)
     UiFreezeWatchdog.start()
@@ -626,6 +631,7 @@ private fun androidx.compose.ui.window.ApplicationScope.AppContent() {
         onPreviewKeyEvent = handleShortcut,
         onKeyEvent = handleShortcut,
     ) {
+        SystemMenuBar(onRun = app.runAction)
         LaunchedEffect(Unit) {
             frameRef.value = window
             val perf = PerfRegistry.instance
