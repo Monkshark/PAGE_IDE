@@ -1414,15 +1414,67 @@ fun EditorPanel(
                         message = d.message,
                     )
                 },
+                clipboardShortcuts = page.ui.EditorClipboardShortcuts(
+                    cut = page.app.input.ShortcutLabels.of(
+                        page.app.input.Binding(Key.X, primary = true),
+                    ),
+                    copy = page.app.input.ShortcutLabels.of(
+                        page.app.input.Binding(Key.C, primary = true),
+                    ),
+                    paste = page.app.input.ShortcutLabels.of(
+                        page.app.input.Binding(Key.V, primary = true),
+                    ),
+                    selectAll = page.app.input.ShortcutLabels.of(
+                        page.app.input.Binding(Key.A, primary = true),
+                    ),
+                ),
                 contextMenuActions = buildList {
+                    if (onRequestDefinition != null || onRequestReferences != null) {
+                        add(
+                            page.ui.EditorContextAction(
+                                label = "Go to Declaration",
+                                shortcut = page.app.input.ShortcutLabels.of(
+                                    page.app.input.Binding(Key.B, primary = true),
+                                ),
+                            ) {
+                                val text = latestValue.text
+                                triggerDefinitionOrReferences(text, latestValue.selection.end.coerceIn(0, text.length))
+                            },
+                        )
+                    }
+                    val refCb = onRequestReferences
+                    if (refCb != null) {
+                        add(
+                            page.ui.EditorContextAction(
+                                label = "Find Usages",
+                                shortcut = page.app.input.ShortcutLabels.of(
+                                    page.app.input.Binding(Key.F12, shift = true),
+                                ),
+                            ) {
+                                val text = latestValue.text
+                                val offset = latestValue.selection.end.coerceIn(0, text.length)
+                                val word = wordRangeAt(text, offset)
+                                val symbolName = if (word != null) text.substring(word.first, word.second) else ""
+                                if (!isInStringOrComment(tokens, text, offset) && isRenamableIdentifier(symbolName)) {
+                                    val pos = TextBuffer(text).lineColOf(offset)
+                                    refCb(pos.line, pos.col, symbolName, ReferencesSurface.Popup)
+                                }
+                            },
+                        )
+                    }
                     val showInAtlas = onShowInAtlas
                     if (showInAtlas != null) {
-                        add(page.ui.EditorContextAction("Show in Atlas") { showInAtlas() })
+                        add(
+                            page.ui.EditorContextAction(
+                                label = "Show in Atlas",
+                                shortcut = page.app.input.ActionCatalog.labelOf("page.atlasFocus"),
+                            ) { showInAtlas() },
+                        )
                     }
                     val callGraph = onShowCallGraph
                     if (callGraph != null) {
                         add(
-                            page.ui.EditorContextAction("Show Call Graph in Atlas") {
+                            page.ui.EditorContextAction(label = "Show Call Graph in Atlas") {
                                 val text = value.text
                                 val offset = value.selection.end.coerceIn(0, text.length)
                                 val word = wordRangeAt(text, offset)

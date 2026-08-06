@@ -5,17 +5,17 @@ import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.isMetaPressed
 
-internal object Platform {
+object Platform {
     val isMac: Boolean = (System.getProperty("os.name") ?: "").lowercase().contains("mac")
 }
 
-internal fun KeyEvent.isPrimaryPressed(mac: Boolean = Platform.isMac): Boolean =
+fun KeyEvent.isPrimaryPressed(mac: Boolean = Platform.isMac): Boolean =
     if (mac) isMetaPressed else isCtrlPressed
 
-internal fun KeyEvent.isSecondaryControlPressed(mac: Boolean = Platform.isMac): Boolean =
+fun KeyEvent.isSecondaryControlPressed(mac: Boolean = Platform.isMac): Boolean =
     if (mac) isCtrlPressed else false
 
-internal object ShortcutLabels {
+object ShortcutLabels {
 
     fun of(binding: Binding, mac: Boolean = Platform.isMac): String {
         val parts = ArrayList<String>(4)

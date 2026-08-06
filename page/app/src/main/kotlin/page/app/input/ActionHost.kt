@@ -1,6 +1,6 @@
 package page.app.input
 
-internal interface ActionHost {
+interface ActionHost {
     val hasSearch: Boolean
 
     fun openFile()

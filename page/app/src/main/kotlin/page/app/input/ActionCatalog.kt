@@ -2,11 +2,11 @@ package page.app.input
 
 import androidx.compose.ui.input.key.Key
 
-internal enum class ActionGroup { File, Edit, Navigate, Code, View, Page }
+enum class ActionGroup { File, Edit, Navigate, Code, View, Page }
 
-internal enum class SearchMode { Any, OnlyWhenOpen, OnlyWhenClosed }
+enum class SearchMode { Any, OnlyWhenOpen, OnlyWhenClosed }
 
-internal data class Binding(
+data class Binding(
     val key: Key,
     val primary: Boolean = false,
     val control: Boolean = false,
@@ -21,7 +21,7 @@ internal data class Binding(
             this.shift == shift
 }
 
-internal data class ActionSpec(
+data class ActionSpec(
     val id: String,
     val label: String,
     val group: ActionGroup,
@@ -33,7 +33,7 @@ internal data class ActionSpec(
     fun bindingFor(mac: Boolean): Binding? = if (mac) macBinding else binding
 }
 
-internal object ActionCatalog {
+object ActionCatalog {
 
     val all: List<ActionSpec> = listOf(
         ActionSpec(
@@ -241,4 +241,7 @@ internal object ActionCatalog {
 
     fun label(spec: ActionSpec, mac: Boolean = Platform.isMac): String? =
         spec.bindingFor(mac)?.let { ShortcutLabels.of(it, mac) }
+
+    fun labelOf(id: String, mac: Boolean = Platform.isMac): String? =
+        all.firstOrNull { it.id == id }?.let { label(it, mac) }
 }

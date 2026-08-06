@@ -108,7 +108,15 @@ import page.editor.PageScroll
 
 data class EditorContextAction(
     val label: String,
+    val shortcut: String? = null,
     val onClick: () -> Unit,
+)
+
+data class EditorClipboardShortcuts(
+    val cut: String? = null,
+    val copy: String? = null,
+    val paste: String? = null,
+    val selectAll: String? = null,
 )
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -149,6 +157,7 @@ fun CodeEditor(
     focusRequestVersion: Int = 0,
     caretBringIntoViewEnabled: Boolean = true,
     contextMenuActions: List<EditorContextAction> = emptyList(),
+    clipboardShortcuts: EditorClipboardShortcuts = EditorClipboardShortcuts(),
     languageMode: String? = null,
     autoPairs: Boolean = true,
     autoHtmlTags: Boolean = true,
@@ -702,6 +711,7 @@ fun CodeEditor(
                     val hasSelection = !sel.collapsed
                     CompactMenuItem(
                         label = "Cut",
+                        trailing = clipboardShortcuts.cut,
                         enabled = hasSelection,
                         onClick = {
                             if (!sel.collapsed) {
@@ -714,6 +724,7 @@ fun CodeEditor(
                     )
                     CompactMenuItem(
                         label = "Copy",
+                        trailing = clipboardShortcuts.copy,
                         enabled = hasSelection,
                         onClick = {
                             if (!sel.collapsed) {
@@ -724,6 +735,7 @@ fun CodeEditor(
                     )
                     CompactMenuItem(
                         label = "Paste",
+                        trailing = clipboardShortcuts.paste,
                         onClick = {
                             val pasted = clipboard.getText()?.text.orEmpty()
                             if (pasted.isNotEmpty()) {
@@ -736,6 +748,7 @@ fun CodeEditor(
                     )
                     CompactMenuItem(
                         label = "Select All",
+                        trailing = clipboardShortcuts.selectAll,
                         onClick = {
                             onValueChange(value.copy(selection = TextRange(0, value.text.length)))
                             menuExpanded = false
@@ -744,6 +757,7 @@ fun CodeEditor(
                     for (action in contextMenuActions) {
                         CompactMenuItem(
                             label = action.label,
+                            trailing = action.shortcut,
                             onClick = {
                                 action.onClick()
                                 menuExpanded = false
