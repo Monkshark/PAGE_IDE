@@ -108,6 +108,7 @@ internal fun InstallManagerPanel(
     modifier: Modifier = Modifier,
 ) {
     val entries = remember { buildManagerEntries() }
+    val installRevision = InstallState.revision
     var selectedId by remember { mutableStateOf(initialSelection ?: entries.firstOrNull()?.id) }
     val scope = rememberCoroutineScope()
     val focusRequester = remember { FocusRequester() }
@@ -159,9 +160,10 @@ private fun ManagerSidebar(
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val installRevision = InstallState.revision
     var systemPresent by remember { mutableStateOf<Set<String>>(emptySet()) }
     var query by remember { mutableStateOf("") }
-    LaunchedEffect(entries) {
+    LaunchedEffect(entries, installRevision) {
         systemPresent = withContext(Dispatchers.IO) {
             entries.filter { it.systemPresent() }.map { it.id }.toSet()
         }
@@ -201,7 +203,7 @@ private fun ManagerSidebar(
                 for (entry in categoryEntries) {
                     val isSelected = entry.id == selectedId
                     val installer = remember(entry.id) { LspInstallers.forId(entry.id) }
-                    val installed = remember(entry.id) { installer?.isInstalled() == true }
+                    val installed = remember(entry.id, installRevision) { installer?.isInstalled() == true }
                     val accent = Glass.colors.primary
                     Row(
                         modifier = Modifier
@@ -265,8 +267,11 @@ private fun ManagerDetailPane(
     modifier: Modifier = Modifier,
 ) {
     val installer = remember(entry.id) { LspInstallers.forId(entry.id) }
-    var installedVersions by remember(entry.id) { mutableStateOf(installer?.installedVersions() ?: emptyList()) }
-    var activeVersion by remember(entry.id) { mutableStateOf(installer?.activeVersion()) }
+    val installRevision = InstallState.revision
+    var installedVersions by remember(entry.id, installRevision) {
+        mutableStateOf(installer?.installedVersions() ?: emptyList())
+    }
+    var activeVersion by remember(entry.id, installRevision) { mutableStateOf(installer?.activeVersion()) }
     var availableVersions by remember(entry.id) { mutableStateOf<List<String>>(emptyList()) }
     var loading by remember(entry.id) { mutableStateOf(true) }
     var confirmDeleteVersion by remember(entry.id) { mutableStateOf<String?>(null) }
@@ -307,6 +312,7 @@ private fun ManagerDetailPane(
             }
             withContext(Dispatchers.Main) {
                 refreshVersions()
+                InstallState.changed()
                 onVersionChanged()
             }
         }
@@ -421,6 +427,7 @@ private fun ManagerDetailPane(
                                     modifier = Modifier.clickable {
                                         installer?.applyVersion(v)
                                         refreshVersions()
+                                        InstallState.changed()
                                         onVersionChanged()
                                     }.padding(horizontal = 6.dp),
                                 )
