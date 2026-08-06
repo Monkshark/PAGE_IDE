@@ -5,8 +5,6 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandHorizontally
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
@@ -595,8 +593,8 @@ internal fun IdeMainLayout(
             }
             AnimatedVisibility(
                 visible = codeActionPreviewVisible,
-                enter = fadeIn(tween(120)) + expandVertically(tween(120), expandFrom = Alignment.Top),
-                exit = fadeOut(tween(120)) + shrinkVertically(tween(120), shrinkTowards = Alignment.Top),
+                enter = expandHorizontally(tween(180), expandFrom = Alignment.End) + fadeIn(tween(180)),
+                exit = shrinkHorizontally(tween(180), shrinkTowards = Alignment.End) + fadeOut(tween(180)),
             ) {
                 CodeActionPreviewPanel(
                     actions = codeActionPreviewActions,
