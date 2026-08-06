@@ -58,7 +58,11 @@ internal fun PaneRegion(
     onTabDragEnd: () -> Unit = {},
     onJumpToProblem: (Path, Int, Int) -> Unit = { _, _, _ -> },
     onApplyRename: (RenameWorkspaceEdit) -> Unit = {},
-    onRequestReferences: (Path, Int, Int, String) -> Unit = { _, _, _, _ -> },
+    onRequestReferences: (Path, Int, Int, String, ReferencesSurface) -> Unit = { _, _, _, _, _ -> },
+    referencesState: ReferencesQueryState? = null,
+    onReferencesClose: () -> Unit = {},
+    onReferencesOpenInPanel: () -> Unit = {},
+    linePreviewFor: (String, Int) -> String? = { _, _ -> null },
     onShowCallGraph: (Path, Int, Int) -> Unit = { _, _, _ -> },
     onShowInAtlas: (Path) -> Unit = {},
     workspaceRoot: Path? = null,
@@ -183,8 +187,19 @@ internal fun PaneRegion(
                     },
                     onApplyRename = onApplyRename,
                     onRequestReferences = active?.path?.let { p ->
-                        { line, ch, sym -> onRequestReferences(p, line, ch, sym) }
+                        { line, ch, sym, surface -> onRequestReferences(p, line, ch, sym, surface) }
                     },
+                    references = referencesState?.takeIf { query ->
+                        query.surface == ReferencesSurface.Popup &&
+                            active?.path?.toUri()?.toString() == query.originUri
+                    },
+                    onReferenceJump = { path, line, character ->
+                        onReferencesClose()
+                        onJumpToProblem(path, line, character)
+                    },
+                    onReferencesOpenInPanel = onReferencesOpenInPanel,
+                    onReferencesDismiss = onReferencesClose,
+                    referenceLinePreview = linePreviewFor,
                     onShowCallGraph = active?.path
                         ?.takeIf { activeCtrl?.supportsCallHierarchy == true || ImportExtractor.supportsStaticCalls(it) }
                         ?.let { p -> { line, ch -> onShowCallGraph(p, line, ch) } },

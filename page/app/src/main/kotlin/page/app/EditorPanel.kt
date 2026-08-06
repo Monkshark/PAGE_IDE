@@ -156,7 +156,12 @@ fun EditorPanel(
     onRequestPrepareRename: ((line: Int, character: Int) -> CompletableFuture<RenamePrepare?>)? = null,
     onRequestRename: ((line: Int, character: Int, newName: String) -> CompletableFuture<RenameWorkspaceEdit>)? = null,
     onApplyRename: ((RenameWorkspaceEdit) -> Unit)? = null,
-    onRequestReferences: ((line: Int, character: Int, symbolName: String) -> Unit)? = null,
+    onRequestReferences: ((line: Int, character: Int, symbolName: String, surface: ReferencesSurface) -> Unit)? = null,
+    references: ReferencesQueryState? = null,
+    onReferenceJump: (Path, Int, Int) -> Unit = { _, _, _ -> },
+    onReferencesOpenInPanel: () -> Unit = {},
+    onReferencesDismiss: () -> Unit = {},
+    referenceLinePreview: (String, Int) -> String? = { _, _ -> null },
     onShowCallGraph: ((line: Int, character: Int) -> Unit)? = null,
     onShowInAtlas: (() -> Unit)? = null,
     onRequestInlayHints: ((startLine: Int, startCharacter: Int, endLine: Int, endCharacter: Int) -> CompletableFuture<List<InlayHintItem>>)? = null,
@@ -587,6 +592,8 @@ fun EditorPanel(
     var lspSignatureRequestToken by remember(activePath) { mutableStateOf(0) }
 
     var renameRequest by remember(activePath) { mutableStateOf<RenameRequestState?>(null) }
+    var declarationCacheText by remember(activePath) { mutableStateOf<String?>(null) }
+    var declarationCache by remember(activePath) { mutableStateOf<Map<String, Int>>(emptyMap()) }
     var renameInProgress by remember(activePath) { mutableStateOf(false) }
     var renameError by remember(activePath) { mutableStateOf<String?>(null) }
 
@@ -1070,6 +1077,13 @@ fun EditorPanel(
                     scrollOffsetProvider = { scrollState.value.toFloat() },
                 )
             }
+            fun declarationsIn(text: String): Map<String, Int> {
+                if (declarationCacheText != text) {
+                    declarationCache = page.shared.syntax.SymbolNames.scan(text).defs
+                    declarationCacheText = text
+                }
+                return declarationCache
+            }
             fun triggerDefinitionOrReferences(text: String, offset: Int): Boolean {
                 val defCb = onRequestDefinition ?: return false
                 val nav = onGoToDefinition ?: return false
@@ -1083,7 +1097,7 @@ fun EditorPanel(
                     val first = targets?.firstOrNull()
                     val atDeclaration = first != null && refCb != null && selfUri != null &&
                         first.uri == selfUri && definitionTargetContains(first, pos.line, pos.col)
-                    if (atDeclaration) refCb!!(pos.line, pos.col, symbolName)
+                    if (atDeclaration) refCb!!(pos.line, pos.col, symbolName, ReferencesSurface.Popup)
                     else if (first != null) nav(first)
                 }
                 return true
@@ -1119,6 +1133,26 @@ fun EditorPanel(
                 },
                 onCtrlPress = { origOff ->
                     triggerDefinitionOrReferences(latestValue.text, origOff)
+                },
+                ctrlHoverLabel = { origOff ->
+                    val text = latestValue.text
+                    val word = wordRangeAt(text, origOff)
+                    if (word == null) null
+                    else {
+                        val name = text.substring(word.first, word.second)
+                        if (declarationsIn(text)[name] == word.first) "Find usages" else "Go to declaration"
+                    }
+                },
+                caretPopup = references?.let { query ->
+                    {
+                        ReferencesPopup(
+                            state = query,
+                            linePreviewFor = referenceLinePreview,
+                            onJump = onReferenceJump,
+                            onOpenInPanel = onReferencesOpenInPanel,
+                            onDismiss = onReferencesDismiss,
+                        )
+                    }
                 },
                 onResolveCtrlHoverLink = { origOff ->
                     if (onRequestDefinition == null) null
@@ -1249,7 +1283,7 @@ fun EditorPanel(
                                 val word = wordRangeAt(text, caret)
                                 val symbolName = if (word != null) text.substring(word.first, word.second) else ""
                                 if (isRenamableIdentifier(symbolName)) {
-                                    cb(pos.line, pos.col, symbolName)
+                                    cb(pos.line, pos.col, symbolName, ReferencesSurface.Panel)
                                 }
                             }
                             return@CodeEditor true

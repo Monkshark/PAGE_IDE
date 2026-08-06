@@ -791,10 +791,11 @@ private fun androidx.compose.ui.window.ApplicationScope.AppContent() {
                     onTerminalToggle = toggleTerminal,
                     run = app.runPanelBinding(),
                     referencesState = referencesState,
-                    onRequestReferences = { path, line, character, symbol ->
-                        onIdeEvent(IdeEvent.Lsp.RequestReferences(path, line, character, symbol))
+                    onRequestReferences = { path, line, character, symbol, surface ->
+                        onIdeEvent(IdeEvent.Lsp.RequestReferences(path, line, character, symbol, surface))
                     },
                     onReferencesClose = { onIdeEvent(IdeEvent.Lsp.ReferencesClose) },
+                    onReferencesOpenInPanel = { onIdeEvent(IdeEvent.Lsp.ReferencesToPanel) },
                     linePreviewFor = { uri, line -> currentLspRouter.controllerForUri(uri)?.linePreviewFor(uri, line) },
                     foldedLinesFor = foldedLinesFor,
                     onFoldChange = onFoldChange,

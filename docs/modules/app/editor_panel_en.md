@@ -128,6 +128,20 @@ Each keystroke runs through three post-processors: `AutoClose` for matched brack
 | Triple | `WordBoundary.lineRangeAt(text, offset)` — line start to just before `\n` |
 
 `PointerEventPass.Final` runs after `BasicTextField`'s built-in pointer logic, so we override its result. The sequence only counts within 400 ms and 8 px; outside that the counter resets.
+---
+
+## Ctrl+Click navigation
+
+| Cursor sits on | Action |
+|---|---|
+| A reference | Jump to the declaration (`onRequestDefinition` → `onGoToDefinition`) |
+| The declaration | Show usages in a popup beside the caret (`ReferencesSurface.Popup`) |
+
+Holding `Ctrl` over an identifier underlines it, switches to the hand cursor, and shows which way the click will go (`Go to declaration` / `Find usages`). Whether the word is a declaration is decided locally from `SymbolNames.scan(text).defs` — no LSP round trip.
+
+`Ctrl+B` runs the same path (`triggerDefinitionOrReferences`). `Shift+F12` still fills the bottom References panel, and the popup's `Open in panel` moves a result set down there.
+
+`ReferencesPopup` groups hits by file and takes `↑↓` to move, `Enter` to open, `Esc` to close.
 
 ---
 
