@@ -47,6 +47,7 @@ class AppControllerTest {
         val runController = RunController(scope) { }
         val outputState = OutputPanelState()
         val todo = TodoController(null, scope)
+        val symbolUsage = SymbolUsageController(null, scope)
 
         var router: LspRouter = LspRouter(null, scope)
         var routerProviderCalls = 0
@@ -70,6 +71,7 @@ class AppControllerTest {
                 router
             },
             todoProvider = { todo },
+            symbolUsageProvider = { symbolUsage },
             exitApplication = { exitCalled++ },
             frameProvider = { null },
             copyToClipboard = { clipboard.add(it) },

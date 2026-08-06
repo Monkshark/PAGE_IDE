@@ -6,10 +6,11 @@ import kotlin.test.assertTrue
 
 class UnusedSymbolsTest {
 
-    private fun analyze(text: String): List<String> {
+    private fun analyze(text: String, usedElsewhere: (String) -> Boolean = { false }): List<String> {
         val tokens = SyntaxRoles.refine(text, KotlinLexer.tokenize(text))
         val pairs = BracketScan.pairs(text, tokens)
-        return UnusedSymbols.find(text, tokens, pairs).map { text.substring(it.first, it.last + 1) }
+        return UnusedSymbols.find(text, tokens, pairs, usedElsewhere)
+            .map { text.substring(it.first, it.last + 1) }
     }
 
     @Test
@@ -103,6 +104,26 @@ class UnusedSymbolsTest {
     }
 
     @Test
+    fun memberUsedInAnotherFileIsLeftAlone() {
+        val text = """
+            class Holder {
+                val exported: Int = 1
+            }
+        """.trimIndent()
+        assertTrue(analyze(text) { it == "exported" }.isEmpty(), "member used elsewhere was dimmed")
+    }
+
+    @Test
+    fun memberUsedNowhereIsDimmed() {
+        val text = """
+            class Holder {
+                val orphan: Int = 1
+            }
+        """.trimIndent()
+        assertTrue(analyze(text).contains("orphan"), "member unused project-wide was kept, got ${'$'}{analyze(text)}")
+    }
+
+    @Test
     fun classPropertyIsLeftAlone() {
         val text = """
             class Holder(
@@ -111,6 +132,6 @@ class UnusedSymbolsTest {
                 val flow: String = id
             }
         """.trimIndent()
-        assertTrue(analyze(text).none { it == "flow" }, "class property flagged, got ${analyze(text)}")
+        assertTrue(analyze(text) { true }.none { it == "flow" }, "class property flagged, got ${analyze(text) { true }}")
     }
 }

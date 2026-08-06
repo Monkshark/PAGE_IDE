@@ -16,27 +16,15 @@ object UnusedSymbols {
         text: String,
         tokens: List<Token>,
         pairs: List<BracketPair>,
+        usedElsewhere: (String) -> Boolean = { true },
     ): List<IntRange> {
         if (text.isEmpty() || tokens.isEmpty()) return emptyList()
-        val importLines = importLines(text)
-        val uses = wordUses(text, importLines)
+        val importLines = SymbolNames.importLines(text)
+        val uses = SymbolNames.occurrences(text)
         val ranges = ArrayList<IntRange>()
         ranges += unusedImports(text, importLines, uses)
-        ranges += unusedLocals(text, tokens, pairs, uses)
+        ranges += unusedDeclarations(text, tokens, pairs, uses, usedElsewhere)
         return ranges
-    }
-
-    private fun wordUses(text: String, importLines: List<IntRange>): Map<String, MutableList<Int>> {
-        val uses = HashMap<String, MutableList<Int>>()
-        var i = 0
-        while (i < text.length) {
-            if (!isNameStart(text[i])) { i++; continue }
-            val start = i
-            while (i < text.length && isNamePart(text[i])) i++
-            if (importLines.any { start >= it.first && start <= it.last }) continue
-            uses.getOrPut(text.substring(start, i)) { ArrayList() }.add(start)
-        }
-        return uses
     }
 
     private fun lineRangeAt(text: String, offset: Int): IntRange {
@@ -46,10 +34,6 @@ object UnusedSymbols {
         while (end < text.length && text[end] != '\n') end++
         return start until end
     }
-
-    private fun isNameStart(c: Char): Boolean = c.isLetter() || c == '_'
-
-    private fun isNamePart(c: Char): Boolean = c.isLetterOrDigit() || c == '_'
 
     private fun unusedImports(
         text: String,
@@ -70,11 +54,12 @@ object UnusedSymbols {
         return ranges
     }
 
-    private fun unusedLocals(
+    private fun unusedDeclarations(
         text: String,
         tokens: List<Token>,
         pairs: List<BracketPair>,
         uses: Map<String, MutableList<Int>>,
+        usedElsewhere: (String) -> Boolean,
     ): List<IntRange> {
         if (pairs.isEmpty()) return emptyList()
         val closers = HashMap<Int, Int>(pairs.size)
@@ -91,8 +76,12 @@ object UnusedSymbols {
             )
             if (keyword !in DECLARATION_KEYWORDS) continue
             val enclosing = BracketScan.enclosing(pairs, token.start) ?: continue
-            if (declaresType(text, enclosing.open, closers)) continue
             val name = nameOf(text, token) ?: continue
+            val modifiers = precedingModifiers(text, tokens, i)
+            if ("override" in modifiers) continue
+            val isMember = declaresType(text, enclosing.open, closers)
+            val fileScoped = "private" in modifiers
+            if (isMember && !fileScoped && usedElsewhere(name)) continue
             val declarationLine = lineRangeAt(text, token.start)
             val usedElsewhere = uses[name].orEmpty().any { it !in declarationLine }
             if (usedElsewhere) continue
@@ -100,6 +89,28 @@ object UnusedSymbols {
         }
         return ranges
     }
+
+    private fun precedingModifiers(text: String, tokens: List<Token>, declarationIndex: Int): Set<String> {
+        val found = HashSet<String>()
+        var i = declarationIndex - 1
+        while (i >= 0) {
+            val token = tokens[i]
+            if (token.kind != TokenKind.KEYWORD) break
+            val word = text.substring(
+                token.start.coerceIn(0, text.length),
+                token.endExclusive.coerceIn(0, text.length),
+            )
+            if (word !in MODIFIERS) break
+            found += word
+            i--
+        }
+        return found
+    }
+
+    private val MODIFIERS = setOf(
+        "val", "var", "override", "open", "final", "abstract", "internal", "public", "protected",
+        "private", "lateinit", "const", "suspend", "inline", "companion", "static", "readonly",
+    )
 
     private const val HEADER_LOOKBEHIND = 600
 

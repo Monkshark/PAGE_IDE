@@ -242,6 +242,8 @@ private fun androidx.compose.ui.window.ApplicationScope.AppContent() {
     registerAllBackends()
     val todo = rememberTodoController(workspaceRoot = rootDir)
     val currentTodo by rememberUpdatedState(todo)
+    val symbolUsage = rememberSymbolUsageController(workspaceRoot = rootDir)
+    val currentSymbolUsage by rememberUpdatedState(symbolUsage)
     val todoItems by todo.items
 
     fun paneOf(side: PaneSide): EditorPaneState = editorWorkspace.paneOf(side)
@@ -257,8 +259,18 @@ private fun androidx.compose.ui.window.ApplicationScope.AppContent() {
     fun focused(): EditorPaneState = editorWorkspace.focused()
 
     val fileTreeWatcher = rememberFileTreeWatcherController()
-    fileTreeWatcher.WatchLoop(rootDir = rootDir, expanded = expanded, onTreeChanged = { onIdeEvent(IdeEvent.Tree.BumpRevision) })
-    val withFileTreeWatcherClosed: (() -> Unit) -> Unit = { block -> fileTreeWatcher.withClosed(block) }
+    fileTreeWatcher.WatchLoop(
+        rootDir = rootDir,
+        expanded = expanded,
+        onTreeChanged = {
+            onIdeEvent(IdeEvent.Tree.BumpRevision)
+            symbolUsage.refreshWorkspaceAsync()
+        },
+    )
+    val withFileTreeWatcherClosed: (() -> Unit) -> Unit = { block ->
+        fileTreeWatcher.withClosed(block)
+        symbolUsage.refreshWorkspaceAsync()
+    }
     val copyToClipboard: (String) -> Unit = { text ->
         runCatching {
             val selection = java.awt.datatransfer.StringSelection(text)
@@ -280,6 +292,7 @@ private fun androidx.compose.ui.window.ApplicationScope.AppContent() {
             appScope = appScope,
             lspRouterProvider = { currentLspRouter },
             todoProvider = { currentTodo },
+            symbolUsageProvider = { currentSymbolUsage },
             exitApplication = { exitApplication() },
             frameProvider = { frameRef.value },
             copyToClipboard = copyToClipboard,
@@ -376,6 +389,7 @@ private fun androidx.compose.ui.window.ApplicationScope.AppContent() {
                         }
                     }
                     todo.scanWorkspaceAsync()
+                    symbolUsage.scanWorkspaceAsync()
                 },
                 { root ->
                     val loaded = if (root == null) RunConfigsState()
@@ -651,7 +665,9 @@ private fun androidx.compose.ui.window.ApplicationScope.AppContent() {
         DisposableEffect(window) {
             val frame = window
             val focusListener = object : java.awt.event.WindowFocusListener {
-                override fun windowGainedFocus(e: java.awt.event.WindowEvent?) {}
+                override fun windowGainedFocus(e: java.awt.event.WindowEvent?) {
+                    symbolUsage.refreshWorkspaceAsync()
+                }
                 override fun windowLostFocus(e: java.awt.event.WindowEvent?) {
                     if (autoSaveOptionsRef.value.onFocusLost) saveAllDirtyRef.value()
                 }
@@ -785,6 +801,8 @@ private fun androidx.compose.ui.window.ApplicationScope.AppContent() {
                     editorFocusVersion = editorFocusVersion,
                     codeAction = app.codeActionPreviewBinding(),
                     editorScrollFor = { p -> editorScrollByPath[p] },
+                    usedElsewhere = { path -> currentSymbolUsage.usedElsewhere(path) },
+                    usageRevision = symbolUsage.revision.value,
                     onEditorScrollChange = { p, snap ->
                         onIdeEvent(IdeEvent.EditorScroll.Changed(p, snap))
                     },

@@ -145,6 +145,8 @@ fun EditorPanel(
     lexer: SyntaxLexer?,
     activePath: Path?,
     diagnostics: List<Diagnostic> = emptyList(),
+    usedElsewhere: (String) -> Boolean = { false },
+    usageRevision: Int = 0,
     onRequestCompletion: ((line: Int, character: Int, triggerCharacter: String?) -> CompletableFuture<CompletionList>)? = null,
     onRequestHover: ((line: Int, character: Int) -> CompletableFuture<HoverInfo?>)? = null,
     onRequestDefinition: ((line: Int, character: Int) -> CompletableFuture<List<DefinitionTarget>>)? = null,
@@ -301,9 +303,12 @@ fun EditorPanel(
             EditorDecoration(startOff, endOff, color, style)
         }
     }
-    val unusedRanges = remember(value.text, tokens, bracketPairs, pageSettings.editor.dimUnusedSymbols) {
+    val unusedRanges = remember(
+        value.text, tokens, bracketPairs, pageSettings.editor.dimUnusedSymbols,
+        usedElsewhere, usageRevision,
+    ) {
         if (!pageSettings.editor.dimUnusedSymbols) emptyList()
-        else page.shared.syntax.UnusedSymbols.find(value.text, tokens, bracketPairs)
+        else page.shared.syntax.UnusedSymbols.find(value.text, tokens, bracketPairs, usedElsewhere)
     }
 
     val unnecessaryRanges = remember(value.text, diagnostics, showInlineDiagnostics, unusedRanges) {

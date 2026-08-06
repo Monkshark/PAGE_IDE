@@ -171,6 +171,8 @@ internal fun IdeMainLayout(
     codeAction: CodeActionPreviewBinding = CodeActionPreviewBinding(),
     editorScrollFor: (Path) -> EditorScrollSnapshot? = { null },
     onEditorScrollChange: (Path, EditorScrollSnapshot) -> Unit = { _, _ -> },
+    usedElsewhere: (Path?) -> (String) -> Boolean = { { false } },
+    usageRevision: Int = 0,
     tabContextActionsFor: (PaneSide) -> TabContextActions? = { null },
     settings: SettingsBinding = SettingsBinding(),
     atlasSlice: GraphSlice = GraphSlice.EMPTY,
@@ -449,6 +451,8 @@ internal fun IdeMainLayout(
                                 onFoldStartLinesChange = onFoldChange,
                                 editorScrollFor = editorScrollFor,
                                 onEditorScrollChange = onEditorScrollChange,
+                        usedElsewhere = usedElsewhere,
+                        usageRevision = usageRevision,
                                 tabContextActions = tabContextActionsFor(PaneSide.PRIMARY),
                                 modifier = Modifier.fillMaxSize(),
                             )
@@ -484,6 +488,8 @@ internal fun IdeMainLayout(
                                 onFoldStartLinesChange = onFoldChange,
                                 editorScrollFor = editorScrollFor,
                                 onEditorScrollChange = onEditorScrollChange,
+                        usedElsewhere = usedElsewhere,
+                        usageRevision = usageRevision,
                                 tabContextActions = tabContextActionsFor(PaneSide.SECONDARY),
                                 modifier = Modifier.fillMaxSize(),
                             )
@@ -518,6 +524,8 @@ internal fun IdeMainLayout(
                         onFoldStartLinesChange = onFoldChange,
                         editorScrollFor = editorScrollFor,
                         onEditorScrollChange = onEditorScrollChange,
+                        usedElsewhere = usedElsewhere,
+                        usageRevision = usageRevision,
                         tabContextActions = tabContextActionsFor(PaneSide.PRIMARY),
                         modifier = Modifier.fillMaxSize(),
                     )

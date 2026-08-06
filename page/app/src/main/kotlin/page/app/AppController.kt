@@ -66,6 +66,7 @@ internal class AppController(
     private val appScope: CoroutineScope,
     private val lspRouterProvider: () -> LspRouter,
     private val todoProvider: () -> TodoController,
+    private val symbolUsageProvider: () -> SymbolUsageController,
     private val exitApplication: () -> Unit,
     private val frameProvider: () -> java.awt.Frame?,
     private val copyToClipboard: (String) -> Unit,
@@ -74,6 +75,7 @@ internal class AppController(
 ) {
     private val router: LspRouter get() = lspRouterProvider()
     private val todo: TodoController get() = todoProvider()
+    private val symbolUsage: SymbolUsageController get() = symbolUsageProvider()
 
     private fun paneOf(side: PaneSide): EditorPaneState = editorWorkspace.paneOf(side)
 
@@ -698,6 +700,7 @@ internal class AppController(
         if (path == null) return
         router.controllerFor(path)?.didChange(path, text)
         todo.updateFile(path, text)
+        symbolUsage.updateFile(path, text)
     }
 
     fun installApplyEditHandler(post: (() -> Unit) -> Unit) {

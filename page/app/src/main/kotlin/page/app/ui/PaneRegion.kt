@@ -62,6 +62,8 @@ internal fun PaneRegion(
     onShowCallGraph: (Path, Int, Int) -> Unit = { _, _, _ -> },
     onShowInAtlas: (Path) -> Unit = {},
     workspaceRoot: Path? = null,
+    usedElsewhere: (Path?) -> (String) -> Boolean = { { false } },
+    usageRevision: Int = 0,
     editorFocusVersion: Int = 0,
     initialFoldedStartLines: Set<Int> = emptySet(),
     onFoldStartLinesChange: (Path, Set<Int>) -> Unit = { _, _ -> },
@@ -152,6 +154,8 @@ internal fun PaneRegion(
                     lexer = activeLexer,
                     activePath = active?.path,
                     diagnostics = activeDiagnostics,
+                    usedElsewhere = usedElsewhere(active?.path),
+                    usageRevision = usageRevision,
                     onRequestCompletion = active?.path?.let { p ->
                         activeCtrl?.let { ctrl -> { line, ch, trig -> ctrl.completion(p, pane.editorValue.text, line, ch, trig) } }
                     },
