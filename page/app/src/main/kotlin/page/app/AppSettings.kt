@@ -125,12 +125,6 @@ object AppSettings {
         return home.resolve(DIR_NAME).resolve(FILE_NAME)
     }
 
-    fun loadPalette(default: GlassPalette = GlassPalette.Signature): GlassPalette {
-        val raw = readProperty(KEY_PALETTE) ?: return default
-        return GlassPalette.values().firstOrNull { it.name.equals(raw, ignoreCase = true) } ?: default
-    }
-    fun savePalette(palette: GlassPalette) = writeProperties(mapOf(KEY_PALETTE to palette.name))
-
     fun loadAutoSave(default: AutoSaveOptions = AutoSaveOptions.DEFAULT): AutoSaveOptions {
         val p = readAllProperties() ?: return default
         return AutoSaveOptions(
@@ -263,8 +257,6 @@ object AppSettings {
 
     private fun Properties.getInt(key: String, default: Int, min: Int, max: Int): Int =
         getProperty(key)?.toIntOrNull()?.coerceIn(min, max) ?: default
-
-    private fun readProperty(key: String): String? = readAllProperties()?.getProperty(key)
 
     private fun readAllProperties(): Properties? {
         val path = settingsPath()

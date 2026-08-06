@@ -29,6 +29,7 @@ private fun reducePalette(state: AppState, e: IdeEvent.Palette): AppState = when
         val next = all[(all.indexOf(state.chrome.palette) + 1) % all.size]
         state.copy(chrome = state.chrome.copy(palette = next))
     }
+    is IdeEvent.Palette.Select -> state.copy(chrome = state.chrome.copy(palette = e.palette))
     IdeEvent.Palette.ToggleFindInFiles ->
         if (state.dialogs.findInFilesOpen) state.copy(dialogs = state.dialogs.copy(findInFilesOpen = false))
         else state

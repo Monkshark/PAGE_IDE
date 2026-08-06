@@ -30,7 +30,6 @@ class AppSettingsUiPaletteTest {
     fun defaultPaletteIsSignature() {
         assertEquals(GlassPalette.Signature, UiOptions.DEFAULT.palette)
         assertEquals(GlassPalette.Signature, AppSettings.loadUi().palette)
-        assertEquals(GlassPalette.Signature, AppSettings.loadPalette())
     }
 
     @Test

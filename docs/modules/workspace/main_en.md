@@ -30,7 +30,7 @@ flowchart TB
 
 ## The file tree
 
-`FileTreePanel` is the Compose composable that draws the left sidebar tree. Row rendering (`TreeRow`), selection (`FileTreeSelection`), clipboard (`FileTreeClipboard`), and a context menu attach to it. Drag handles both in-tree reordering and export out of the tree, split across `TreeDragController` · `TreeDragGestures` · `TreeOutboundTransferable`. When files change externally, `FileTreeWatcher` detects it and refreshes the tree. Per-workspace settings (palette, etc.) are persisted by `WorkspaceStore` in `workspace.json`.
+`FileTreePanel` is the Compose composable that draws the left sidebar tree. Row rendering (`TreeRow`), selection (`FileTreeSelection`), clipboard (`FileTreeClipboard`), and a context menu attach to it. Drag handles both in-tree reordering and export out of the tree, split across `TreeDragController` · `TreeDragGestures` · `TreeOutboundTransferable`. When files change externally, `FileTreeWatcher` detects it and refreshes the tree.
 
 ---
 

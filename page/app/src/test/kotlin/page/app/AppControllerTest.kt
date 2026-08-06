@@ -19,6 +19,7 @@ import page.runtime.RunConfig
 import page.runtime.RunConfigsState
 import page.runtime.RunController
 import page.runtime.RunEvent
+import page.app.mvi.IdeEvent
 import page.ui.GlassPalette
 import page.workspace.FileOpHistory
 import java.nio.file.Files
@@ -41,6 +42,7 @@ class AppControllerTest {
         val layoutUiState = LayoutUiState(store)
         val appState = IdeAppState(store)
         val effects = IdeEffectHandler()
+        val dispatch: (IdeEvent) -> Unit by lazy { IdeDispatcher(store, effects).onEvent }
         val fileOpHistory = FileOpHistory.Stack()
         val runController = RunController(scope) { }
         val outputState = OutputPanelState()
@@ -72,7 +74,7 @@ class AppControllerTest {
             frameProvider = { null },
             copyToClipboard = { clipboard.add(it) },
             withFileTreeWatcherClosed = { block -> block() },
-            dispatch = IdeDispatcher(store, effects).onEvent,
+            dispatch = dispatch,
         )
 
         init {
@@ -242,9 +244,10 @@ class AppControllerTest {
     }
 
     @Test
-    fun `cyclePalette persists to AppSettings when there is no root`() {
+    fun `palette picks persist to AppSettings with or without a root`() {
         val h = Harness()
         val settingsDir = Files.createTempDirectory("appctl-palette")
+        val root = Files.createTempDirectory("appctl-palette-ws")
         val prior = System.getProperty("page.settings.dir")
         System.setProperty("page.settings.dir", settingsDir.toString())
         try {
@@ -255,7 +258,16 @@ class AppControllerTest {
             val advanced = h.appState.palette
             assertTrue(advanced != before, "palette should advance")
             assertEquals(advanced, AppSettings.loadUi().palette, "no root: palette persisted to AppSettings")
+
+            h.workspaceState.rootDir = root
+            val picked = GlassPalette.values().first { it != advanced }
+            h.dispatch(IdeEvent.Palette.Select(picked))
+
+            assertEquals(picked, h.appState.palette, "selection applies immediately")
+            assertEquals(picked, AppSettings.loadUi().palette, "with root: palette still persisted globally")
+            assertEquals(picked, h.appState.pageSettings.ui.palette, "settings state stays in sync")
         } finally {
+            root.toFile().deleteRecursively()
             if (prior != null) System.setProperty("page.settings.dir", prior)
             else System.clearProperty("page.settings.dir")
             settingsDir.toFile().deleteRecursively()
