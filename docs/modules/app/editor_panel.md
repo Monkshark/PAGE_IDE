@@ -143,6 +143,19 @@ onValueChange(final)
 
 `ReferencesPopup` 은 파일별로 묶어서 보여주고 `↑↓` 이동, `Enter` 열기, `Esc` 닫기를 받는다
 로딩은 두 군데서 보인다 — LSP 정의 조회를 기다리는 동안 캐럿 옆에 `Resolving declaration of <symbol>…` 이 뜨고 (8초 지나면 사라짐), 워크스페이스 인덱스가 아직 도는 중이면 팝업이 `Indexing — list may grow` 를 달아 결과가 더 늘 수 있다고 알린다
+---
+
+## 액션 카탈로그
+
+단축키·라벨·그룹은 `page.app.input.ActionCatalog` 한 곳에만 있다. 한 줄이 곧 하나의 액션이고, 키 디스패치·컨텍스트 메뉴·액션 팔레트가 같은 줄을 읽는다
+
+| 표면 | 읽는 것 |
+|---|---|
+| `ActionDispatcher` | 바인딩 → 실행 (`ShortcutResolver` 대체) |
+| 컨텍스트 메뉴 | 라벨 + 단축키 표기 |
+| 액션 팔레트 (`Ctrl+Shift+P`) | 전체 액션 검색 |
+
+`Binding.primary` 는 Windows·Linux 에서 `Ctrl`, macOS 에서 `Cmd` 로 해석된다. mac 에서 진짜 `Ctrl` 이어야 하는 조합은 `control = true` 로 따로 적는다 (`Ctrl+Alt+T` 등). 표기는 `ShortcutLabels` 가 플랫폼에 맞춰 `Ctrl+Shift+F` / `⇧⌘F` 로 렌더한다
 
 ---
 

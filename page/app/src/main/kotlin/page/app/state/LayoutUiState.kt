@@ -111,6 +111,7 @@ internal class LayoutUiState(private val store: IdeStore = IdeStore()) {
     var largeCopyState: LargeCopyDialogState? by mutableStateOf(null)
 
     var quickOpen by mutableStateOf(false)
+    var actionPalette by mutableStateOf(false)
     var quickOpenIndex by mutableStateOf<List<IndexedFile>>(emptyList())
     var documentSymbolOpen by mutableStateOf(false)
     var documentSymbolList by mutableStateOf<List<DocumentSymbolEntry>>(emptyList())

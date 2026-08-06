@@ -25,6 +25,8 @@ import page.workspace.FileOpHistory
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -33,6 +35,25 @@ import kotlin.test.assertTrue
 import kotlin.test.assertIs
 
 class AppControllerTest {
+
+    private lateinit var settingsDir: Path
+    private var priorSettingsDir: String? = null
+
+    @BeforeTest
+    fun isolateSettings() {
+        settingsDir = Files.createTempDirectory("appctl-settings-")
+        priorSettingsDir = System.getProperty("page.settings.dir")
+        System.setProperty("page.settings.dir", settingsDir.toString())
+    }
+
+    @AfterTest
+    fun restoreSettings() {
+        val prior = priorSettingsDir
+        if (prior != null) System.setProperty("page.settings.dir", prior)
+        else System.clearProperty("page.settings.dir")
+        settingsDir.toFile().deleteRecursively()
+    }
+
 
     private class Harness {
         val scope = CoroutineScope(SupervisorJob())

@@ -149,6 +149,7 @@ internal fun IdeMainLayout(
     workspace: WorkspaceState,
     editor: EditorWorkspaceState,
     ui: LayoutUiState,
+    onRunAction: (page.app.input.ActionSpec) -> Unit = {},
     onEvent: (IdeEvent) -> Unit,
     lspRouter: LspRouter,
     onCloseTab: (PaneSide, Int) -> Unit,
@@ -721,6 +722,12 @@ internal fun IdeMainLayout(
                 )
             }
         }
+    }
+    if (ui.actionPalette) {
+        page.app.ui.dialog.ActionPaletteDialog(
+            onRun = onRunAction,
+            onDismiss = { ui.actionPalette = false },
+        )
     }
     AnimatedVisibility(
         visible = ui.quickOpen,
