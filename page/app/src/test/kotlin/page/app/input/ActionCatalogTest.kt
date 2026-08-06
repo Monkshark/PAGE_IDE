@@ -83,6 +83,24 @@ class ActionCatalogTest {
     }
 
     @Test
+    fun `only global actions with a body are dispatched`() {
+        assertNull(resolve(Key.F2), "editor rename is owned by the editor, not the dispatcher")
+        assertNull(resolve(Key.Delete), "tree delete is owned by the file tree")
+        assertEquals("file.save", resolve(Key.S, primary = true))
+    }
+
+    @Test
+    fun `documented editor and tree keys still carry labels`() {
+        val rename = ActionCatalog.all.first { it.id == "editor.rename" }
+        assertEquals(ActionContext.Editor, rename.context)
+        assertEquals("F2", ActionCatalog.label(rename, mac = false))
+        val cut = ActionCatalog.all.first { it.id == "tree.cut" }
+        assertEquals(ActionContext.FileTree, cut.context)
+        assertEquals("Ctrl+X", ActionCatalog.label(cut, mac = false))
+        assertEquals("⌘X", ActionCatalog.label(cut, mac = true))
+    }
+
+    @Test
     fun `every action carries a binding on both platforms`() {
         for (spec in ActionCatalog.all) {
             assertNotNull(spec.bindingFor(mac = false), "${spec.id} has no Windows binding")
@@ -94,7 +112,7 @@ class ActionCatalogTest {
     fun `no two actions share a chord on the same platform`() {
         for (mac in listOf(false, true)) {
             val seen = HashMap<String, String>()
-            for (spec in ActionCatalog.all) {
+            for (spec in ActionCatalog.all.filter { it.context == ActionContext.Global }) {
                 val binding = spec.bindingFor(mac) ?: continue
                 val chord = "$binding|${spec.searchMode}"
                 val previous = seen.put(chord, spec.id)

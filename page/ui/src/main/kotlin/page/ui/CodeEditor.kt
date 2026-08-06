@@ -318,7 +318,7 @@ fun CodeEditor(
             .focusRequester(focusRequester)
             .focusable(interactionSource = remember { MutableInteractionSource() })
             .onPreviewKeyEvent { event ->
-                ctrlPressedState = event.isCtrlPressed
+                ctrlPressedState = event.isPrimaryPressed()
                 if (latestPreview(event)) return@onPreviewKeyEvent true
                 handleDefaultKey(
                     event = event,
@@ -396,7 +396,7 @@ fun CodeEditor(
                                         continue
                                     }
                                     if (
-                                        e.keyboardModifiers.isCtrlPressed &&
+                                        e.keyboardModifiers.isPrimaryPressed() &&
                                         !e.keyboardModifiers.isShiftPressed &&
                                         latestCtrlPress != null
                                     ) {
@@ -489,7 +489,7 @@ fun CodeEditor(
                                         val origOff = latestMapping.transformedToOriginal(transOff)
                                         hoverPosition = change.position
                                         hoverOriginalOffset = origOff
-                                        ctrlPressedState = e.keyboardModifiers.isCtrlPressed
+                                        ctrlPressedState = e.keyboardModifiers.isPrimaryPressed()
                                         latestOnHover?.invoke(origOff)
                                     }
                                 }
@@ -1527,7 +1527,7 @@ private fun handleDefaultKey(
     val text = value.text
     val sel = value.selection
     val shift = event.isShiftPressed
-    val ctrl = event.isCtrlPressed
+    val ctrl = event.isPrimaryPressed()
     val alt = event.isAltPressed
     val isVerticalMove = !ctrl && !alt && (
         event.key == Key.DirectionUp || event.key == Key.DirectionDown ||

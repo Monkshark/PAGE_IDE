@@ -156,6 +156,9 @@ onValueChange(final)
 | 액션 팔레트 (`Ctrl+Shift+P`) | 전체 액션 검색 |
 
 `Binding.primary` 는 Windows·Linux 에서 `Ctrl`, macOS 에서 `Cmd` 로 해석된다. mac 에서 진짜 `Ctrl` 이어야 하는 조합은 `control = true` 로 따로 적는다 (`Ctrl+Alt+T` 등). 표기는 `ShortcutLabels` 가 플랫폼에 맞춰 `Ctrl+Shift+F` / `⇧⌘F` 로 렌더한다
+액션 행은 `context` 로 어디서 듣는 키인지 구분한다 — `Global` 은 `ActionDispatcher` 가 직접 실행하고, `Editor`·`FileTree` 는 각 화면이 자기 상태(자동완성 팝업, 스니펫 탭스톱, 트리 선택)와 함께 처리한다. 후자는 `run` 이 없어 실행 대상은 아니지만 라벨·바인딩은 카탈로그가 들고 있어서 팔레트·컨텍스트 메뉴·플랫폼 표기가 같은 표를 본다
+
+키 매칭 자체도 `isPrimaryPressed()` 로 통일했다. Windows·Linux 는 `Ctrl`, macOS 는 `Cmd` — 에디터의 `Ctrl+A/C/X/V`·단어 이동·`Ctrl+Click` 과 파일트리의 복사·붙여넣기까지 포함
 
 ---
 

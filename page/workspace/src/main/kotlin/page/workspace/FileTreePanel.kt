@@ -1,5 +1,6 @@
 package page.workspace
 
+import page.ui.isPrimaryPressed
 import page.runtime.*
 
 import androidx.compose.foundation.ContextMenuArea
@@ -404,7 +405,7 @@ fun FileTreePanel(
                                         else -> candidate.parent
                                     }
                                 }
-                                if (e.isCtrlPressed && !e.isShiftPressed) {
+                                if (e.isPrimaryPressed() && !e.isShiftPressed) {
                                     when (e.key) {
                                         Key.C -> {
                                             val paths = copyableSelection()
