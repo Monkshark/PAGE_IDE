@@ -27,6 +27,20 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.OpenInNew
+import androidx.compose.material.icons.outlined.ContentCopy
+import androidx.compose.material.icons.outlined.ContentCut
+import androidx.compose.material.icons.outlined.ContentPaste
+import androidx.compose.material.icons.outlined.CreateNewFolder
+import androidx.compose.material.icons.outlined.DeleteOutline
+import androidx.compose.material.icons.outlined.DriveFileRenameOutline
+import androidx.compose.material.icons.outlined.FolderOpen
+import androidx.compose.material.icons.outlined.Hub
+import androidx.compose.material.icons.outlined.Link
+import androidx.compose.material.icons.outlined.NoteAdd
+import androidx.compose.material.icons.outlined.SubdirectoryArrowRight
+import page.ui.CompactMenuSeparator
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -205,6 +219,7 @@ fun TreeRow(
                     })
                 }
                 if (!multi) {
+                    if (isNotEmpty()) add(ContextMenuItem(MENU_SEPARATOR) {})
                     if (onOpenInAtlas != null && !node.isDirectory) {
                         add(ContextMenuItem("Open in Atlas") { onOpenInAtlas(node.path) })
                     }
@@ -337,4 +352,22 @@ fun TreeRow(
             }
         }
     }
+}
+
+private const val MENU_SEPARATOR = "-"
+
+private fun treeMenuIcon(label: String): androidx.compose.ui.graphics.vector.ImageVector? = when {
+    label.startsWith("New file") -> Icons.Outlined.NoteAdd
+    label.startsWith("New folder") -> Icons.Outlined.CreateNewFolder
+    label.startsWith("Open") -> Icons.AutoMirrored.Outlined.OpenInNew
+    label == "Cut" -> Icons.Outlined.ContentCut
+    label == "Copy" -> Icons.Outlined.ContentCopy
+    label == "Paste" -> Icons.Outlined.ContentPaste
+    label.startsWith("Rename") -> Icons.Outlined.DriveFileRenameOutline
+    label.startsWith("Delete") -> Icons.Outlined.DeleteOutline
+    label.startsWith("Show in Explorer") -> Icons.Outlined.FolderOpen
+    label == "Open in Atlas" -> Icons.Outlined.Hub
+    label == "Copy path" -> Icons.Outlined.Link
+    label == "Copy relative path" -> Icons.Outlined.SubdirectoryArrowRight
+    else -> null
 }

@@ -29,6 +29,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowForward
+import androidx.compose.material.icons.outlined.AccountTree
+import androidx.compose.material.icons.outlined.Hub
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -1454,6 +1459,7 @@ fun EditorPanel(
                         add(
                             page.ui.EditorContextAction(
                                 label = "Go to Declaration",
+                                icon = Icons.AutoMirrored.Outlined.ArrowForward,
                                 shortcut = page.ui.ShortcutLabels.of(
                                     page.ui.Binding(Key.B, primary = true),
                                 ),
@@ -1468,6 +1474,7 @@ fun EditorPanel(
                         add(
                             page.ui.EditorContextAction(
                                 label = "Find Usages",
+                                icon = Icons.Outlined.Search,
                                 shortcut = page.ui.ShortcutLabels.of(
                                     page.ui.Binding(Key.F12, shift = true),
                                 ),
@@ -1488,6 +1495,7 @@ fun EditorPanel(
                         add(
                             page.ui.EditorContextAction(
                                 label = "Show in Atlas",
+                                icon = Icons.Outlined.Hub,
                                 shortcut = page.app.input.ActionCatalog.labelOf("page.atlasFocus"),
                             ) { showInAtlas() },
                         )
@@ -1495,7 +1503,10 @@ fun EditorPanel(
                     val callGraph = onShowCallGraph
                     if (callGraph != null) {
                         add(
-                            page.ui.EditorContextAction(label = "Show Call Graph in Atlas") {
+                            page.ui.EditorContextAction(
+                                label = "Show Call Graph in Atlas",
+                                icon = Icons.Outlined.AccountTree,
+                            ) {
                                 val text = value.text
                                 val offset = value.selection.end.coerceIn(0, text.length)
                                 val word = wordRangeAt(text, offset)

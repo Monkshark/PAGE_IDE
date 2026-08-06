@@ -231,3 +231,5 @@ val foldSegments = FoldRegions.segmentsFor(value.text, activeFolds)
 `UnusedSymbols` 결과는 회색 표시로만 끝나지 않는다. `UnusedQuickFixes.diagnostics` 가 이를 WARNING 진단으로 바꿔 `LocalDiagnostics` 에 올리고, Problems 패널이 LSP 진단과 합쳐서 보여준다 (`Unused import` / `'name' is never used`). LSP 가 없거나 아직 안 떠도 나온다
 
 `Alt+Enter` 는 LSP 코드액션 앞에 로컬 수정을 붙인다 — 캐럿이 놓인 줄의 `Remove unused import`, 그리고 파일 전체의 `Remove all unused imports (N)`. 일괄 삭제는 **아래 줄부터** 지우므로 앞선 줄 번호가 밀리지 않는다. 선언은 지우면 의미가 바뀔 수 있어 수정 제안 없이 경고만 남긴다
+
+컨텍스트 메뉴는 `CompactMenuItem` 한 컴포넌트가 그린다 — 14dp Material Outlined 아이콘 열, 행 안쪽에 여백을 둔 둥근 호버, 오른쪽 정렬 단축키 열, 그리고 `danger = true` 인 항목은 라벨만 위험색으로 (행 전체를 물들이면 에러 상태처럼 보인다). 그룹 사이는 `CompactMenuSeparator` 로 끊는다. 같은 컴포넌트를 타이틀바 메뉴·탭 메뉴·Run 드롭다운이 함께 쓰므로 생김새가 한 번에 맞춰진다
