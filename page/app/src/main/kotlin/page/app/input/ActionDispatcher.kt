@@ -6,6 +6,9 @@ import androidx.compose.ui.input.key.isAltPressed
 import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
+import page.ui.Platform
+import page.ui.isPrimaryPressed
+import page.ui.isSecondaryControlPressed
 
 internal object ActionDispatcher {
 
@@ -20,7 +23,8 @@ internal object ActionDispatcher {
             hasSearch = host.hasSearch,
             mac = mac,
         ) ?: return false
-        spec.run(host)
+        val run = spec.run ?: return false
+        run(host)
         return true
     }
 

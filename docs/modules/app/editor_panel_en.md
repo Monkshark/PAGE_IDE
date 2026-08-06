@@ -156,6 +156,9 @@ Shortcuts, labels, and groups live only in `page.app.input.ActionCatalog`. One r
 | Action palette (`Ctrl+Shift+P`) | every action, searchable |
 
 `Binding.primary` resolves to `Ctrl` on Windows and Linux, `Cmd` on macOS. Chords that must stay literal `Ctrl` on a Mac (`Ctrl+Alt+T` and friends) set `control = true` instead. `ShortcutLabels` renders the same binding as `Ctrl+Shift+F` or `⇧⌘F` depending on the platform.
+Each row carries a `context` saying where the key is heard — `Global` rows run straight from `ActionDispatcher`, while `Editor` and `FileTree` rows are handled by those screens alongside their own state (completion popup, snippet tabstops, tree selection). Those rows have no `run`, so nothing dispatches them, but the catalog still owns their label and binding, which is what lets the palette, the context menus, and the platform labels read one table.
+
+Key matching itself now goes through `isPrimaryPressed()`: `Ctrl` on Windows and Linux, `Cmd` on macOS — including the editor's `Ctrl+A/C/X/V`, word motion, `Ctrl+Click`, and the file tree's copy and paste.
 
 ---
 

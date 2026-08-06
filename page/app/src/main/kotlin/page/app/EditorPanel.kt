@@ -1,5 +1,6 @@
 package page.app
 
+import page.ui.isPrimaryPressed
 import page.runtime.*
 import page.workspace.*
 
@@ -1240,7 +1241,7 @@ fun EditorPanel(
                     }
                     if (
                         (event.key == Key.Enter || event.key == Key.NumPadEnter) &&
-                        !event.isShiftPressed && !event.isCtrlPressed && !event.isAltPressed &&
+                        !event.isShiftPressed && !event.isPrimaryPressed() && !event.isAltPressed &&
                         value.selection.start == value.selection.end
                     ) {
                         val caret = value.selection.end.coerceIn(0, value.text.length)
@@ -1256,12 +1257,12 @@ fun EditorPanel(
                             return@CodeEditor true
                         }
                     }
-                    if (event.isCtrlPressed && event.isShiftPressed && event.key == Key.Spacebar) {
+                    if (event.isPrimaryPressed() && event.isShiftPressed && event.key == Key.Spacebar) {
                         val caret = value.selection.end.coerceIn(0, value.text.length)
                         triggerSignatureHelp(caret, null, lspSignatureInfo != null)
                         return@CodeEditor true
                     }
-                    if (event.isCtrlPressed && event.key == Key.Spacebar) {
+                    if (event.isPrimaryPressed() && event.key == Key.Spacebar) {
                         val text = value.text
                         val caret = value.selection.end.coerceIn(0, text.length)
                         val wordStart = wordStartAt(text, caret)
@@ -1273,8 +1274,8 @@ fun EditorPanel(
                         return@CodeEditor true
                     }
                     val isRenameKey =
-                        (event.key == Key.F2 && !event.isCtrlPressed && !event.isShiftPressed) ||
-                            (event.key == Key.F6 && event.isShiftPressed && !event.isCtrlPressed)
+                        (event.key == Key.F2 && !event.isPrimaryPressed() && !event.isShiftPressed) ||
+                            (event.key == Key.F6 && event.isShiftPressed && !event.isPrimaryPressed())
                     if (isRenameKey && onRequestRename != null) {
                         val text = value.text
                         val caret = value.selection.end.coerceIn(0, text.length)
@@ -1302,7 +1303,7 @@ fun EditorPanel(
                         }
                         return@CodeEditor true
                     }
-                    if (event.key == Key.F12 && event.isShiftPressed && !event.isCtrlPressed) {
+                    if (event.key == Key.F12 && event.isShiftPressed && !event.isPrimaryPressed()) {
                         val cb = onRequestReferences
                         if (cb != null) {
                             val text = value.text
@@ -1318,13 +1319,13 @@ fun EditorPanel(
                             return@CodeEditor true
                         }
                     }
-                    if (event.key == Key.B && event.isCtrlPressed && !event.isShiftPressed && !event.isAltPressed) {
+                    if (event.key == Key.B && event.isPrimaryPressed() && !event.isShiftPressed && !event.isAltPressed) {
                         val caret = value.selection.end.coerceIn(0, value.text.length)
                         if (triggerDefinitionOrReferences(value.text, caret)) {
                             return@CodeEditor true
                         }
                     }
-                    if (event.key == Key.F12 && !event.isCtrlPressed && !event.isShiftPressed) {
+                    if (event.key == Key.F12 && !event.isPrimaryPressed() && !event.isShiftPressed) {
                         val cb = onRequestDefinition
                         val nav = onGoToDefinition
                         if (cb != null && nav != null) {
@@ -1339,7 +1340,7 @@ fun EditorPanel(
                         }
                     }
                     if (
-                        event.isCtrlPressed && !event.isShiftPressed &&
+                        event.isPrimaryPressed() && !event.isShiftPressed &&
                         event.key == Key.Slash && commentPrefix != null
                     ) {
                         val r = LineComment.toggle(
@@ -1422,17 +1423,17 @@ fun EditorPanel(
                     )
                 },
                 clipboardShortcuts = page.ui.EditorClipboardShortcuts(
-                    cut = page.app.input.ShortcutLabels.of(
-                        page.app.input.Binding(Key.X, primary = true),
+                    cut = page.ui.ShortcutLabels.of(
+                        page.ui.Binding(Key.X, primary = true),
                     ),
-                    copy = page.app.input.ShortcutLabels.of(
-                        page.app.input.Binding(Key.C, primary = true),
+                    copy = page.ui.ShortcutLabels.of(
+                        page.ui.Binding(Key.C, primary = true),
                     ),
-                    paste = page.app.input.ShortcutLabels.of(
-                        page.app.input.Binding(Key.V, primary = true),
+                    paste = page.ui.ShortcutLabels.of(
+                        page.ui.Binding(Key.V, primary = true),
                     ),
-                    selectAll = page.app.input.ShortcutLabels.of(
-                        page.app.input.Binding(Key.A, primary = true),
+                    selectAll = page.ui.ShortcutLabels.of(
+                        page.ui.Binding(Key.A, primary = true),
                     ),
                 ),
                 contextMenuActions = buildList {
@@ -1440,8 +1441,8 @@ fun EditorPanel(
                         add(
                             page.ui.EditorContextAction(
                                 label = "Go to Declaration",
-                                shortcut = page.app.input.ShortcutLabels.of(
-                                    page.app.input.Binding(Key.B, primary = true),
+                                shortcut = page.ui.ShortcutLabels.of(
+                                    page.ui.Binding(Key.B, primary = true),
                                 ),
                             ) {
                                 val text = latestValue.text
@@ -1454,8 +1455,8 @@ fun EditorPanel(
                         add(
                             page.ui.EditorContextAction(
                                 label = "Find Usages",
-                                shortcut = page.app.input.ShortcutLabels.of(
-                                    page.app.input.Binding(Key.F12, shift = true),
+                                shortcut = page.ui.ShortcutLabels.of(
+                                    page.ui.Binding(Key.F12, shift = true),
                                 ),
                             ) {
                                 val text = latestValue.text

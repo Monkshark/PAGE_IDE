@@ -1,25 +1,15 @@
 package page.app.input
 
 import androidx.compose.ui.input.key.Key
+import page.ui.Binding
+import page.ui.Platform
+import page.ui.ShortcutLabels
 
 enum class ActionGroup { File, Edit, Navigate, Code, View, Page }
 
-enum class SearchMode { Any, OnlyWhenOpen, OnlyWhenClosed }
+enum class ActionContext { Global, Editor, FileTree }
 
-data class Binding(
-    val key: Key,
-    val primary: Boolean = false,
-    val control: Boolean = false,
-    val alt: Boolean = false,
-    val shift: Boolean = false,
-) {
-    fun matches(key: Key, primary: Boolean, control: Boolean, alt: Boolean, shift: Boolean): Boolean =
-        this.key == key &&
-            this.primary == primary &&
-            this.control == control &&
-            this.alt == alt &&
-            this.shift == shift
-}
+enum class SearchMode { Any, OnlyWhenOpen, OnlyWhenClosed }
 
 data class ActionSpec(
     val id: String,
@@ -28,7 +18,8 @@ data class ActionSpec(
     val binding: Binding?,
     val macBinding: Binding? = binding,
     val searchMode: SearchMode = SearchMode.Any,
-    val run: (ActionHost) -> Unit,
+    val context: ActionContext = ActionContext.Global,
+    val run: ((ActionHost) -> Unit)? = null,
 ) {
     fun bindingFor(mac: Boolean): Binding? = if (mac) macBinding else binding
 }
@@ -225,6 +216,211 @@ object ActionCatalog {
             binding = Binding(Key.A, primary = true, alt = true),
             macBinding = Binding(Key.A, control = true, alt = true),
         ) { it.focusActiveInAtlas() },
+        ActionSpec(
+            id = "editor.completion",
+            label = "Trigger Completion",
+            group = ActionGroup.Code,
+            binding = Binding(Key.Spacebar, primary = true),
+            macBinding = Binding(Key.I, primary = true),
+            context = ActionContext.Editor,
+        ),
+        ActionSpec(
+            id = "editor.signatureHelp",
+            label = "Show Parameter Info",
+            group = ActionGroup.Code,
+            binding = Binding(Key.Spacebar, primary = true, shift = true),
+            context = ActionContext.Editor,
+        ),
+        ActionSpec(
+            id = "editor.rename",
+            label = "Rename Symbol",
+            group = ActionGroup.Code,
+            binding = Binding(Key.F2),
+            context = ActionContext.Editor,
+        ),
+        ActionSpec(
+            id = "editor.declaration",
+            label = "Go to Declaration",
+            group = ActionGroup.Navigate,
+            binding = Binding(Key.B, primary = true),
+            context = ActionContext.Editor,
+        ),
+        ActionSpec(
+            id = "editor.definition",
+            label = "Go to Definition",
+            group = ActionGroup.Navigate,
+            binding = Binding(Key.F12),
+            context = ActionContext.Editor,
+        ),
+        ActionSpec(
+            id = "editor.usages",
+            label = "Find Usages",
+            group = ActionGroup.Navigate,
+            binding = Binding(Key.F12, shift = true),
+            context = ActionContext.Editor,
+        ),
+        ActionSpec(
+            id = "editor.toggleComment",
+            label = "Comment Lines",
+            group = ActionGroup.Edit,
+            binding = Binding(Key.Slash, primary = true),
+            context = ActionContext.Editor,
+        ),
+        ActionSpec(
+            id = "editor.indent",
+            label = "Indent Selection",
+            group = ActionGroup.Edit,
+            binding = Binding(Key.Tab),
+            context = ActionContext.Editor,
+        ),
+        ActionSpec(
+            id = "editor.unindent",
+            label = "Unindent Selection",
+            group = ActionGroup.Edit,
+            binding = Binding(Key.Tab, shift = true),
+            context = ActionContext.Editor,
+        ),
+        ActionSpec(
+            id = "editor.selectAll",
+            label = "Select All",
+            group = ActionGroup.Edit,
+            binding = Binding(Key.A, primary = true),
+            context = ActionContext.Editor,
+        ),
+        ActionSpec(
+            id = "editor.cut",
+            label = "Cut",
+            group = ActionGroup.Edit,
+            binding = Binding(Key.X, primary = true),
+            context = ActionContext.Editor,
+        ),
+        ActionSpec(
+            id = "editor.copy",
+            label = "Copy",
+            group = ActionGroup.Edit,
+            binding = Binding(Key.C, primary = true),
+            context = ActionContext.Editor,
+        ),
+        ActionSpec(
+            id = "editor.paste",
+            label = "Paste",
+            group = ActionGroup.Edit,
+            binding = Binding(Key.V, primary = true),
+            context = ActionContext.Editor,
+        ),
+        ActionSpec(
+            id = "editor.moveLineUp",
+            label = "Move Line Up",
+            group = ActionGroup.Edit,
+            binding = Binding(Key.DirectionUp, alt = true),
+            context = ActionContext.Editor,
+        ),
+        ActionSpec(
+            id = "editor.moveLineDown",
+            label = "Move Line Down",
+            group = ActionGroup.Edit,
+            binding = Binding(Key.DirectionDown, alt = true),
+            context = ActionContext.Editor,
+        ),
+        ActionSpec(
+            id = "editor.duplicateLineUp",
+            label = "Duplicate Line Up",
+            group = ActionGroup.Edit,
+            binding = Binding(Key.DirectionUp, alt = true, shift = true),
+            context = ActionContext.Editor,
+        ),
+        ActionSpec(
+            id = "editor.duplicateLineDown",
+            label = "Duplicate Line Down",
+            group = ActionGroup.Edit,
+            binding = Binding(Key.DirectionDown, alt = true, shift = true),
+            context = ActionContext.Editor,
+        ),
+        ActionSpec(
+            id = "editor.wordLeft",
+            label = "Move to Previous Word",
+            group = ActionGroup.Edit,
+            binding = Binding(Key.DirectionLeft, primary = true),
+            context = ActionContext.Editor,
+        ),
+        ActionSpec(
+            id = "editor.wordRight",
+            label = "Move to Next Word",
+            group = ActionGroup.Edit,
+            binding = Binding(Key.DirectionRight, primary = true),
+            context = ActionContext.Editor,
+        ),
+        ActionSpec(
+            id = "editor.deleteWordLeft",
+            label = "Delete Word Before Caret",
+            group = ActionGroup.Edit,
+            binding = Binding(Key.Backspace, primary = true),
+            context = ActionContext.Editor,
+        ),
+        ActionSpec(
+            id = "editor.deleteWordRight",
+            label = "Delete Word After Caret",
+            group = ActionGroup.Edit,
+            binding = Binding(Key.Delete, primary = true),
+            context = ActionContext.Editor,
+        ),
+
+        ActionSpec(
+            id = "tree.open",
+            label = "Open Selected",
+            group = ActionGroup.File,
+            binding = Binding(Key.Enter),
+            context = ActionContext.FileTree,
+        ),
+        ActionSpec(
+            id = "tree.openRecursive",
+            label = "Expand Selected Recursively",
+            group = ActionGroup.File,
+            binding = Binding(Key.Enter, shift = true),
+            context = ActionContext.FileTree,
+        ),
+        ActionSpec(
+            id = "tree.rename",
+            label = "Rename…",
+            group = ActionGroup.File,
+            binding = Binding(Key.F2),
+            context = ActionContext.FileTree,
+        ),
+        ActionSpec(
+            id = "tree.delete",
+            label = "Delete…",
+            group = ActionGroup.File,
+            binding = Binding(Key.Delete),
+            context = ActionContext.FileTree,
+        ),
+        ActionSpec(
+            id = "tree.cut",
+            label = "Cut",
+            group = ActionGroup.File,
+            binding = Binding(Key.X, primary = true),
+            context = ActionContext.FileTree,
+        ),
+        ActionSpec(
+            id = "tree.copy",
+            label = "Copy",
+            group = ActionGroup.File,
+            binding = Binding(Key.C, primary = true),
+            context = ActionContext.FileTree,
+        ),
+        ActionSpec(
+            id = "tree.paste",
+            label = "Paste",
+            group = ActionGroup.File,
+            binding = Binding(Key.V, primary = true),
+            context = ActionContext.FileTree,
+        ),
+        ActionSpec(
+            id = "tree.undo",
+            label = "Undo File Operation",
+            group = ActionGroup.File,
+            binding = Binding(Key.Z, primary = true),
+            context = ActionContext.FileTree,
+        ),
     )
 
     fun resolve(
@@ -236,6 +432,7 @@ object ActionCatalog {
         hasSearch: Boolean,
         mac: Boolean = Platform.isMac,
     ): ActionSpec? = all.firstOrNull { spec ->
+        if (spec.context != ActionContext.Global || spec.run == null) return@firstOrNull false
         val binding = spec.bindingFor(mac) ?: return@firstOrNull false
         if (!binding.matches(key, primary, control, alt, shift)) return@firstOrNull false
         when (spec.searchMode) {

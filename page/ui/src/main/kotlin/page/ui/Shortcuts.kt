@@ -1,9 +1,27 @@
-package page.app.input
+package page.ui
 
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.isMetaPressed
+import androidx.compose.ui.input.pointer.PointerKeyboardModifiers
+import androidx.compose.ui.input.pointer.isCtrlPressed as pointerCtrlPressed
+import androidx.compose.ui.input.pointer.isMetaPressed as pointerMetaPressed
+
+data class Binding(
+    val key: Key,
+    val primary: Boolean = false,
+    val control: Boolean = false,
+    val alt: Boolean = false,
+    val shift: Boolean = false,
+) {
+    fun matches(key: Key, primary: Boolean, control: Boolean, alt: Boolean, shift: Boolean): Boolean =
+        this.key == key &&
+            this.primary == primary &&
+            this.control == control &&
+            this.alt == alt &&
+            this.shift == shift
+}
 
 object Platform {
     val isMac: Boolean = (System.getProperty("os.name") ?: "").lowercase().contains("mac")
@@ -14,6 +32,9 @@ fun KeyEvent.isPrimaryPressed(mac: Boolean = Platform.isMac): Boolean =
 
 fun KeyEvent.isSecondaryControlPressed(mac: Boolean = Platform.isMac): Boolean =
     if (mac) isCtrlPressed else false
+
+fun PointerKeyboardModifiers.isPrimaryPressed(mac: Boolean = Platform.isMac): Boolean =
+    if (mac) pointerMetaPressed else pointerCtrlPressed
 
 object ShortcutLabels {
 
