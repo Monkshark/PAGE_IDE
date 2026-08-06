@@ -131,6 +131,7 @@ fun CodeEditor(
     ctrlHoverLabel: ((originalOffset: Int) -> String?)? = null,
     caretPopup: (@Composable () -> Unit)? = null,
     caretPopupFocusable: Boolean = true,
+    onCaretPopupDismiss: (() -> Unit)? = null,
     onHover: ((originalOffset: Int?) -> Unit)? = null,
     hoverText: String? = null,
     hoverDiagnostic: HoverDiagnostic? = null,
@@ -757,6 +758,7 @@ fun CodeEditor(
             Popup(
                 offset = IntOffset(caretRect.left.toInt(), caretRect.bottom.toInt() + 6),
                 focusable = caretPopupFocusable,
+                onDismissRequest = onCaretPopupDismiss,
             ) {
                 caretPopup()
             }

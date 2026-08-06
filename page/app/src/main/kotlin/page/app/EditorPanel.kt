@@ -1178,6 +1178,7 @@ fun EditorPanel(
                     else -> null
                 },
                 caretPopupFocusable = references != null,
+                onCaretPopupDismiss = if (references != null) onReferencesDismiss else null,
                 onResolveCtrlHoverLink = { origOff ->
                     val text = latestValue.text
                     val word = wordRangeAt(text, origOff)
