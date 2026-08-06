@@ -6,6 +6,7 @@ import page.app.CreateEntryKind
 import page.app.DeleteEntryDialogState
 import page.workspace.EditorScrollSnapshot
 import page.app.PaneSide
+import page.app.ReferencesSurface
 import page.app.PendingClose
 import page.app.ReferencesQueryState
 import page.app.RenameEntryDialogState
@@ -498,6 +499,21 @@ class ReducerTest {
         val loaded = reduce(AppState(), IdeEvent.Internal.ReferencesResult(references("foo")))
         val closed = reduce(loaded, IdeEvent.Lsp.ReferencesClose)
         assertNull(closed.references.query)
+    }
+
+    @Test
+    fun `references open in panel moves the popup query to the dock`() {
+        val popup = references("foo").copy(surface = ReferencesSurface.Popup)
+        val loaded = reduce(AppState(), IdeEvent.Internal.ReferencesResult(popup))
+        val docked = reduce(loaded, IdeEvent.Lsp.ReferencesToPanel)
+        assertEquals(ReferencesSurface.Panel, docked.references.query?.surface)
+        assertEquals("foo", docked.references.query?.symbolName)
+    }
+
+    @Test
+    fun `references open in panel is a no-op without a query`() {
+        val next = reduce(AppState(), IdeEvent.Lsp.ReferencesToPanel)
+        assertNull(next.references.query)
     }
 
     @Test

@@ -47,12 +47,15 @@ import java.net.URI
 import java.nio.file.Path
 import page.lsp.ReferenceLocation
 
+enum class ReferencesSurface { Popup, Panel }
+
 data class ReferencesQueryState(
     val symbolName: String,
     val originUri: String,
     val results: List<ReferenceLocation>,
     val isLoading: Boolean,
     val errorMessage: String? = null,
+    val surface: ReferencesSurface = ReferencesSurface.Panel,
 )
 
 @Composable

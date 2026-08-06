@@ -564,7 +564,7 @@ internal class AppController(
             }
             IdeEvent.CodeAction.Dismiss -> frameProvider()?.requestFocus()
             is IdeEvent.Lsp.RequestReferences ->
-                requestReferences(event.path, event.line, event.character, event.symbol)
+                requestReferences(event.path, event.line, event.character, event.symbol, event.surface)
             is IdeEvent.Lsp.JumpToProblem -> jumpToProblem(event.path, event.line, event.character)
             is IdeEvent.Lsp.ApplyRename -> applyRename(event.edit)
             IdeEvent.Lsp.ReferencesClose -> Unit

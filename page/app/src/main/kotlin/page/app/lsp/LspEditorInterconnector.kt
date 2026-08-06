@@ -6,6 +6,7 @@ import page.app.EditorPaneState
 import page.language.LspController
 import page.app.PaneSide
 import page.app.ReferencesQueryState
+import page.app.ReferencesSurface
 import page.app.utils.lineCharToOffset
 import page.editor.EditHistory
 import page.editor.EditSnapshot
@@ -34,7 +35,13 @@ internal class LspEditorInterconnector(
         openInTabAt(picked, lineCharToOffset(text, line, character))
     }
 
-    fun requestReferences(p: Path, line: Int, char: Int, symbol: String) {
+    fun requestReferences(
+        p: Path,
+        line: Int,
+        char: Int,
+        symbol: String,
+        surface: ReferencesSurface = ReferencesSurface.Panel,
+    ) {
         val origin = p.toUri().toString()
         setReferences(
             ReferencesQueryState(
@@ -42,6 +49,7 @@ internal class LspEditorInterconnector(
                 originUri = origin,
                 results = emptyList(),
                 isLoading = true,
+                surface = surface,
             )
         )
         val ctrl = controllerFor(p)
@@ -60,6 +68,7 @@ internal class LspEditorInterconnector(
                             isLoading = false,
                             errorMessage = err.message?.lineSequence()?.firstOrNull()?.take(160)
                                 ?: "Find references failed",
+                            surface = surface,
                         )
                     )
                     return@whenComplete
@@ -80,6 +89,7 @@ internal class LspEditorInterconnector(
                                 originUri = origin,
                                 results = list,
                                 isLoading = false,
+                                surface = surface,
                             )
                         )
                     }
@@ -90,6 +100,7 @@ internal class LspEditorInterconnector(
                             originUri = origin,
                             results = list,
                             isLoading = false,
+                            surface = surface,
                         )
                     )
                 }

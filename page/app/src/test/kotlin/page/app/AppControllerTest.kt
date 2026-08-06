@@ -282,13 +282,13 @@ class AppControllerTest {
         assertEquals(0, h.routerProviderCalls, "router must not be captured eagerly at construction")
 
         val path = Paths.get("/p/note.unknownext")
-        h.controller.requestReferences(path, 0, 0, "sym")
+        h.controller.requestReferences(path, 0, 0, "sym", ReferencesSurface.Panel)
         val afterFirst = h.routerProviderCalls
         assertTrue(afterFirst > 0, "first call must consult the provider")
         assertIs<ReferencesQueryState>(h.appState.referencesState)
 
         h.router = LspRouter(null, h.scope)
-        h.controller.requestReferences(path, 0, 0, "sym")
+        h.controller.requestReferences(path, 0, 0, "sym", ReferencesSurface.Panel)
         assertTrue(h.routerProviderCalls > afterFirst, "second call must re-consult the provider (swapped router)")
     }
 
