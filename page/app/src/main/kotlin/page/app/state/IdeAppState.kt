@@ -15,7 +15,6 @@ import page.lsp.CodeActionEntry
 import page.runtime.RunConfigsState
 import page.ui.GlassPalette
 import page.workspace.HistoryFile
-import page.workspace.WorkspaceFile
 
 internal class IdeAppState(private val store: IdeStore = IdeStore()) {
     var pageSettings: PageSettings by mutableStateOf(
@@ -45,7 +44,6 @@ internal class IdeAppState(private val store: IdeStore = IdeStore()) {
     var sessionLoaded by mutableStateOf(false)
     var historyFile by mutableStateOf(HistoryFile())
     var historyLoaded by mutableStateOf(false)
-    var workspaceFile by mutableStateOf(WorkspaceFile())
 
     var runState: RunConfigsState
         get() = store.run.configs

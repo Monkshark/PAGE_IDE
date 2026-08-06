@@ -126,6 +126,7 @@ internal sealed interface IdeEvent {
 
     sealed interface Palette : IdeEvent {
         data object Cycle : Palette
+        data class Select(val palette: page.ui.GlassPalette) : Palette
         data object QuickOpen : Palette
         data object DocumentSymbol : Palette
         data object WorkspaceSymbol : Palette
