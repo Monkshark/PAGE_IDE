@@ -242,6 +242,8 @@ private fun androidx.compose.ui.window.ApplicationScope.AppContent() {
     registerAllBackends()
     val todo = rememberTodoController(workspaceRoot = rootDir)
     val currentTodo by rememberUpdatedState(todo)
+    val symbolUsage = rememberSymbolUsageController(workspaceRoot = rootDir)
+    val currentSymbolUsage by rememberUpdatedState(symbolUsage)
     val todoItems by todo.items
 
     fun paneOf(side: PaneSide): EditorPaneState = editorWorkspace.paneOf(side)
@@ -280,6 +282,7 @@ private fun androidx.compose.ui.window.ApplicationScope.AppContent() {
             appScope = appScope,
             lspRouterProvider = { currentLspRouter },
             todoProvider = { currentTodo },
+            symbolUsageProvider = { currentSymbolUsage },
             exitApplication = { exitApplication() },
             frameProvider = { frameRef.value },
             copyToClipboard = copyToClipboard,
@@ -377,6 +380,7 @@ private fun androidx.compose.ui.window.ApplicationScope.AppContent() {
                         }
                     }
                     todo.scanWorkspaceAsync()
+                    symbolUsage.scanWorkspaceAsync()
                 },
                 { root ->
                     val loaded = if (root == null) RunConfigsState()
@@ -799,6 +803,8 @@ private fun androidx.compose.ui.window.ApplicationScope.AppContent() {
                     editorFocusVersion = editorFocusVersion,
                     codeAction = app.codeActionPreviewBinding(),
                     editorScrollFor = { p -> editorScrollByPath[p] },
+                    usedElsewhere = { path -> currentSymbolUsage.usedElsewhere(path) },
+                    usageRevision = symbolUsage.revision.value,
                     onEditorScrollChange = { p, snap ->
                         onIdeEvent(IdeEvent.EditorScroll.Changed(p, snap))
                     },
