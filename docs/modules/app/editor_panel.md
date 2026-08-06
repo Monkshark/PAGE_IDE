@@ -223,3 +223,11 @@ val foldSegments = FoldRegions.segmentsFor(value.text, activeFolds)
 ---
 
 - [목차로 돌아가기](https://monkshark.github.io/page-ide/#README_kr.md)
+
+---
+
+## unused 진단과 빠른 수정
+
+`UnusedSymbols` 결과는 회색 표시로만 끝나지 않는다. `UnusedQuickFixes.diagnostics` 가 이를 WARNING 진단으로 바꿔 `LocalDiagnostics` 에 올리고, Problems 패널이 LSP 진단과 합쳐서 보여준다 (`Unused import` / `'name' is never used`). LSP 가 없거나 아직 안 떠도 나온다
+
+`Alt+Enter` 는 LSP 코드액션 앞에 로컬 수정을 붙인다 — 캐럿이 놓인 줄의 `Remove unused import`, 그리고 파일 전체의 `Remove all unused imports (N)`. 일괄 삭제는 **아래 줄부터** 지우므로 앞선 줄 번호가 밀리지 않는다. 선언은 지우면 의미가 바뀔 수 있어 수정 제안 없이 경고만 남긴다

@@ -274,7 +274,7 @@ internal fun IdeMainLayout(
     }
     val scopedDiagnostics = mergeDiagnostics(
         diagnosticsInScope(
-            all = lspRouter.allDiagnosticsByUri,
+            all = page.app.lsp.LocalDiagnostics.merged(lspRouter.allDiagnosticsByUri),
             scope = LocalPageSettings.current.lsp.diagnosticsScope,
             focusedPath = editor.focused().book.active?.path,
             openPaths = (editor.primaryPane.book.tabs + editor.secondaryPane.book.tabs).map { it.path }.toSet(),

@@ -123,6 +123,18 @@ internal class CommandPaletteController(
         val active = focused().book.active
         val activePath = active?.path
         val caCtrl = activePath?.let { controllerFor(it) }
+        val localActions = if (activePath == null) emptyList() else {
+            val text = focused().editorValue.text
+            val caret = focused().editorValue.selection.start.coerceIn(0, text.length)
+            val (caretLine, _) = offsetToLineChar(text, caret)
+            val uri = activePath.toUri().toString()
+            page.app.lsp.UnusedQuickFixes.actions(
+                uri = uri,
+                text = text,
+                diagnostics = page.app.lsp.LocalDiagnostics.forUri(uri),
+                caretLine = caretLine,
+            )
+        }
         if (activePath != null
             && caCtrl != null
             && caCtrl.status.value == LspController.Status.READY
@@ -139,7 +151,7 @@ internal class CommandPaletteController(
             }
             caCtrl.codeActions(activePath, line, 0, line, lineLen).whenComplete { actions, err ->
                 if (err == null) {
-                    val raw = actions.orEmpty()
+                    val raw = localActions + actions.orEmpty()
                     val list = raw.map { entry ->
                         val normalized = page.lsp.CodeActionNormalize.normalize(entry.edit, snapshotUri, snapshotText)
                         if (normalized !== entry.edit) {
@@ -159,6 +171,11 @@ internal class CommandPaletteController(
                     }
                 }
             }
+            return
+        }
+        if (activePath != null && localActions.isNotEmpty()) {
+            val text = focused().editorValue.text
+            onCodeActions(localActions, activePath.toUri().toString(), text, 0, true)
         }
     }
 }

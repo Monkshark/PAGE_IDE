@@ -33,6 +33,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -317,6 +318,18 @@ fun EditorPanel(
     ) {
         if (!pageSettings.editor.dimUnusedSymbols) emptyList()
         else page.shared.syntax.UnusedSymbols.find(value.text, tokens, bracketPairs, usedElsewhere)
+    }
+
+    val unusedUri = remember(activePath) { activePath?.toUri()?.toString() }
+    LaunchedEffect(unusedUri, unusedRanges) {
+        val uri = unusedUri ?: return@LaunchedEffect
+        page.app.lsp.LocalDiagnostics.set(
+            uri,
+            page.app.lsp.UnusedQuickFixes.diagnostics(value.text, unusedRanges),
+        )
+    }
+    DisposableEffect(unusedUri) {
+        onDispose { unusedUri?.let { page.app.lsp.LocalDiagnostics.remove(it) } }
     }
 
     val unnecessaryRanges = remember(value.text, diagnostics, showInlineDiagnostics, unusedRanges) {

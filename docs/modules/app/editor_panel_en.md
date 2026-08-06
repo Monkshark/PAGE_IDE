@@ -223,3 +223,11 @@ A thin bottom row: `Ln {line+1}, Col {col+1}` · line count · char count. The n
 ---
 
 - [Back to index](https://monkshark.github.io/page-ide/#README_en.md)
+
+---
+
+## Unused diagnostics and quick fixes
+
+What `UnusedSymbols` finds no longer stops at grey text. `UnusedQuickFixes.diagnostics` turns each range into a WARNING and publishes it through `LocalDiagnostics`, which the Problems panel merges with the LSP's own (`Unused import` / `'name' is never used`). It works with no language server running.
+
+`Alt+Enter` prepends local fixes to whatever the LSP offers — `Remove unused import` for the line under the caret, and `Remove all unused imports (N)` for the file. The bulk edit deletes from the bottom up so earlier line numbers stay valid. Declarations only get the warning: deleting one can change what the code means.
