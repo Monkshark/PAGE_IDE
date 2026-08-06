@@ -58,3 +58,27 @@ fun GlassSurface(
         content()
     }
 }
+
+@Composable
+fun GlassPopup(
+    modifier: Modifier = Modifier,
+    shape: Shape = RoundedCornerShape(Glass.radius.sm),
+    content: @Composable () -> Unit,
+) {
+    val shadow = Glass.elevation.overlay
+    Box(
+        modifier = modifier
+            .shadow(
+                elevation = shadow.blur,
+                shape = shape,
+                clip = false,
+                ambientColor = Color.Black.copy(alpha = shadow.alpha),
+                spotColor = Color.Black.copy(alpha = shadow.alpha),
+            )
+            .clip(shape)
+            .background(Glass.colors.surfaceRaised)
+            .border(1.dp, Glass.colors.outline, shape),
+    ) {
+        content()
+    }
+}
