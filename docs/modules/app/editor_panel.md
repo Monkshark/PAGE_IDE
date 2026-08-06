@@ -160,6 +160,7 @@ onValueChange(final)
 
 키 매칭 자체도 `isPrimaryPressed()` 로 통일했다. Windows·Linux 는 `Ctrl`, macOS 는 `Cmd` — 에디터의 `Ctrl+A/C/X/V`·단어 이동·`Ctrl+Click` 과 파일트리의 복사·붙여넣기까지 포함
 설정의 **Keymap** 화면과 macOS 메뉴바도 같은 표에서 나온다. 치트시트는 `Anywhere` / `While editing` / `In the file tree` 로 나눠 전부 나열하고, 메뉴바는 `Global` 이면서 실행 본문이 있는 행만 File·Edit·Navigate·Code·View·PAGE 메뉴로 묶는다. 메뉴바는 macOS 에서만 그려지며 `apple.laf.useScreenMenuBar` 로 시스템 상단 바에 붙는다
+Windows·Linux 에서는 이 표가 타이틀바 메뉴로도 나온다. `PAGE` 워드마크 자리를 `File Edit Navigate Code View PAGE` 가 대신하고 (로고는 남는다), 창이 900dp 아래로 좁아지면 `Menu` 버튼 하나로 접힌다. macOS 는 이 줄 대신 시스템 메뉴바를 쓰므로 워드마크가 그대로 남는다. 세 표면(`ActionMenus`) 모두 같은 그룹 정의를 읽는다
 
 ---
 
