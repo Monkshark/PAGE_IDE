@@ -5,6 +5,8 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
@@ -591,7 +593,11 @@ internal fun IdeMainLayout(
                 )
                 }
             }
-            if (codeActionPreviewVisible) {
+            AnimatedVisibility(
+                visible = codeActionPreviewVisible,
+                enter = fadeIn(tween(120)) + expandVertically(tween(120), expandFrom = Alignment.Top),
+                exit = fadeOut(tween(120)) + shrinkVertically(tween(120), shrinkTowards = Alignment.Top),
+            ) {
                 CodeActionPreviewPanel(
                     actions = codeActionPreviewActions,
                     selected = codeActionPreviewSelected,
@@ -724,7 +730,11 @@ internal fun IdeMainLayout(
             }
         }
     }
-    if (ui.actionPalette) {
+    AnimatedVisibility(
+        visible = ui.actionPalette,
+        enter = fadeIn(tween(160)),
+        exit = fadeOut(tween(160)),
+    ) {
         page.app.ui.dialog.ActionPaletteDialog(
             onRun = onRunAction,
             onDismiss = { ui.actionPalette = false },
