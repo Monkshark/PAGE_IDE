@@ -16,7 +16,7 @@ class NpmGlobalInstaller(
 
     override val languageId: String = descriptor.languageId
     override val displayName: String = descriptor.displayName
-    override val precheck: LspInstaller.Precheck = computePrecheck()
+    override val precheck: LspInstaller.Precheck by lazy { computePrecheck() }
 
     override fun isInstalled(): Boolean = executable() != null
 

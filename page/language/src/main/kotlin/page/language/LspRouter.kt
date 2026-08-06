@@ -44,6 +44,11 @@ class LspRouter(
         }
     }
 
+    fun existingControllerFor(path: Path): LspController? {
+        val backend = LspBackends.forFile(path, workspaceRoot) ?: return null
+        return controllers[backend.id]
+    }
+
     @Synchronized
     fun prewarm(backendId: String): Boolean {
         if (backendId in deleting) return false

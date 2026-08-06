@@ -55,6 +55,8 @@ class LspWorkspace(private val client: LspClient) {
 
     private val sender = LspSender()
 
+    fun pendingMessages(): Int = sender.pending()
+
     private val resolveRegistry = ConcurrentHashMap<Long, org.eclipse.lsp4j.CompletionItem>()
     private val resolveTokenSeq = AtomicLong(0)
 

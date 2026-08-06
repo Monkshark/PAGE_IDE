@@ -74,7 +74,7 @@ internal fun GlobalStatusBar(
     val buffer = remember(value.text) { TextBuffer(value.text) }
     val caret = buffer.lineColOf(value.selection.start.coerceIn(0, buffer.length))
 
-    val activeCtrl = active?.path?.let { lspRouter.controllerFor(it) }
+    val activeCtrl = active?.path?.let { lspRouter.existingControllerFor(it) }
     val diagnostics = if (showCursor) activeCtrl?.diagnosticsFor(active!!.path).orEmpty() else emptyList()
     val errorCount = diagnostics.count { it.severity == DiagnosticSeverity.ERROR }
     val warningCount = diagnostics.count { it.severity == DiagnosticSeverity.WARNING }
