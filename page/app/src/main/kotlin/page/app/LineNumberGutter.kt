@@ -105,6 +105,9 @@ internal fun LineNumberGutter(
     val glyphCache = remember(textStyle, density.density, mutedColor, activeColor, toggleColor) {
         HashMap<String, androidx.compose.ui.text.TextLayoutResult>()
     }
+    val numberCache = remember(textStyle, density.density, mutedColor, activeColor) {
+        HashMap<Int, androidx.compose.ui.text.TextLayoutResult>()
+    }
     val gutterWidth = FoldColumnWidth + DotColumnWidth + KeywordColumnWidth +
         numberColumnWidth + NumberEndPadding
 
@@ -205,8 +208,9 @@ internal fun LineNumberGutter(
                     )
                 }
                 val isCurrent = entry.originalLine == currentOriginalLine
-                val label = (entry.originalLine + 1).toString()
-                val measured = glyphCache.getOrPut("n:$label:$isCurrent") {
+                val cacheKey = if (isCurrent) -(entry.originalLine + 1) else entry.originalLine + 1
+                val measured = numberCache.getOrPut(cacheKey) {
+                    val label = (entry.originalLine + 1).toString()
                     measurer.measure(
                         AnnotatedString(label),
                         style = if (isCurrent) numberActiveStyle else numberMutedStyle,
