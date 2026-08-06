@@ -25,7 +25,6 @@ import page.app.utils.isKotlinSource
 import page.app.utils.offsetToLineChar
 import page.app.utils.windowTitle
 import page.lsp.GenericLanguageBackend
-import page.lsp.LanguageRegistry
 import page.lsp.LspBackends
 import page.language.LspController
 import page.language.LspRouter

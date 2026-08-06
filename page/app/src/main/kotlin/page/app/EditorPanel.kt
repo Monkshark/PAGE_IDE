@@ -167,6 +167,7 @@ fun EditorPanel(
     onApplyRename: ((RenameWorkspaceEdit) -> Unit)? = null,
     onRequestReferences: ((line: Int, character: Int, symbolName: String, surface: ReferencesSurface) -> Unit)? = null,
     references: ReferencesQueryState? = null,
+    codeAction: page.app.ui.CodeActionPreviewBinding = page.app.ui.CodeActionPreviewBinding(),
     onReferenceJump: (Path, Int, Int) -> Unit = { _, _, _ -> },
     onReferencesOpenInPanel: () -> Unit = {},
     onReferencesDismiss: () -> Unit = {},
@@ -1187,6 +1188,20 @@ fun EditorPanel(
                     }
                 },
                 caretPopup = when {
+                    codeAction.visible && codeAction.actions.isNotEmpty() -> {
+                        {
+                            CodeActionPopup(
+                                actions = codeAction.actions,
+                                selected = codeAction.selected,
+                                pending = codeAction.pending,
+                                currentUri = codeAction.uri,
+                                currentText = codeAction.text,
+                                onSelectedChange = codeAction.onSelectedChange,
+                                onApply = codeAction.onApply,
+                                onOpenInPanel = codeAction.onDismiss,
+                            )
+                        }
+                    }
                     references != null -> {
                         {
                             ReferencesPopup(
@@ -1203,8 +1218,12 @@ fun EditorPanel(
                     }
                     else -> null
                 },
-                caretPopupFocusable = references != null,
-                onCaretPopupDismiss = if (references != null) onReferencesDismiss else null,
+                caretPopupFocusable = references != null || codeAction.visible,
+                onCaretPopupDismiss = when {
+                    codeAction.visible -> codeAction.onDismiss
+                    references != null -> onReferencesDismiss
+                    else -> null
+                },
                 onResolveCtrlHoverLink = { origOff ->
                     val text = latestValue.text
                     val word = wordRangeAt(text, origOff)

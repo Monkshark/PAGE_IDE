@@ -441,8 +441,8 @@ internal class AppController(
         allDiagnosticsByUri = { router.allDiagnosticsByUri },
         jumpToProblem = jumpToProblem,
         applyRename = applyRename,
-        onCodeActions = { list, uri, text, selected, open ->
-            dispatch(IdeEvent.Internal.CodeActionsResult(list, uri, text, selected, open))
+        onCodeActions = { list, uri, text, selected, open, pending ->
+            dispatch(IdeEvent.Internal.CodeActionsResult(list, uri, text, selected, open, pending))
         },
     )
     val openQuickOpen: () -> Unit = { dispatch(IdeEvent.Palette.QuickOpen) }
@@ -601,6 +601,7 @@ internal class AppController(
         visible = appState.codeActionOpen,
         actions = appState.codeActionList,
         selected = appState.codeActionSelected,
+        pending = appState.codeActionPending,
         onSelectedChange = { dispatch(IdeEvent.CodeAction.SelectedChange(it)) },
         uri = appState.codeActionUri,
         text = appState.codeActionText,

@@ -178,6 +178,7 @@ internal sealed interface IdeEvent {
             val text: String?,
             val selected: Int,
             val open: Boolean,
+            val pending: Boolean = false,
         ) : Internal
 
         data class ReferencesResult(val state: ReferencesQueryState?) : Internal

@@ -86,6 +86,7 @@ internal data class CodeActionState(
     val uri: String? = null,
     val text: String? = null,
     val selected: Int = 0,
+    val pending: Boolean = false,
 )
 
 internal data class ReferencesState(

@@ -233,3 +233,7 @@ val foldSegments = FoldRegions.segmentsFor(value.text, activeFolds)
 `Alt+Enter` 는 LSP 코드액션 앞에 로컬 수정을 붙인다 — 캐럿이 놓인 줄의 `Remove unused import`, 그리고 파일 전체의 `Remove all unused imports (N)`. 일괄 삭제는 **아래 줄부터** 지우므로 앞선 줄 번호가 밀리지 않는다. 선언은 지우면 의미가 바뀔 수 있어 수정 제안 없이 경고만 남긴다
 
 컨텍스트 메뉴는 `CompactMenuItem` 한 컴포넌트가 그린다 — 14dp Material Outlined 아이콘 열, 행 안쪽에 여백을 둔 둥근 호버, 오른쪽 정렬 단축키 열, 그리고 `danger = true` 인 항목은 라벨만 위험색으로 (행 전체를 물들이면 에러 상태처럼 보인다). 그룹 사이는 `CompactMenuSeparator` 로 끊는다. 같은 컴포넌트를 타이틀바 메뉴·탭 메뉴·Run 드롭다운이 함께 쓰므로 생김새가 한 번에 맞춰진다
+
+`Alt+Enter` 는 캐럿 옆 팝업으로 뜬다. 로컬 수정(dead import 등)은 계산이 끝나 있으므로 **즉시** 그리고, LSP 응답은 헤더에 `searching…` 을 띄운 채 도착하면 목록에 합쳐진다 — 서버를 기다리느라 아무것도 안 보이던 구간이 사라진다
+
+선택된 수정의 diff 가 팝업 안에 최대 6줄까지 붙고, 넘치면 `+N more lines` 로 접힌다. 다른 파일까지 건드리는 수정이면 파일 이름과 편집 수를 함께 보여준다. 액션 종류(quick fix / refactor / source)는 행 오른쪽에 표기한다. 한 번 더 `Alt+Enter` 를 누르면 선택된 수정이 적용된다

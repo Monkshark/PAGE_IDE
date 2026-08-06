@@ -233,3 +233,7 @@ What `UnusedSymbols` finds no longer stops at grey text. `UnusedQuickFixes.diagn
 `Alt+Enter` prepends local fixes to whatever the LSP offers — `Remove unused import` for the line under the caret, and `Remove all unused imports (N)` for the file. The bulk edit deletes from the bottom up so earlier line numbers stay valid. Declarations only get the warning: deleting one can change what the code means.
 
 Context menus are drawn by one component, `CompactMenuItem`: a 14 dp Material Outlined icon column, an inset rounded hover, a right-aligned shortcut column, and `danger = true` tinting only the label (a fully red row reads as an error state). `CompactMenuSeparator` breaks the groups apart. The title-bar menus, the tab menu, and the run dropdown share the component, so they all move together.
+
+`Alt+Enter` opens beside the caret. Local fixes (dead imports and friends) are already computed, so they paint **immediately** while the header shows `searching…`; the server's actions merge in when they arrive, so there is no longer a stretch where nothing is on screen.
+
+The selected fix shows its diff inside the popup, up to six lines, then folds into `+N more lines`. A fix that reaches other files lists their names and edit counts. Each row is tagged with its kind (quick fix / refactor / source). Pressing `Alt+Enter` again applies the selected fix.

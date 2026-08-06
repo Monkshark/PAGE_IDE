@@ -126,10 +126,11 @@ internal data class RunPanelBinding(
     val onOutputClear: () -> Unit,
 )
 
-internal data class CodeActionPreviewBinding(
+data class CodeActionPreviewBinding(
     val visible: Boolean = false,
     val actions: List<CodeActionEntry> = emptyList(),
     val selected: Int = 0,
+    val pending: Boolean = false,
     val onSelectedChange: (Int) -> Unit = {},
     val uri: String? = null,
     val text: String? = null,
@@ -447,6 +448,7 @@ internal fun IdeMainLayout(
                                 onApplyRename = onApplyRename,
                                 onRequestReferences = onRequestReferences,
                                 referencesState = referencesState,
+                        codeAction = codeAction,
                                 onReferencesClose = onReferencesClose,
                                 onReferencesOpenInPanel = onReferencesOpenInPanel,
                                 linePreviewFor = linePreviewFor,
@@ -488,6 +490,7 @@ internal fun IdeMainLayout(
                                 onApplyRename = onApplyRename,
                                 onRequestReferences = onRequestReferences,
                                 referencesState = referencesState,
+                        codeAction = codeAction,
                                 onReferencesClose = onReferencesClose,
                                 onReferencesOpenInPanel = onReferencesOpenInPanel,
                                 linePreviewFor = linePreviewFor,
@@ -528,6 +531,7 @@ internal fun IdeMainLayout(
                         onApplyRename = onApplyRename,
                         onRequestReferences = onRequestReferences,
                         referencesState = referencesState,
+                        codeAction = codeAction,
                         onReferencesClose = onReferencesClose,
                         onReferencesOpenInPanel = onReferencesOpenInPanel,
                         linePreviewFor = linePreviewFor,
@@ -590,22 +594,6 @@ internal fun IdeMainLayout(
                     },
                 )
                 }
-            }
-            AnimatedVisibility(
-                visible = codeActionPreviewVisible,
-                enter = expandHorizontally(tween(110), expandFrom = Alignment.End) + fadeIn(tween(110)),
-                exit = shrinkHorizontally(tween(90), shrinkTowards = Alignment.End) + fadeOut(tween(90)),
-            ) {
-                CodeActionPreviewPanel(
-                    actions = codeActionPreviewActions,
-                    selected = codeActionPreviewSelected,
-                    onSelectedChange = onCodeActionSelectedChange,
-                    currentUri = codeActionPreviewUri,
-                    currentText = codeActionPreviewText,
-                    onApply = onCodeActionApply,
-                    onDismiss = onCodeActionDismiss,
-                    width = 420.dp,
-                )
             }
             }
         }

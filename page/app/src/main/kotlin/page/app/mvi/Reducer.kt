@@ -84,6 +84,7 @@ private fun reduceInternal(state: AppState, e: IdeEvent.Internal): AppState = wh
             text = e.text,
             selected = e.selected,
             open = e.open,
+            pending = e.pending,
         ),
     )
     is IdeEvent.Internal.ReferencesResult -> state.copy(
