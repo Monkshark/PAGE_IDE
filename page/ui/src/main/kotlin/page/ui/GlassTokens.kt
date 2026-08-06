@@ -198,10 +198,10 @@ private val CoolSyntax = SyntaxPalette(
     annotation = Color(0xFFC8A0F3),
     type = Color(0xFFF29D52),
     identifier = Color(0xFFE7C174),
-    function = Color(0xFFCFAB6D),
-    property = Color(0xFFE58FC4),
-    parameter = Color(0xFFA0B2CA),
-    template = Color(0xFF95BB88),
+    function = Color(0xFFDAB570),
+    property = Color(0xFFE6A6A0),
+    parameter = Color(0xFFC0B9A3),
+    template = Color(0xFFBABE7F),
 )
 
 private val WarmSyntax = SyntaxPalette(
@@ -214,10 +214,10 @@ private val WarmSyntax = SyntaxPalette(
     annotation = Color(0xFFC8A2C8),
     type = Color(0xFFE8C691),
     identifier = Color(0xFFB8D4A1),
-    function = Color(0xFFE8C07A),
-    property = Color(0xFFE58FC4),
-    parameter = Color(0xFFA8BBD4),
-    template = Color(0xFFA9D49A),
+    function = Color(0xFFD0C689),
+    property = Color(0xFFCFABB2),
+    parameter = Color(0xFFADC4BB),
+    template = Color(0xFFAED19B),
 )
 
 private val FrostSyntax = SyntaxPalette(
@@ -230,10 +230,10 @@ private val FrostSyntax = SyntaxPalette(
     annotation = Color(0xFF8250DF),
     type = Color(0xFF953800),
     identifier = Color(0xFF393D41),
-    function = Color(0xFF8A6A16),
-    property = Color(0xFFA83C7E),
-    parameter = Color(0xFF4A5F7A),
-    template = Color(0xFF3F7A3A),
+    function = Color(0xFF665629),
+    property = Color(0xFF763C63),
+    parameter = Color(0xFF425060),
+    template = Color(0xFF3C5F3D),
 )
 
 private val GraphiteSyntax = SyntaxPalette(
@@ -246,10 +246,10 @@ private val GraphiteSyntax = SyntaxPalette(
     annotation = Color(0xFFBBB529),
     type = Color(0xFFFFC66D),
     identifier = Color(0xFFA9B7C6),
-    function = Color(0xFFE8C07A),
-    property = Color(0xFFE58FC4),
-    parameter = Color(0xFFA8BBD4),
-    template = Color(0xFFA9D49A),
+    function = Color(0xFFCCBC9C),
+    property = Color(0xFFCAA1C5),
+    parameter = Color(0xFFA8B9CE),
+    template = Color(0xFFA9C7AE),
 )
 
 private val GraphiteColors = glassColors(
@@ -330,10 +330,10 @@ private val ForestSyntax = SyntaxPalette(
     annotation = Color(0xFFD9C28E),
     type = Color(0xFFE8C691),
     identifier = Color(0xFFD8E1C6),
-    function = Color(0xFFE8C07A),
-    property = Color(0xFFE58FC4),
-    parameter = Color(0xFFA8BBD4),
-    template = Color(0xFFA9D49A),
+    function = Color(0xFFD6C493),
+    property = Color(0xFFD5A9BB),
+    parameter = Color(0xFFB3C1C4),
+    template = Color(0xFFB4CFA4),
 )
 
 private val ForestColors = glassColors(
@@ -363,10 +363,10 @@ private val MidnightSyntax = SyntaxPalette(
     annotation = Color(0xFFC8B6FF),
     type = Color(0xFFFFC078),
     identifier = Color(0xFFE6E8F0),
-    function = Color(0xFFE8C07A),
-    property = Color(0xFFE58FC4),
-    parameter = Color(0xFFA8BBD4),
-    template = Color(0xFFA9D49A),
+    function = Color(0xFFE7D2AF),
+    property = Color(0xFFE5B7D8),
+    parameter = Color(0xFFC4CFE1),
+    template = Color(0xFFC4DDC1),
 )
 
 private val MidnightColors = glassColors(
@@ -396,10 +396,10 @@ private val SandSyntax = SyntaxPalette(
     annotation = Color(0xFF8E5DA8),
     type = Color(0xFF9C6B2D),
     identifier = Color(0xFF3D352A),
-    function = Color(0xFF8B6C19),
-    property = Color(0xFFB04D89),
-    parameter = Color(0xFF5F7289),
-    template = Color(0xFF437D3E),
+    function = Color(0xFF685321),
+    property = Color(0xFF7C425E),
+    parameter = Color(0xFF50575E),
+    template = Color(0xFF405D35),
 )
 
 private val SandColors = glassColors(
@@ -429,10 +429,10 @@ private val SignatureSyntax = SyntaxPalette(
     annotation = Color(0xFFB79CFF),
     type = Color(0xFF71BEC7),
     identifier = Color(0xFFBEC6DB),
-    function = Color(0xFFD0AC6D),
-    property = Color(0xFFE58FC4),
-    parameter = Color(0xFFA1B3CB),
-    template = Color(0xFF95BB88),
+    function = Color(0xFFC8B89F),
+    property = Color(0xFFD3A8CE),
+    parameter = Color(0xFFAEBCD2),
+    template = Color(0xFFA7C0AD),
 )
 
 private val SignatureColors = glassColors(
