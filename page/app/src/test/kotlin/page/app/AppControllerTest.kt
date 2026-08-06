@@ -277,6 +277,27 @@ class AppControllerTest {
     }
 
     @Test
+    fun `references without an lsp fall back to a local search and say the index is cold`() {
+        val h = Harness()
+        val root = Files.createTempDirectory("appctl-usages")
+        try {
+            val file = root.resolve("Note.unknownext")
+            Files.writeString(file, "val hit = 1" + System.lineSeparator() + "use(hit)")
+
+            h.controller.requestReferences(file, 0, 4, "hit", ReferencesSurface.Panel)
+
+            val query = h.appState.referencesState
+            assertIs<ReferencesQueryState>(query)
+            assertFalse(query.isLoading, "local search resolves immediately")
+            assertTrue(query.indexing, "an empty index must be reported as still indexing")
+            assertEquals(2, query.results.size, "both occurrences come from the file on disk")
+            assertEquals(setOf(0, 1), query.results.map { it.startLine }.toSet())
+        } finally {
+            root.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
     fun `lspRouterProvider is read lazily per call, never captured at construction`() {
         val h = Harness()
         assertEquals(0, h.routerProviderCalls, "router must not be captured eagerly at construction")

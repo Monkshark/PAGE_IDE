@@ -130,6 +130,7 @@ fun CodeEditor(
     ctrlHoverLinkColor: Color = MaterialTheme.colorScheme.primary,
     ctrlHoverLabel: ((originalOffset: Int) -> String?)? = null,
     caretPopup: (@Composable () -> Unit)? = null,
+    caretPopupFocusable: Boolean = true,
     onHover: ((originalOffset: Int?) -> Unit)? = null,
     hoverText: String? = null,
     hoverDiagnostic: HoverDiagnostic? = null,
@@ -755,7 +756,7 @@ fun CodeEditor(
             val caretRect = caretRectProvider()
             Popup(
                 offset = IntOffset(caretRect.left.toInt(), caretRect.bottom.toInt() + 6),
-                focusable = true,
+                focusable = caretPopupFocusable,
             ) {
                 caretPopup()
             }

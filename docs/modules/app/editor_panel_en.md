@@ -142,6 +142,7 @@ Holding `Ctrl` over an identifier underlines it, switches to the hand cursor, an
 `Ctrl+B` runs the same path (`triggerDefinitionOrReferences`). `Shift+F12` still fills the bottom References panel, and the popup's `Open in panel` moves a result set down there.
 
 `ReferencesPopup` groups hits by file and takes `↑↓` to move, `Enter` to open, `Esc` to close.
+Two waits are visible — while the LSP definition request is in flight a `Resolving declaration of <symbol>…` label sits beside the caret (it clears itself after 8 s), and while the workspace index is still building the popup carries an `Indexing — list may grow` note so a short list is not mistaken for a complete one.
 
 ---
 

@@ -56,6 +56,7 @@ data class ReferencesQueryState(
     val isLoading: Boolean,
     val errorMessage: String? = null,
     val surface: ReferencesSurface = ReferencesSurface.Panel,
+    val indexing: Boolean = false,
 )
 
 @Composable
@@ -113,6 +114,9 @@ fun ReferencesPanel(
             )
             when {
                 state.isLoading -> CenteredMessage("Searching…")
+                state.indexing && state.results.isEmpty() -> CenteredMessage(
+                    "Indexing the project — no usages of '${state.symbolName}' yet."
+                )
                 state.errorMessage != null -> CenteredMessage(state.errorMessage, isError = true)
                 state.results.isEmpty() -> CenteredMessage(
                     "No references found for '${state.symbolName}'."

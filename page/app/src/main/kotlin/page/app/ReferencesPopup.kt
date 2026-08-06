@@ -100,6 +100,7 @@ fun ReferencesPopup(
             when {
                 state.isLoading -> Message("Searching…")
                 state.errorMessage != null -> Message(state.errorMessage, isError = true)
+                flat.isEmpty() && state.indexing -> Message("Indexing the project — searched open files only")
                 flat.isEmpty() -> Message("No usages of ${state.symbolName}")
                 else -> LazyColumn(state = listState, modifier = Modifier.heightIn(max = 320.dp)) {
                     for ((path, hits) in groups) {
@@ -118,7 +119,7 @@ fun ReferencesPopup(
             }
             if (flat.isNotEmpty()) {
                 Divider()
-                Footer()
+                Footer(indexing = state.indexing)
             }
         }
     }
@@ -233,10 +234,11 @@ private fun HitRow(
 }
 
 @Composable
-private fun Footer() {
+private fun Footer(indexing: Boolean) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 5.dp),
         horizontalArrangement = Arrangement.spacedBy(14.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         for (hint in listOf("↑↓ move", "Enter open", "Esc close")) {
             Text(
@@ -245,6 +247,26 @@ private fun Footer() {
                 color = Glass.colors.faint,
             )
         }
+        if (indexing) {
+            Box(modifier = Modifier.weight(1f))
+            Text(
+                text = "Indexing — list may grow",
+                style = MaterialTheme.typography.labelSmall,
+                color = Glass.colors.warn,
+            )
+        }
+    }
+}
+
+@Composable
+fun CaretBusyPopup(label: String) {
+    GlassPopup {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = Glass.colors.muted,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+        )
     }
 }
 

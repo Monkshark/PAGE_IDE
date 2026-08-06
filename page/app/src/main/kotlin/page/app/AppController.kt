@@ -145,6 +145,7 @@ internal class AppController(
         getReferences = { appState.referencesState },
         setReferences = { dispatch(IdeEvent.Internal.ReferencesResult(it)) },
         localUsages = { symbol, origin -> localUsages(symbol, origin) },
+        isIndexing = { symbolUsage.isIndexing },
     )
     private fun localUsages(symbol: String, originUri: String): List<ReferenceLocation> {
         val candidates = LinkedHashSet<String>()

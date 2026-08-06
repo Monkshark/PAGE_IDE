@@ -29,6 +29,7 @@ internal class LspEditorInterconnector(
     private val getReferences: () -> ReferencesQueryState?,
     private val setReferences: (ReferencesQueryState?) -> Unit,
     private val localUsages: (symbol: String, originUri: String) -> List<ReferenceLocation> = { _, _ -> emptyList() },
+    private val isIndexing: () -> Boolean = { false },
 ) {
     fun jumpToProblem(picked: Path, line: Int, character: Int) {
         val pane = focused()
@@ -111,6 +112,7 @@ internal class LspEditorInterconnector(
                 results = localUsages(symbol, origin),
                 isLoading = false,
                 surface = surface,
+                indexing = isIndexing(),
             )
         )
     }

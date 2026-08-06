@@ -592,6 +592,13 @@ fun EditorPanel(
     var lspSignatureRequestToken by remember(activePath) { mutableStateOf(0) }
 
     var renameRequest by remember(activePath) { mutableStateOf<RenameRequestState?>(null) }
+    var pendingDeclaration by remember(activePath) { mutableStateOf<String?>(null) }
+    LaunchedEffect(pendingDeclaration) {
+        if (pendingDeclaration != null) {
+            kotlinx.coroutines.delay(8_000)
+            pendingDeclaration = null
+        }
+    }
     var declarationCacheText by remember(activePath) { mutableStateOf<String?>(null) }
     var declarationCache by remember(activePath) { mutableStateOf<Map<String, Int>>(emptyMap()) }
     var renameInProgress by remember(activePath) { mutableStateOf(false) }
@@ -1099,7 +1106,9 @@ fun EditorPanel(
                     refCb(pos.line, pos.col, symbolName, ReferencesSurface.Popup)
                     return true
                 }
+                pendingDeclaration = symbolName
                 defCb(pos.line, pos.col).whenComplete { targets, _ ->
+                    pendingDeclaration = null
                     val first = targets?.firstOrNull()
                     val atDeclaration = first != null && refCb != null && selfUri != null &&
                         first.uri == selfUri && definitionTargetContains(first, pos.line, pos.col)
@@ -1151,17 +1160,24 @@ fun EditorPanel(
                         if (declaredHere || onRequestDefinition == null) "Find usages" else "Go to declaration"
                     }
                 },
-                caretPopup = references?.let { query ->
-                    {
-                        ReferencesPopup(
-                            state = query,
-                            linePreviewFor = referenceLinePreview,
-                            onJump = onReferenceJump,
-                            onOpenInPanel = onReferencesOpenInPanel,
-                            onDismiss = onReferencesDismiss,
-                        )
+                caretPopup = when {
+                    references != null -> {
+                        {
+                            ReferencesPopup(
+                                state = references,
+                                linePreviewFor = referenceLinePreview,
+                                onJump = onReferenceJump,
+                                onOpenInPanel = onReferencesOpenInPanel,
+                                onDismiss = onReferencesDismiss,
+                            )
+                        }
                     }
+                    pendingDeclaration != null -> {
+                        { CaretBusyPopup("Resolving declaration of ${'$'}pendingDeclaration…") }
+                    }
+                    else -> null
                 },
+                caretPopupFocusable = references != null,
                 onResolveCtrlHoverLink = { origOff ->
                     val text = latestValue.text
                     val word = wordRangeAt(text, origOff)

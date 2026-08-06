@@ -142,6 +142,7 @@ onValueChange(final)
 `Ctrl+B` 도 같은 경로(`triggerDefinitionOrReferences`)를 탄다. `Shift+F12` 는 그대로 하단 References 패널을 채운다. 팝업의 `Open in panel` 로 패널로 옮길 수 있다
 
 `ReferencesPopup` 은 파일별로 묶어서 보여주고 `↑↓` 이동, `Enter` 열기, `Esc` 닫기를 받는다
+로딩은 두 군데서 보인다 — LSP 정의 조회를 기다리는 동안 캐럿 옆에 `Resolving declaration of <symbol>…` 이 뜨고 (8초 지나면 사라짐), 워크스페이스 인덱스가 아직 도는 중이면 팝업이 `Indexing — list may grow` 를 달아 결과가 더 늘 수 있다고 알린다
 
 ---
 

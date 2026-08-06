@@ -30,6 +30,8 @@ class SymbolUsageController(
     private val listener: (SymbolUsageIndex) -> Unit = { revisionState.value = revisionState.value + 1 }
     private val perFileDebounce = HashMap<String, Job>()
     private val scanLock = Mutex()
+    private val indexingState = mutableStateOf(false)
+    val isIndexing: Boolean get() = indexingState.value || index.fileCount() == 0
     private var refreshJob: Job? = null
     private var sweepJob: Job? = null
 
@@ -83,7 +85,12 @@ class SymbolUsageController(
     }
 
     private suspend fun rescan(root: Path) = scanLock.withLock {
-        index.replaceAll(SymbolUsageScanner.scanWorkspace(root, index.entries()))
+        indexingState.value = true
+        try {
+            index.replaceAll(SymbolUsageScanner.scanWorkspace(root, index.entries()))
+        } finally {
+            indexingState.value = false
+        }
     }
 
     private fun startSweep(root: Path) {
