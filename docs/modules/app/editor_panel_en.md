@@ -143,6 +143,19 @@ Holding `Ctrl` over an identifier underlines it, switches to the hand cursor, an
 
 `ReferencesPopup` groups hits by file and takes `↑↓` to move, `Enter` to open, `Esc` to close.
 Two waits are visible — while the LSP definition request is in flight a `Resolving declaration of <symbol>…` label sits beside the caret (it clears itself after 8 s), and while the workspace index is still building the popup carries an `Indexing — list may grow` note so a short list is not mistaken for a complete one.
+---
+
+## Action catalog
+
+Shortcuts, labels, and groups live only in `page.app.input.ActionCatalog`. One row is one action, and key dispatch, the context menu, and the action palette all read that same row.
+
+| Surface | Reads |
+|---|---|
+| `ActionDispatcher` | binding → run (replaces `ShortcutResolver`) |
+| Context menu | label plus its shortcut |
+| Action palette (`Ctrl+Shift+P`) | every action, searchable |
+
+`Binding.primary` resolves to `Ctrl` on Windows and Linux, `Cmd` on macOS. Chords that must stay literal `Ctrl` on a Mac (`Ctrl+Alt+T` and friends) set `control = true` instead. `ShortcutLabels` renders the same binding as `Ctrl+Shift+F` or `⇧⌘F` depending on the platform.
 
 ---
 

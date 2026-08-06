@@ -31,6 +31,7 @@ interface ActionHost {
     fun toggleSplit()
     fun toggleSplitOrientation()
 
+    fun showAllActions()
     fun cyclePalette()
     fun focusActiveInAtlas()
 }

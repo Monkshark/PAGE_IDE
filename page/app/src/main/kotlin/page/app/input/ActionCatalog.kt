@@ -206,6 +206,12 @@ object ActionCatalog {
         ) { it.toggleSplitOrientation() },
 
         ActionSpec(
+            id = "page.actions",
+            label = "Show All Actions",
+            group = ActionGroup.Page,
+            binding = Binding(Key.P, primary = true, shift = true),
+        ) { it.showAllActions() },
+        ActionSpec(
             id = "page.cycleTheme",
             label = "Next Theme",
             group = ActionGroup.Page,

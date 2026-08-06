@@ -535,11 +535,13 @@ internal class AppController(
                 else SplitOrientation.HORIZONTAL
         }
 
+        override fun showAllActions() { layoutUiState.actionPalette = true }
         override fun cyclePalette() = this@AppController.cyclePalette()
         override fun focusActiveInAtlas() = onFocusActiveInAtlas()
     }
 
     val handleShortcut: (KeyEvent) -> Boolean = { event -> ActionDispatcher.handle(event, actionHost) }
+    val runAction: (page.app.input.ActionSpec) -> Unit = { spec -> spec.run(actionHost) }
 
     fun fileTreePanelActions(): FileTreePanelActions = FileTreePanelActions(
         onToggle = { p, recursive -> dispatch(IdeEvent.FileTree.Toggle(p, recursive)) },

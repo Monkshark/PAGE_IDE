@@ -776,6 +776,7 @@ private fun androidx.compose.ui.window.ApplicationScope.AppContent() {
                     workspace = workspaceState,
                     editor = editorWorkspace,
                     ui = layoutUiState,
+                    onRunAction = app.runAction,
                     onEvent = onIdeEvent,
                     lspRouter = currentLspRouter,
                     onCloseTab = { side, index -> requestCloseTab(side, index) },
