@@ -300,7 +300,12 @@ private fun SettingsDetailPane(
                 SettingsCategory.EDITOR -> EditorSection(draft.editor) { onChange(draft.copy(editor = it)) }
                 SettingsCategory.LSP -> LspSection(draft.lsp) { onChange(draft.copy(lsp = it)) }
                 SettingsCategory.AUTO_INPUT -> AutoInputSection(draft.autoInput) { onChange(draft.copy(autoInput = it)) }
-                SettingsCategory.UI -> UiSection(draft.ui) { onChange(draft.copy(ui = it)) }
+                SettingsCategory.UI -> UiSection(
+                    o = draft.ui,
+                    e = draft.editor,
+                    onChange = { onChange(draft.copy(ui = it)) },
+                    onEditorChange = { onChange(draft.copy(editor = it)) },
+                )
                 SettingsCategory.RUN -> RunSection(draft.run) { onChange(draft.copy(run = it)) }
             }
         }
@@ -349,14 +354,6 @@ private fun AutoSaveSection(o: AutoSaveOptions, onChange: (AutoSaveOptions) -> U
 @Composable
 private fun EditorSection(o: EditorOptions, onChange: (EditorOptions) -> Unit) {
     NumberField(
-        label = "Font size (sp)",
-        value = o.fontSize,
-        min = 8,
-        max = 48,
-        onChange = { v -> onChange(o.copy(fontSize = v)) },
-    )
-    Spacer(Modifier.height(8.dp))
-    NumberField(
         label = "Tab size",
         value = o.tabSize,
         min = 1,
@@ -366,81 +363,9 @@ private fun EditorSection(o: EditorOptions, onChange: (EditorOptions) -> Unit) {
     Spacer(Modifier.height(8.dp))
     CheckRow(
         label = "Insert spaces for Tab",
-        description = "Use space characters when Tab is pressed (off = literal \\t).",
+        description = "Use space characters when Tab is pressed (off = literal \t).",
         checked = o.useSpacesForTab,
         onToggle = { onChange(o.copy(useSpacesForTab = !o.useSpacesForTab)) },
-    )
-    Spacer(Modifier.height(8.dp))
-    CheckRow(
-        label = "Show line numbers",
-        description = "Display line numbers in the left gutter.",
-        checked = o.showLineNumbers,
-        onToggle = { onChange(o.copy(showLineNumbers = !o.showLineNumbers)) },
-    )
-    Spacer(Modifier.height(8.dp))
-    CheckRow(
-        label = "Minimap",
-        description = "Show minimap on the right (applies after restart).",
-        checked = o.showMinimap,
-        onToggle = { onChange(o.copy(showMinimap = !o.showMinimap)) },
-    )
-    Spacer(Modifier.height(8.dp))
-    CheckRow(
-        label = "Highlight current line",
-        description = "Tint the row containing the caret.",
-        checked = o.highlightCurrentLine,
-        onToggle = { onChange(o.copy(highlightCurrentLine = !o.highlightCurrentLine)) },
-    )
-    Spacer(Modifier.height(18.dp))
-    SectionLabel("Syntax colors")
-    Spacer(Modifier.height(3.dp))
-    Hint("How far the editor separates calls, members and parameters from plain names.")
-    Spacer(Modifier.height(8.dp))
-    Row {
-        for (preset in SyntaxPreset.entries) {
-            ChoiceChip(
-                label = preset.label,
-                selected = o.syntaxPreset == preset,
-                onClick = { onChange(o.copy(syntaxPreset = preset)) },
-            )
-            Spacer(Modifier.width(6.dp))
-        }
-    }
-    Spacer(Modifier.height(18.dp))
-    CheckRow(
-        label = "Dim unused symbols",
-        description = "Fade locals and imports that nothing else in the file refers to.",
-        checked = o.dimUnusedSymbols,
-        onToggle = { onChange(o.copy(dimUnusedSymbols = !o.dimUnusedSymbols)) },
-    )
-    Spacer(Modifier.height(8.dp))
-    CheckRow(
-        label = "Rainbow brackets",
-        description = "Tint each bracket pair and its guide by nesting depth.",
-        checked = o.rainbowBrackets,
-        onToggle = { onChange(o.copy(rainbowBrackets = !o.rainbowBrackets)) },
-    )
-    Spacer(Modifier.height(18.dp))
-    SectionLabel("Scope guides")
-    Spacer(Modifier.height(3.dp))
-    Hint("Vertical lines that connect a block to its closing brace.")
-    Spacer(Modifier.height(8.dp))
-    Row {
-        for (mode in ScopeGuideMode.entries) {
-            ChoiceChip(
-                label = mode.label,
-                selected = o.scopeGuides == mode,
-                onClick = { onChange(o.copy(scopeGuides = mode)) },
-            )
-            Spacer(Modifier.width(6.dp))
-        }
-    }
-    Spacer(Modifier.height(18.dp))
-    CheckRow(
-        label = "Highlight identifier under caret",
-        description = "Tint the other places the name at the caret appears.",
-        checked = o.highlightIdentifierUnderCaret,
-        onToggle = { onChange(o.copy(highlightIdentifierUnderCaret = !o.highlightIdentifierUnderCaret)) },
     )
 }
 
@@ -537,7 +462,12 @@ private fun AutoInputSection(o: AutoInputOptions, onChange: (AutoInputOptions) -
 }
 
 @Composable
-private fun UiSection(o: UiOptions, onChange: (UiOptions) -> Unit) {
+private fun UiSection(
+    o: UiOptions,
+    e: EditorOptions,
+    onChange: (UiOptions) -> Unit,
+    onEditorChange: (EditorOptions) -> Unit,
+) {
     SectionLabel("Glass palette")
     Spacer(Modifier.height(3.dp))
     Hint("The token set that colors every surface, syntax, and control.")
@@ -573,8 +503,92 @@ private fun UiSection(o: UiOptions, onChange: (UiOptions) -> Unit) {
         checked = o.showTabCloseButton,
         onToggle = { onChange(o.copy(showTabCloseButton = !o.showTabCloseButton)) },
     )
-}
 
+    Spacer(Modifier.height(20.dp))
+    SectionLabel("Editor surface")
+    Spacer(Modifier.height(3.dp))
+    Hint("How the code area itself is drawn.")
+    Spacer(Modifier.height(10.dp))
+    NumberField(
+        label = "Font size (sp)",
+        value = e.fontSize,
+        min = 8,
+        max = 48,
+        onChange = { v -> onEditorChange(e.copy(fontSize = v)) },
+    )
+    Spacer(Modifier.height(8.dp))
+    CheckRow(
+        label = "Show line numbers",
+        description = "Display line numbers in the left gutter.",
+        checked = e.showLineNumbers,
+        onToggle = { onEditorChange(e.copy(showLineNumbers = !e.showLineNumbers)) },
+    )
+    Spacer(Modifier.height(8.dp))
+    CheckRow(
+        label = "Minimap",
+        description = "Show minimap on the right (applies after restart).",
+        checked = e.showMinimap,
+        onToggle = { onEditorChange(e.copy(showMinimap = !e.showMinimap)) },
+    )
+    Spacer(Modifier.height(8.dp))
+    CheckRow(
+        label = "Highlight current line",
+        description = "Tint the row containing the caret.",
+        checked = e.highlightCurrentLine,
+        onToggle = { onEditorChange(e.copy(highlightCurrentLine = !e.highlightCurrentLine)) },
+    )
+    Spacer(Modifier.height(20.dp))
+    SectionLabel("Syntax colors")
+    Spacer(Modifier.height(3.dp))
+    Hint("How far the editor separates calls, members and parameters from plain names.")
+    Spacer(Modifier.height(8.dp))
+    Row {
+        for (preset in SyntaxPreset.entries) {
+            ChoiceChip(
+                label = preset.label,
+                selected = e.syntaxPreset == preset,
+                onClick = { onEditorChange(e.copy(syntaxPreset = preset)) },
+            )
+            Spacer(Modifier.width(6.dp))
+        }
+    }
+    Spacer(Modifier.height(18.dp))
+    CheckRow(
+        label = "Dim unused symbols",
+        description = "Fade locals and imports that nothing else in the file refers to.",
+        checked = e.dimUnusedSymbols,
+        onToggle = { onEditorChange(e.copy(dimUnusedSymbols = !e.dimUnusedSymbols)) },
+    )
+    Spacer(Modifier.height(8.dp))
+    CheckRow(
+        label = "Rainbow brackets",
+        description = "Tint each bracket pair and its guide by nesting depth.",
+        checked = e.rainbowBrackets,
+        onToggle = { onEditorChange(e.copy(rainbowBrackets = !e.rainbowBrackets)) },
+    )
+    Spacer(Modifier.height(18.dp))
+    SectionLabel("Scope guides")
+    Spacer(Modifier.height(3.dp))
+    Hint("Vertical lines that connect a block to its closing brace.")
+    Spacer(Modifier.height(8.dp))
+    Row {
+        for (mode in ScopeGuideMode.entries) {
+            ChoiceChip(
+                label = mode.label,
+                selected = e.scopeGuides == mode,
+                onClick = { onEditorChange(e.copy(scopeGuides = mode)) },
+            )
+            Spacer(Modifier.width(6.dp))
+        }
+    }
+    Spacer(Modifier.height(18.dp))
+    CheckRow(
+        label = "Highlight identifier under caret",
+        description = "Tint the other places the name at the caret appears.",
+        checked = e.highlightIdentifierUnderCaret,
+        onToggle = { onEditorChange(e.copy(highlightIdentifierUnderCaret = !e.highlightIdentifierUnderCaret)) },
+    )
+}
 @Composable
 private fun RunSection(o: RunOptions, onChange: (RunOptions) -> Unit) {
     CheckRow(
