@@ -37,7 +37,7 @@ import page.ui.Platform
 
 private val COLLAPSE_BELOW = 900.dp
 
-@androidx.compose.ui.ExperimentalComposeUiApi
+@OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
 @Composable
 internal fun TitleBarMenus(onRun: (ActionSpec) -> Unit) {
     if (Platform.isMac) return

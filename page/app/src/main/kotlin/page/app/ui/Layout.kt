@@ -314,6 +314,7 @@ internal fun IdeMainLayout(
             onStartRun = onStartRun,
             onStopRun = onStopRun,
             onOpenRunDialog = onOpenRunDialog,
+            onRunAction = onRunAction,
         )
         Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
             ActivityRail(
