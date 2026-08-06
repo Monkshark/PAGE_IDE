@@ -1374,6 +1374,11 @@ class LspController(
                         if (java.nio.file.Files.size(p) > MAX_AUTO_OPEN_BYTES) continue
                         val uri = p.toUri().toString()
                         if (ws.isOpen(uri)) continue
+                        var waited = 0L
+                        while (ws.pendingMessages() > MAX_AUTO_OPEN_INFLIGHT && waited < AUTO_OPEN_MAX_WAIT_MILLIS) {
+                            delay(AUTO_OPEN_BACKPRESSURE_MILLIS)
+                            waited += AUTO_OPEN_BACKPRESSURE_MILLIS
+                        }
                         val text = java.nio.file.Files.readString(p)
                         ws.didOpen(uri, backend.id, text)
                         opened++
@@ -1540,6 +1545,9 @@ class LspController(
         private const val WORKSPACE_AUTO_OPEN_SCAN_LIMIT = 4000L
         private const val AUTO_OPEN_THROTTLE_BATCH = 10
         private const val AUTO_OPEN_THROTTLE_MILLIS = 60L
+        private const val MAX_AUTO_OPEN_INFLIGHT = 2
+        private const val AUTO_OPEN_BACKPRESSURE_MILLIS = 25L
+        private const val AUTO_OPEN_MAX_WAIT_MILLIS = 30_000L
         private const val AUTO_OPEN_START_DELAY_MILLIS = 2_000L
         private const val EXTERNAL_SYMBOL_MESSAGE =
             "Cannot rename external library symbols (kotlin-stdlib · dependency jars)"
