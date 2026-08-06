@@ -597,6 +597,7 @@ internal class AppController(
             IdeEvent.Run.Stop -> runActionsController.stopActiveRun()
             IdeEvent.Run.ClearOutput -> runCatching { outputState.clear() }
             IdeEvent.Palette.Cycle -> persistPalette(next.chrome.palette)
+            is IdeEvent.Palette.Select -> persistPalette(event.palette)
             IdeEvent.Palette.QuickOpen -> paletteController.openQuickOpen()
             IdeEvent.Palette.DocumentSymbol -> paletteController.openDocumentSymbol()
             IdeEvent.Palette.WorkspaceSymbol -> paletteController.openWorkspaceSymbol()
@@ -617,13 +618,9 @@ internal class AppController(
 
     private fun persistPalette(palette: GlassPalette) {
         dispatch(IdeEvent.Chrome.ShowPaletteToast(System.currentTimeMillis() + 1600L))
-        val root = workspaceState.rootDir
-        if (root != null) {
-            appState.workspaceFile = appState.workspaceFile.copy(palette = palette.name)
-            runCatching { WorkspaceStore.save(root, appState.workspaceFile) }
-        } else {
-            AppSettings.savePalette(palette)
-        }
+        val settings = appState.pageSettings
+        if (settings.ui.palette == palette) return
+        persistSettings(settings.copy(ui = settings.ui.copy(palette = palette)))
     }
 
     fun settingsBinding(): SettingsBinding = SettingsBinding(
@@ -636,9 +633,14 @@ internal class AppController(
     private var settingsSaveJob: Job? = null
 
     private fun persistSettings(updated: PageSettings) {
+        val paletteChanged = appState.pageSettings.ui.palette != updated.ui.palette
         appState.pageSettings = updated
         appState.palette = updated.ui.palette
         settingsSaveJob?.cancel()
+        if (paletteChanged) {
+            writeSettings(updated)
+            return
+        }
         settingsSaveJob = appScope.launch {
             delay(SETTINGS_SAVE_DEBOUNCE_MS)
             withContext(Dispatchers.IO) { writeSettings(updated) }

@@ -30,7 +30,7 @@ flowchart TB
 
 ## 파일 트리
 
-`FileTreePanel`은 좌측 사이드바 트리를 그리는 Compose 컴포저블이다. 행 렌더(`TreeRow`), 선택(`FileTreeSelection`), 클립보드(`FileTreeClipboard`), 컨텍스트 메뉴가 붙는다. 드래그는 트리 안 재배치와 트리 밖으로의 내보내기를 모두 다루며, `TreeDragController`·`TreeDragGestures`·`TreeOutboundTransferable`로 나뉜다. 외부에서 파일이 바뀌면 `FileTreeWatcher`가 감지해 트리를 갱신한다. 워크스페이스별 설정(팔레트 등)은 `WorkspaceStore`가 `workspace.json`으로 저장한다.
+`FileTreePanel`은 좌측 사이드바 트리를 그리는 Compose 컴포저블이다. 행 렌더(`TreeRow`), 선택(`FileTreeSelection`), 클립보드(`FileTreeClipboard`), 컨텍스트 메뉴가 붙는다. 드래그는 트리 안 재배치와 트리 밖으로의 내보내기를 모두 다루며, `TreeDragController`·`TreeDragGestures`·`TreeOutboundTransferable`로 나뉜다. 외부에서 파일이 바뀌면 `FileTreeWatcher`가 감지해 트리를 갱신한다.
 
 ---
 

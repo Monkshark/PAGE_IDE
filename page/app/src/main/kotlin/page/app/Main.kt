@@ -337,7 +337,6 @@ private fun androidx.compose.ui.window.ApplicationScope.AppContent() {
     var foldByPath by editorWorkspace::foldByPath
     var historyFile by appState::historyFile
     var historyLoaded by appState::historyLoaded
-    var workspaceFile by appState::workspaceFile
     LaunchedEffect(rootDir) {
         sessionLoaded = false
         val root = rootDir
@@ -405,19 +404,6 @@ private fun androidx.compose.ui.window.ApplicationScope.AppContent() {
                         historyFile = runCatching { HistoryStore.load(root) }.getOrDefault(HistoryFile())
                     }
                     historyLoaded = true
-                },
-                { root ->
-                    if (root == null) {
-                        workspaceFile = WorkspaceFile()
-                    } else {
-                        val ws = runCatching { WorkspaceStore.load(root) }.getOrDefault(WorkspaceFile())
-                        workspaceFile = ws
-                        val name = ws.palette
-                        if (name != null) {
-                            val resolved = GlassPalette.values().firstOrNull { it.name.equals(name, ignoreCase = true) }
-                            if (resolved != null) palette = resolved
-                        }
-                    }
                 },
             ),
             savers = listOf(
@@ -839,7 +825,7 @@ private fun androidx.compose.ui.window.ApplicationScope.AppContent() {
                     onShowCallGraph = showCallGraph,
                     onShowInAtlas = focusInAtlas,
                     palette = palette,
-                    onSelectPalette = { palette = it },
+                    onSelectPalette = { onIdeEvent(IdeEvent.Palette.Select(it)) },
                   )
                 }
                 if (findInFiles) {
