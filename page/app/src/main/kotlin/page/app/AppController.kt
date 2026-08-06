@@ -541,7 +541,7 @@ internal class AppController(
     }
 
     val handleShortcut: (KeyEvent) -> Boolean = { event -> ActionDispatcher.handle(event, actionHost) }
-    val runAction: (page.app.input.ActionSpec) -> Unit = { spec -> spec.run(actionHost) }
+    val runAction: (page.app.input.ActionSpec) -> Unit = { spec -> spec.run?.invoke(actionHost) }
 
     fun fileTreePanelActions(): FileTreePanelActions = FileTreePanelActions(
         onToggle = { p, recursive -> dispatch(IdeEvent.FileTree.Toggle(p, recursive)) },

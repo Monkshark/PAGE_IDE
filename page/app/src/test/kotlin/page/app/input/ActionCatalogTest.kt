@@ -83,6 +83,24 @@ class ActionCatalogTest {
     }
 
     @Test
+    fun `only global actions with a body are dispatched`() {
+        assertNull(resolve(Key.F2), "editor rename is owned by the editor, not the dispatcher")
+        assertNull(resolve(Key.Delete), "tree delete is owned by the file tree")
+        assertEquals("file.save", resolve(Key.S, primary = true))
+    }
+
+    @Test
+    fun `documented editor and tree keys still carry labels`() {
+        val rename = ActionCatalog.all.first { it.id == "editor.rename" }
+        assertEquals(ActionContext.Editor, rename.context)
+        assertEquals("F2", ActionCatalog.label(rename, mac = false))
+        val cut = ActionCatalog.all.first { it.id == "tree.cut" }
+        assertEquals(ActionContext.FileTree, cut.context)
+        assertEquals("Ctrl+X", ActionCatalog.label(cut, mac = false))
+        assertEquals("⌘X", ActionCatalog.label(cut, mac = true))
+    }
+
+    @Test
     fun `every action carries a binding on both platforms`() {
         for (spec in ActionCatalog.all) {
             assertNotNull(spec.bindingFor(mac = false), "${spec.id} has no Windows binding")
@@ -94,7 +112,7 @@ class ActionCatalogTest {
     fun `no two actions share a chord on the same platform`() {
         for (mac in listOf(false, true)) {
             val seen = HashMap<String, String>()
-            for (spec in ActionCatalog.all) {
+            for (spec in ActionCatalog.all.filter { it.context == ActionContext.Global }) {
                 val binding = spec.bindingFor(mac) ?: continue
                 val chord = "$binding|${spec.searchMode}"
                 val previous = seen.put(chord, spec.id)
@@ -111,6 +129,23 @@ class ActionCatalogTest {
         val findInFiles = ActionCatalog.all.first { it.id == "nav.findInFiles" }
         assertEquals("Ctrl+Shift+F", ActionCatalog.label(findInFiles, mac = false))
         assertEquals("⇧⌘F", ActionCatalog.label(findInFiles, mac = true))
+    }
+
+    @Test
+    fun `the mac menu bar can render every global action it offers`() {
+        val menuActions = ActionCatalog.all.filter { it.context == ActionContext.Global && it.run != null }
+        assertTrue(menuActions.isNotEmpty())
+        for (spec in menuActions) {
+            val binding = spec.bindingFor(mac = true)
+            assertNotNull(binding, "${spec.id} would land in the menu bar without a key")
+            assertTrue(binding.key != androidx.compose.ui.input.key.Key.Unknown, "${spec.id} has an unknown key")
+        }
+    }
+
+    @Test
+    fun `the keymap sheet covers every context`() {
+        val contexts = ActionCatalog.all.map { it.context }.toSet()
+        assertEquals(ActionContext.entries.toSet(), contexts, "a context with no rows would render an empty sheet")
     }
 
     @Test

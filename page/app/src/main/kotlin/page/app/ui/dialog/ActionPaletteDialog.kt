@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import page.app.input.ActionCatalog
 import page.app.input.ActionMatch
+import page.app.input.ActionContext
 import page.app.input.ActionSearch
 import page.app.input.ActionSpec
 import page.ui.Glass
@@ -74,6 +75,7 @@ fun ActionPaletteDialog(
 
     fun runSelected() {
         val hit = results.getOrNull(selected) ?: return
+        if (hit.spec.run == null) return
         onDismiss()
         onRun(hit.spec)
     }
@@ -158,8 +160,10 @@ fun ActionPaletteDialog(
                                 hit = hit,
                                 selected = results.getOrNull(selected) === hit,
                                 onClick = {
-                                    onDismiss()
-                                    onRun(hit.spec)
+                                    if (hit.spec.run != null) {
+                                        onDismiss()
+                                        onRun(hit.spec)
+                                    }
                                 },
                             )
                         }
@@ -205,7 +209,8 @@ private fun ActionRow(hit: ActionMatch, selected: Boolean, onClick: () -> Unit) 
     ) {
         Text(text = label, style = MaterialTheme.typography.bodySmall, color = colors.text)
         Text(
-            text = hit.spec.group.name,
+            text = if (hit.spec.context == ActionContext.Global) hit.spec.group.name
+            else hit.spec.context.name,
             style = MaterialTheme.typography.labelSmall,
             color = colors.faint,
         )

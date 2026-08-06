@@ -34,6 +34,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.automirrored.outlined.Notes
 import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.KeyboardAlt
 import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.Extension
 import androidx.compose.material.icons.outlined.Palette
@@ -99,6 +100,7 @@ private enum class SettingsCategory(val label: String, val group: String, val ic
     AUTO_INPUT("AutoInput", "Workspace", Icons.Outlined.Code),
     UI("UI", "Appearance", Icons.Outlined.Palette),
     RUN("Run", "Tasks", Icons.Outlined.PlayArrow),
+    KEYMAP("Keymap", "Appearance", Icons.Outlined.KeyboardAlt),
 }
 
 @Composable
@@ -307,6 +309,7 @@ private fun SettingsDetailPane(
                     onEditorChange = { onChange(draft.copy(editor = it)) },
                 )
                 SettingsCategory.RUN -> RunSection(draft.run) { onChange(draft.copy(run = it)) }
+                SettingsCategory.KEYMAP -> KeymapSection()
             }
         }
     }
@@ -604,6 +607,55 @@ private fun RunSection(o: RunOptions, onChange: (RunOptions) -> Unit) {
         checked = o.openTerminalOnRun,
         onToggle = { onChange(o.copy(openTerminalOnRun = !o.openTerminalOnRun)) },
     )
+}
+
+@Composable
+private fun KeymapSection() {
+    val grouped = remember {
+        page.app.input.ActionCatalog.all
+            .groupBy { it.context }
+            .toSortedMap(compareBy { it.ordinal })
+    }
+    Hint(
+        if (page.ui.Platform.isMac) "Keys shown for macOS."
+        else "Keys shown for this machine."
+    )
+    for ((context, actions) in grouped) {
+        Spacer(Modifier.height(10.dp))
+        SectionLabel(keymapContextLabel(context))
+        Spacer(Modifier.height(2.dp))
+        for (action in actions.sortedWith(compareBy({ it.group.ordinal }, { it.label }))) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = action.label,
+                    color = Glass.colors.text,
+                    fontSize = Glass.type.label,
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = action.group.name,
+                    color = Glass.colors.faint,
+                    fontSize = Glass.type.label,
+                )
+                Spacer(Modifier.weight(1f))
+                Text(
+                    text = page.app.input.ActionCatalog.label(action) ?: "—",
+                    color = Glass.colors.muted,
+                    fontSize = Glass.type.label,
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                )
+            }
+        }
+    }
+}
+
+private fun keymapContextLabel(context: page.app.input.ActionContext): String = when (context) {
+    page.app.input.ActionContext.Global -> "Anywhere"
+    page.app.input.ActionContext.Editor -> "While editing"
+    page.app.input.ActionContext.FileTree -> "In the file tree"
 }
 
 @Composable
