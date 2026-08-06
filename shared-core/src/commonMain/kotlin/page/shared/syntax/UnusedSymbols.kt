@@ -19,18 +19,30 @@ object UnusedSymbols {
     ): List<IntRange> {
         if (text.isEmpty() || tokens.isEmpty()) return emptyList()
         val importLines = importLines(text)
-        val counts = HashMap<String, Int>()
-        for (token in tokens) {
-            if (token.kind !in CODE_KINDS) continue
-            if (importLines.any { token.start >= it.first && token.start <= it.last }) continue
-            val name = nameOf(text, token) ?: continue
-            counts[name] = (counts[name] ?: 0) + 1
-        }
+        val counts = wordCounts(text, importLines)
         val ranges = ArrayList<IntRange>()
         ranges += unusedImports(text, importLines, counts)
         ranges += unusedLocals(text, tokens, pairs, counts)
         return ranges
     }
+
+    private fun wordCounts(text: String, importLines: List<IntRange>): Map<String, Int> {
+        val counts = HashMap<String, Int>()
+        var i = 0
+        while (i < text.length) {
+            if (!isNameStart(text[i])) { i++; continue }
+            val start = i
+            while (i < text.length && isNamePart(text[i])) i++
+            if (importLines.any { start >= it.first && start <= it.last }) continue
+            val name = text.substring(start, i)
+            counts[name] = (counts[name] ?: 0) + 1
+        }
+        return counts
+    }
+
+    private fun isNameStart(c: Char): Boolean = c.isLetter() || c == '_'
+
+    private fun isNamePart(c: Char): Boolean = c.isLetterOrDigit() || c == '_'
 
     private fun unusedImports(
         text: String,
@@ -58,6 +70,8 @@ object UnusedSymbols {
         counts: Map<String, Int>,
     ): List<IntRange> {
         if (pairs.isEmpty()) return emptyList()
+        val closers = HashMap<Int, Int>(pairs.size)
+        for (pair in pairs) closers[pair.close] = pair.open
         val ranges = ArrayList<IntRange>()
         for (i in tokens.indices) {
             val token = tokens[i]
@@ -69,12 +83,39 @@ object UnusedSymbols {
                 previous.endExclusive.coerceIn(0, text.length),
             )
             if (keyword !in DECLARATION_KEYWORDS) continue
-            if (BracketScan.enclosing(pairs, token.start) == null) continue
+            val enclosing = BracketScan.enclosing(pairs, token.start) ?: continue
+            if (declaresType(text, enclosing.open, closers)) continue
             val name = nameOf(text, token) ?: continue
             if ((counts[name] ?: 0) != 1) continue
             ranges += token.start until token.endExclusive
         }
         return ranges
+    }
+
+    private const val HEADER_LOOKBEHIND = 600
+
+    private val TYPE_KEYWORDS = listOf(
+        "class ", "object ", "interface ", "enum ", "companion ", "struct ", "trait ", "record ",
+    )
+
+    private fun declaresType(text: String, openOffset: Int, closers: Map<Int, Int>): Boolean {
+        val header = StringBuilder()
+        var i = openOffset - 1
+        var steps = 0
+        while (i >= 0 && steps++ < HEADER_LOOKBEHIND) {
+            val c = text[i]
+            val open = closers[i]
+            if (open != null) {
+                header.append(' ')
+                i = open - 1
+                continue
+            }
+            if (c == '{' || c == '}' || c == ';') break
+            header.append(c)
+            i--
+        }
+        val reversed = header.reverse().toString()
+        return TYPE_KEYWORDS.any { reversed.contains(it) }
     }
 
     private fun importLines(text: String): List<IntRange> {
@@ -106,6 +147,6 @@ object UnusedSymbols {
         val start = token.start.coerceIn(0, text.length)
         val end = token.endExclusive.coerceIn(start, text.length)
         if (start >= end) return null
-        return text.substring(start, end)
+        return text.substring(start, end).trimStart('$').takeIf { it.isNotEmpty() }
     }
 }

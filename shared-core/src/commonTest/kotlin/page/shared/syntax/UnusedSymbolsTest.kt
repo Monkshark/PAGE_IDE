@@ -67,13 +67,36 @@ class UnusedSymbolsTest {
     }
 
     @Test
-    fun nameUsedOnlyInsideAStringStillCountsAsUnused() {
+    fun nameMentionedAnywhereElseIsLeftAlone() {
         val text = """
             fun run() {
                 val label = 1
                 println("label")
             }
         """.trimIndent()
-        assertEquals(listOf("label"), analyze(text))
+        assertTrue(analyze(text).isEmpty(), "a mention anywhere counts as use, got ${analyze(text)}")
+    }
+
+    @Test
+    fun stringTemplateCountsAsUse() {
+        val text = """
+            fun run() {
+                val started = 1
+                println("took ${'$'}{started}ms")
+            }
+        """.trimIndent()
+        assertTrue(analyze(text).isEmpty(), "template use missed, got ${analyze(text)}")
+    }
+
+    @Test
+    fun classPropertyIsLeftAlone() {
+        val text = """
+            class Holder(
+                private val id: String,
+            ) {
+                val flow: String = id
+            }
+        """.trimIndent()
+        assertTrue(analyze(text).none { it == "flow" }, "class property flagged, got ${analyze(text)}")
     }
 }
