@@ -56,6 +56,7 @@ internal fun TitleBarMenus(onRun: (ActionSpec) -> Unit) {
                         for (action in menu.actions) {
                             CompactMenuItem(
                                 label = action.label,
+                                icon = ActionIcons.forId(action.id),
                                 trailing = ActionCatalog.label(action),
                                 onClick = {
                                     openMenu = null
@@ -82,6 +83,7 @@ internal fun TitleBarMenus(onRun: (ActionSpec) -> Unit) {
                         for (action in menu.actions) {
                             CompactMenuItem(
                                 label = action.label,
+                                icon = ActionIcons.forId(action.id),
                                 trailing = ActionCatalog.label(action),
                                 onClick = {
                                     openMenu = null
@@ -131,7 +133,7 @@ private fun MenuButton(
 @Composable
 private fun MenuPopup(onDismiss: () -> Unit, content: @Composable () -> Unit) {
     Popup(
-        offset = IntOffset(0, with(LocalDensity.current) { 26.dp.roundToPx() }),
+        offset = IntOffset(0, with(LocalDensity.current) { 32.dp.roundToPx() }),
         onDismissRequest = onDismiss,
         properties = PopupProperties(focusable = true),
     ) {

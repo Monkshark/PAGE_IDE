@@ -593,8 +593,8 @@ internal fun IdeMainLayout(
             }
             AnimatedVisibility(
                 visible = codeActionPreviewVisible,
-                enter = expandHorizontally(tween(180), expandFrom = Alignment.End) + fadeIn(tween(180)),
-                exit = shrinkHorizontally(tween(180), shrinkTowards = Alignment.End) + fadeOut(tween(180)),
+                enter = expandHorizontally(tween(110), expandFrom = Alignment.End) + fadeIn(tween(110)),
+                exit = shrinkHorizontally(tween(90), shrinkTowards = Alignment.End) + fadeOut(tween(90)),
             ) {
                 CodeActionPreviewPanel(
                     actions = codeActionPreviewActions,
