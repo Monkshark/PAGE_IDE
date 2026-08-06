@@ -156,7 +156,12 @@ fun EditorPanel(
     onRequestPrepareRename: ((line: Int, character: Int) -> CompletableFuture<RenamePrepare?>)? = null,
     onRequestRename: ((line: Int, character: Int, newName: String) -> CompletableFuture<RenameWorkspaceEdit>)? = null,
     onApplyRename: ((RenameWorkspaceEdit) -> Unit)? = null,
-    onRequestReferences: ((line: Int, character: Int, symbolName: String) -> Unit)? = null,
+    onRequestReferences: ((line: Int, character: Int, symbolName: String, surface: ReferencesSurface) -> Unit)? = null,
+    references: ReferencesQueryState? = null,
+    onReferenceJump: (Path, Int, Int) -> Unit = { _, _, _ -> },
+    onReferencesOpenInPanel: () -> Unit = {},
+    onReferencesDismiss: () -> Unit = {},
+    referenceLinePreview: (String, Int) -> String? = { _, _ -> null },
     onShowCallGraph: ((line: Int, character: Int) -> Unit)? = null,
     onShowInAtlas: (() -> Unit)? = null,
     onRequestInlayHints: ((startLine: Int, startCharacter: Int, endLine: Int, endCharacter: Int) -> CompletableFuture<List<InlayHintItem>>)? = null,
@@ -587,6 +592,15 @@ fun EditorPanel(
     var lspSignatureRequestToken by remember(activePath) { mutableStateOf(0) }
 
     var renameRequest by remember(activePath) { mutableStateOf<RenameRequestState?>(null) }
+    var pendingDeclaration by remember(activePath) { mutableStateOf<String?>(null) }
+    LaunchedEffect(pendingDeclaration) {
+        if (pendingDeclaration != null) {
+            kotlinx.coroutines.delay(8_000)
+            pendingDeclaration = null
+        }
+    }
+    var declarationCacheText by remember(activePath) { mutableStateOf<String?>(null) }
+    var declarationCache by remember(activePath) { mutableStateOf<Map<String, Int>>(emptyMap()) }
     var renameInProgress by remember(activePath) { mutableStateOf(false) }
     var renameError by remember(activePath) { mutableStateOf<String?>(null) }
 
@@ -1070,21 +1084,37 @@ fun EditorPanel(
                     scrollOffsetProvider = { scrollState.value.toFloat() },
                 )
             }
+            fun declarationsIn(text: String): Map<String, Int> {
+                if (declarationCacheText != text) {
+                    declarationCache = page.shared.syntax.SymbolNames.scan(text).defs
+                    declarationCacheText = text
+                }
+                return declarationCache
+            }
             fun triggerDefinitionOrReferences(text: String, offset: Int): Boolean {
-                val defCb = onRequestDefinition ?: return false
-                val nav = onGoToDefinition ?: return false
                 val word = wordRangeAt(text, offset) ?: return false
                 val symbolName = text.substring(word.first, word.second)
                 if (isInStringOrComment(tokens, text, offset) || !isRenamableIdentifier(symbolName)) return false
                 val pos = TextBuffer(text).lineColOf(offset)
                 val selfUri = activePath?.toUri()?.toString()
                 val refCb = onRequestReferences
+                val declaredHere = declarationsIn(text)[symbolName] == word.first
+                val defCb = onRequestDefinition
+                val nav = onGoToDefinition
+                if (declaredHere || defCb == null || nav == null) {
+                    if (refCb == null) return false
+                    refCb(pos.line, pos.col, symbolName, ReferencesSurface.Popup)
+                    return true
+                }
+                pendingDeclaration = symbolName
                 defCb(pos.line, pos.col).whenComplete { targets, _ ->
+                    pendingDeclaration = null
                     val first = targets?.firstOrNull()
                     val atDeclaration = first != null && refCb != null && selfUri != null &&
                         first.uri == selfUri && definitionTargetContains(first, pos.line, pos.col)
-                    if (atDeclaration) refCb!!(pos.line, pos.col, symbolName)
+                    if (atDeclaration) refCb!!(pos.line, pos.col, symbolName, ReferencesSurface.Popup)
                     else if (first != null) nav(first)
+                    else if (refCb != null) refCb(pos.line, pos.col, symbolName, ReferencesSurface.Popup)
                 }
                 return true
             }
@@ -1120,20 +1150,46 @@ fun EditorPanel(
                 onCtrlPress = { origOff ->
                     triggerDefinitionOrReferences(latestValue.text, origOff)
                 },
-                onResolveCtrlHoverLink = { origOff ->
-                    if (onRequestDefinition == null) null
+                ctrlHoverLabel = { origOff ->
+                    val text = latestValue.text
+                    val word = wordRangeAt(text, origOff)
+                    if (word == null) null
                     else {
-                        val text = latestValue.text
-                        val word = wordRangeAt(text, origOff)
-                        if (word == null) null
-                        else {
-                            val symbolName = text.substring(word.first, word.second)
-                            if (
-                                !isInStringOrComment(tokens, text, origOff) &&
-                                isRenamableIdentifier(symbolName)
-                            ) word.first until word.second
-                            else null
+                        val name = text.substring(word.first, word.second)
+                        val declaredHere = declarationsIn(text)[name] == word.first
+                        if (declaredHere || onRequestDefinition == null) "Find usages" else "Go to declaration"
+                    }
+                },
+                caretPopup = when {
+                    references != null -> {
+                        {
+                            ReferencesPopup(
+                                state = references,
+                                linePreviewFor = referenceLinePreview,
+                                onJump = onReferenceJump,
+                                onOpenInPanel = onReferencesOpenInPanel,
+                                onDismiss = onReferencesDismiss,
+                            )
                         }
+                    }
+                    pendingDeclaration != null -> {
+                        { CaretBusyPopup("Resolving declaration of ${'$'}pendingDeclaration…") }
+                    }
+                    else -> null
+                },
+                caretPopupFocusable = references != null,
+                onCaretPopupDismiss = if (references != null) onReferencesDismiss else null,
+                onResolveCtrlHoverLink = { origOff ->
+                    val text = latestValue.text
+                    val word = wordRangeAt(text, origOff)
+                    if (word == null) null
+                    else {
+                        val symbolName = text.substring(word.first, word.second)
+                        if (
+                            !isInStringOrComment(tokens, text, origOff) &&
+                            isRenamableIdentifier(symbolName)
+                        ) word.first until word.second
+                        else null
                     }
                 },
                 ctrlHoverLinkColor = MaterialTheme.colorScheme.primary,
@@ -1249,7 +1305,7 @@ fun EditorPanel(
                                 val word = wordRangeAt(text, caret)
                                 val symbolName = if (word != null) text.substring(word.first, word.second) else ""
                                 if (isRenamableIdentifier(symbolName)) {
-                                    cb(pos.line, pos.col, symbolName)
+                                    cb(pos.line, pos.col, symbolName, ReferencesSurface.Panel)
                                 }
                             }
                             return@CodeEditor true

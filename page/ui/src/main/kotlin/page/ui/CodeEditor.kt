@@ -128,6 +128,10 @@ fun CodeEditor(
     onCtrlPress: ((originalOffset: Int) -> Boolean)? = null,
     onResolveCtrlHoverLink: ((originalOffset: Int) -> IntRange?)? = null,
     ctrlHoverLinkColor: Color = MaterialTheme.colorScheme.primary,
+    ctrlHoverLabel: ((originalOffset: Int) -> String?)? = null,
+    caretPopup: (@Composable () -> Unit)? = null,
+    caretPopupFocusable: Boolean = true,
+    onCaretPopupDismiss: (() -> Unit)? = null,
     onHover: ((originalOffset: Int?) -> Unit)? = null,
     hoverText: String? = null,
     hoverDiagnostic: HoverDiagnostic? = null,
@@ -749,6 +753,36 @@ fun CodeEditor(
                 }
             }
         }
+        if (caretPopup != null) {
+            val caretRect = caretRectProvider()
+            Popup(
+                offset = IntOffset(caretRect.left.toInt(), caretRect.bottom.toInt() + 6),
+                focusable = caretPopupFocusable,
+                onDismissRequest = onCaretPopupDismiss,
+            ) {
+                caretPopup()
+            }
+        }
+        val ctrlLinkLabel = ctrlHoverLinkRange?.let { range ->
+            val resolver = ctrlHoverLabel
+            if (resolver == null) null else resolver(range.first)
+        }
+        val ctrlLabelPosition = hoverPosition
+        if (ctrlLinkLabel != null && ctrlLabelPosition != null && caretPopup == null) {
+            Popup(
+                offset = IntOffset(ctrlLabelPosition.x.toInt() + 12, ctrlLabelPosition.y.toInt() + 20),
+                focusable = false,
+            ) {
+                GlassPopup {
+                    Text(
+                        text = ctrlLinkLabel,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Glass.colors.muted,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                    )
+                }
+            }
+        }
         val hoverTextSnapshot = hoverText
         val hoverDiagnosticSnapshot = hoverDiagnostic
         val hoverPositionSnapshot = latchedHoverPosition
@@ -821,30 +855,6 @@ data class CompletionDisplay(
 
 enum class CompletionKindIcon {
     METHOD, PROPERTY, CLASS, INTERFACE, ENUM, KEYWORD, VARIABLE, CONSTANT, MODULE, SNIPPET, GENERIC
-}
-
-@Composable
-private fun GlassPopup(
-    modifier: Modifier = Modifier,
-    shape: Shape = RoundedCornerShape(Glass.radius.sm),
-    content: @Composable () -> Unit,
-) {
-    val shadow = Glass.elevation.overlay
-    Box(
-        modifier = modifier
-            .shadow(
-                elevation = shadow.blur,
-                shape = shape,
-                clip = false,
-                ambientColor = Color.Black.copy(alpha = shadow.alpha),
-                spotColor = Color.Black.copy(alpha = shadow.alpha),
-            )
-            .clip(shape)
-            .background(Glass.colors.surfaceRaised)
-            .border(1.dp, Glass.colors.outline, shape),
-    ) {
-        content()
-    }
 }
 
 private fun kindGlyphColor(icon: CompletionKindIcon, c: GlassColors): Color = when (icon) {

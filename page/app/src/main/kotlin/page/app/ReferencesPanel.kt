@@ -47,12 +47,16 @@ import java.net.URI
 import java.nio.file.Path
 import page.lsp.ReferenceLocation
 
+enum class ReferencesSurface { Popup, Panel }
+
 data class ReferencesQueryState(
     val symbolName: String,
     val originUri: String,
     val results: List<ReferenceLocation>,
     val isLoading: Boolean,
     val errorMessage: String? = null,
+    val surface: ReferencesSurface = ReferencesSurface.Panel,
+    val indexing: Boolean = false,
 )
 
 @Composable
@@ -110,6 +114,9 @@ fun ReferencesPanel(
             )
             when {
                 state.isLoading -> CenteredMessage("Searching…")
+                state.indexing && state.results.isEmpty() -> CenteredMessage(
+                    "Indexing the project — no usages of '${state.symbolName}' yet."
+                )
                 state.errorMessage != null -> CenteredMessage(state.errorMessage, isError = true)
                 state.results.isEmpty() -> CenteredMessage(
                     "No references found for '${state.symbolName}'."

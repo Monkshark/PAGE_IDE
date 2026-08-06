@@ -39,6 +39,8 @@ import page.app.ui.editor.FileMenuController
 import page.app.ui.editor.TabContextController
 import page.app.ui.editor.TabOpenController
 import page.app.utils.applyReplaceToBook
+import page.editor.UsageSearch
+import page.lsp.ReferenceLocation
 import page.editor.FileDocument
 import page.editor.FileKinds
 import page.editor.OpenTab
@@ -142,7 +144,36 @@ internal class AppController(
         applyExternalChange = { uri, text -> router.applyExternalChange(uri, text) },
         getReferences = { appState.referencesState },
         setReferences = { dispatch(IdeEvent.Internal.ReferencesResult(it)) },
+        localUsages = { symbol, origin -> localUsages(symbol, origin) },
+        isIndexing = { symbolUsage.isIndexing },
     )
+    private fun localUsages(symbol: String, originUri: String): List<ReferenceLocation> {
+        val candidates = LinkedHashSet<String>()
+        candidates += originUri
+        candidates += symbolUsage.index.referencesOf(symbol)
+        candidates += symbolUsage.index.definitionsOf(symbol).keys
+        val openText = HashMap<String, String>()
+        for (side in PaneSide.values()) {
+            val pane = paneOf(side)
+            for (tab in pane.book.tabs) {
+                val uri = tab.path?.toUri()?.toString() ?: continue
+                openText[uri] = tab.text
+            }
+            val active = pane.book.active?.path?.toUri()?.toString()
+            if (active != null) openText[active] = pane.editorValue.text
+        }
+        return UsageSearch.find(symbol, candidates) { uri -> openText[uri] }
+            .map { hit ->
+                ReferenceLocation(
+                    uri = hit.uri,
+                    startLine = hit.line,
+                    startCharacter = hit.startCharacter,
+                    endLine = hit.line,
+                    endCharacter = hit.endCharacter,
+                )
+            }
+    }
+
     val jumpToProblem = lspEditorInterconnector::jumpToProblem
     val requestReferences = lspEditorInterconnector::requestReferences
     val applyRename = lspEditorInterconnector::applyRename
@@ -564,7 +595,7 @@ internal class AppController(
             }
             IdeEvent.CodeAction.Dismiss -> frameProvider()?.requestFocus()
             is IdeEvent.Lsp.RequestReferences ->
-                requestReferences(event.path, event.line, event.character, event.symbol)
+                requestReferences(event.path, event.line, event.character, event.symbol, event.surface)
             is IdeEvent.Lsp.JumpToProblem -> jumpToProblem(event.path, event.line, event.character)
             is IdeEvent.Lsp.ApplyRename -> applyRename(event.edit)
             IdeEvent.Lsp.ReferencesClose -> Unit

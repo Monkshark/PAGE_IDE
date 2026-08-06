@@ -50,6 +50,11 @@ private fun reduceRun(state: AppState, e: IdeEvent.Run): AppState = when (e) {
 
 private fun reduceLsp(state: AppState, e: IdeEvent.Lsp): AppState = when (e) {
     IdeEvent.Lsp.ReferencesClose -> state.copy(references = state.references.copy(query = null))
+    IdeEvent.Lsp.ReferencesToPanel -> state.copy(
+        references = state.references.copy(
+            query = state.references.query?.copy(surface = page.app.ReferencesSurface.Panel),
+        ),
+    )
     is IdeEvent.Lsp.RequestReferences,
     is IdeEvent.Lsp.JumpToProblem,
     is IdeEvent.Lsp.ApplyRename -> state

@@ -162,8 +162,9 @@ internal fun IdeMainLayout(
     onTerminalToggle: () -> Unit,
     run: RunPanelBinding,
     referencesState: ReferencesQueryState?,
-    onRequestReferences: (Path, Int, Int, String) -> Unit,
+    onRequestReferences: (Path, Int, Int, String, ReferencesSurface) -> Unit,
     onReferencesClose: () -> Unit,
+    onReferencesOpenInPanel: () -> Unit,
     linePreviewFor: (String, Int) -> String?,
     foldedLinesFor: (Path?) -> Set<Int> = { emptySet() },
     onFoldChange: (Path, Set<Int>) -> Unit = { _, _ -> },
@@ -443,6 +444,10 @@ internal fun IdeMainLayout(
                                 onJumpToProblem = onJumpToProblem,
                                 onApplyRename = onApplyRename,
                                 onRequestReferences = onRequestReferences,
+                                referencesState = referencesState,
+                                onReferencesClose = onReferencesClose,
+                                onReferencesOpenInPanel = onReferencesOpenInPanel,
+                                linePreviewFor = linePreviewFor,
                                 onShowCallGraph = onShowCallGraph,
                                 onShowInAtlas = onShowInAtlas,
                                 workspaceRoot = workspace.rootDir,
@@ -480,6 +485,10 @@ internal fun IdeMainLayout(
                                 onJumpToProblem = onJumpToProblem,
                                 onApplyRename = onApplyRename,
                                 onRequestReferences = onRequestReferences,
+                                referencesState = referencesState,
+                                onReferencesClose = onReferencesClose,
+                                onReferencesOpenInPanel = onReferencesOpenInPanel,
+                                linePreviewFor = linePreviewFor,
                                 onShowCallGraph = onShowCallGraph,
                                 onShowInAtlas = onShowInAtlas,
                                 workspaceRoot = workspace.rootDir,
@@ -516,6 +525,10 @@ internal fun IdeMainLayout(
                         onJumpToProblem = onJumpToProblem,
                         onApplyRename = onApplyRename,
                         onRequestReferences = onRequestReferences,
+                        referencesState = referencesState,
+                        onReferencesClose = onReferencesClose,
+                        onReferencesOpenInPanel = onReferencesOpenInPanel,
+                        linePreviewFor = linePreviewFor,
                         onShowCallGraph = onShowCallGraph,
                         onShowInAtlas = onShowInAtlas,
                         workspaceRoot = workspace.rootDir,
@@ -654,7 +667,7 @@ internal fun IdeMainLayout(
                 }
             }
         }
-        if (referencesState != null) {
+        if (referencesState != null && referencesState.surface == ReferencesSurface.Panel) {
             ReferencesPanel(
                 state = referencesState,
                 onJump = onJumpToProblem,

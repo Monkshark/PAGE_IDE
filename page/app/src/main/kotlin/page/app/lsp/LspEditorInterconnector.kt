@@ -6,11 +6,13 @@ import page.app.EditorPaneState
 import page.language.LspController
 import page.app.PaneSide
 import page.app.ReferencesQueryState
+import page.app.ReferencesSurface
 import page.app.utils.lineCharToOffset
 import page.editor.EditHistory
 import page.editor.EditSnapshot
 import page.editor.FileDocument
 import page.editor.OpenTab
+import page.lsp.ReferenceLocation
 import page.lsp.RenameApply
 import page.lsp.RenameWorkspaceEdit
 import page.lsp.pickSingleOtherReference
@@ -26,6 +28,8 @@ internal class LspEditorInterconnector(
     private val applyExternalChange: (String, String) -> Unit,
     private val getReferences: () -> ReferencesQueryState?,
     private val setReferences: (ReferencesQueryState?) -> Unit,
+    private val localUsages: (symbol: String, originUri: String) -> List<ReferenceLocation> = { _, _ -> emptyList() },
+    private val isIndexing: () -> Boolean = { false },
 ) {
     fun jumpToProblem(picked: Path, line: Int, character: Int) {
         val pane = focused()
@@ -34,7 +38,13 @@ internal class LspEditorInterconnector(
         openInTabAt(picked, lineCharToOffset(text, line, character))
     }
 
-    fun requestReferences(p: Path, line: Int, char: Int, symbol: String) {
+    fun requestReferences(
+        p: Path,
+        line: Int,
+        char: Int,
+        symbol: String,
+        surface: ReferencesSurface = ReferencesSurface.Panel,
+    ) {
         val origin = p.toUri().toString()
         setReferences(
             ReferencesQueryState(
@@ -42,29 +52,25 @@ internal class LspEditorInterconnector(
                 originUri = origin,
                 results = emptyList(),
                 isLoading = true,
+                surface = surface,
             )
         )
         val ctrl = controllerFor(p)
         if (ctrl == null) {
-            setReferences(getReferences()?.copy(isLoading = false, errorMessage = "No LSP for this file type"))
+            publishLocalUsages(symbol, origin, surface)
             return
         }
         ctrl.references(p, line, char, includeDeclaration = true, symbolName = symbol)
             .whenComplete { results, err ->
                 if (err != null) {
-                    setReferences(
-                        ReferencesQueryState(
-                            symbolName = symbol,
-                            originUri = origin,
-                            results = emptyList(),
-                            isLoading = false,
-                            errorMessage = err.message?.lineSequence()?.firstOrNull()?.take(160)
-                                ?: "Find references failed",
-                        )
-                    )
+                    publishLocalUsages(symbol, origin, surface)
                     return@whenComplete
                 }
                 val list = results.orEmpty()
+                if (list.isEmpty()) {
+                    publishLocalUsages(symbol, origin, surface)
+                    return@whenComplete
+                }
                 val autoJump = pickSingleOtherReference(list, origin, line, char)
                 if (autoJump != null) {
                     setReferences(null)
@@ -80,6 +86,7 @@ internal class LspEditorInterconnector(
                                 originUri = origin,
                                 results = list,
                                 isLoading = false,
+                                surface = surface,
                             )
                         )
                     }
@@ -90,10 +97,24 @@ internal class LspEditorInterconnector(
                             originUri = origin,
                             results = list,
                             isLoading = false,
+                            surface = surface,
                         )
                     )
                 }
             }
+    }
+
+    private fun publishLocalUsages(symbol: String, origin: String, surface: ReferencesSurface) {
+        setReferences(
+            ReferencesQueryState(
+                symbolName = symbol,
+                originUri = origin,
+                results = localUsages(symbol, origin),
+                isLoading = false,
+                surface = surface,
+                indexing = isIndexing(),
+            )
+        )
     }
 
     fun applyRename(edit: RenameWorkspaceEdit) {

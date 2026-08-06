@@ -128,6 +128,21 @@ onValueChange(final)
 | 트리플 | `WordBoundary.lineRangeAt(text, offset)` → 줄 시작 ~ `\n` 직전 |
 
 `PointerEventPass.Final` 이라 `BasicTextField` 가 자체 포인터 처리를 끝낸 뒤 우리가 덮어 쓴다. 400ms / 8px 안에서만 시퀀스로 인정 → 그 외엔 카운터 리셋
+---
+
+## Ctrl+Click 네비게이션
+
+| 위치 | 동작 |
+|---|---|
+| 참조 위 | 선언으로 점프 (`onRequestDefinition` → `onGoToDefinition`) |
+| 선언 위 | 사용처를 캐럿 옆 팝업으로 (`ReferencesSurface.Popup`) |
+
+`Ctrl` 을 누른 채 식별자에 올리면 밑줄 + 손 커서가 뜨고, 어느 쪽으로 갈지 알려주는 힌트가 붙는다 (`Go to declaration` / `Find usages`). 선언 판정은 `SymbolNames.scan(text).defs` 로 파일 안에서 즉시 계산 — LSP 왕복 없음
+
+`Ctrl+B` 도 같은 경로(`triggerDefinitionOrReferences`)를 탄다. `Shift+F12` 는 그대로 하단 References 패널을 채운다. 팝업의 `Open in panel` 로 패널로 옮길 수 있다
+
+`ReferencesPopup` 은 파일별로 묶어서 보여주고 `↑↓` 이동, `Enter` 열기, `Esc` 닫기를 받는다
+로딩은 두 군데서 보인다 — LSP 정의 조회를 기다리는 동안 캐럿 옆에 `Resolving declaration of <symbol>…` 이 뜨고 (8초 지나면 사라짐), 워크스페이스 인덱스가 아직 도는 중이면 팝업이 `Indexing — list may grow` 를 달아 결과가 더 늘 수 있다고 알린다
 
 ---
 

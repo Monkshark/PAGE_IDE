@@ -110,10 +110,12 @@ internal sealed interface IdeEvent {
             val line: Int,
             val character: Int,
             val symbol: String,
+            val surface: page.app.ReferencesSurface = page.app.ReferencesSurface.Panel,
         ) : Lsp
         data class JumpToProblem(val path: Path, val line: Int, val character: Int) : Lsp
         data class ApplyRename(val edit: RenameWorkspaceEdit) : Lsp
         data object ReferencesClose : Lsp
+        data object ReferencesToPanel : Lsp
     }
 
     sealed interface Run : IdeEvent {
