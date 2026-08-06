@@ -828,7 +828,7 @@ private fun statusLineFor(progress: LspInstaller.Progress?, name: String, versio
     }
     is LspInstaller.Progress.Extracting -> p.message
     is LspInstaller.Progress.CommandOutput -> p.line.take(120)
-    is LspInstaller.Progress.Done -> "Installed to ${p.executable.parent?.parent ?: p.executable}"
+    is LspInstaller.Progress.Done -> "Done"
     is LspInstaller.Progress.Failed -> "Install failed — see details above"
 }
 
