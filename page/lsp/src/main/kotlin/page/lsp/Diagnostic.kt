@@ -40,8 +40,31 @@ data class Diagnostic(
                     else -> null
                 }
             },
-            unnecessary = d.tags?.contains(org.eclipse.lsp4j.DiagnosticTag.Unnecessary) == true,
+            unnecessary = d.tags?.contains(org.eclipse.lsp4j.DiagnosticTag.Unnecessary) == true ||
+                readsAsUnused(d.message),
             deprecated = d.tags?.contains(org.eclipse.lsp4j.DiagnosticTag.Deprecated) == true,
         )
+
+        private val UNUSED_PHRASES = listOf(
+            "is never used",
+            "are never used",
+            "never used",
+            "is unused",
+            "unused variable",
+            "unused import",
+            "unused parameter",
+            "unused local",
+            "declared but its value is never read",
+            "declared but never used",
+            "declared and not used",
+            "imported but unused",
+            "assigned but never used",
+            "value is never used",
+        )
+
+        fun readsAsUnused(message: String?): Boolean {
+            val text = message?.lowercase() ?: return false
+            return UNUSED_PHRASES.any { text.contains(it) }
+        }
     }
 }
