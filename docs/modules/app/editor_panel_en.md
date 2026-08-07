@@ -237,3 +237,7 @@ Context menus are drawn by one component, `CompactMenuItem`: a 14 dp Material Ou
 `Alt+Enter` opens beside the caret. Local fixes (dead imports and friends) are already computed, so they paint **immediately** while the header shows `searching…`; the server's actions merge in when they arrive, so there is no longer a stretch where nothing is on screen.
 
 The selected fix shows its diff inside the popup, up to six lines, then folds into `+N more lines`. A fix that reaches other files lists their names and edit counts. Each row is tagged with its kind (quick fix / refactor / source). Pressing `Alt+Enter` again applies the selected fix.
+
+A fix that reaches other files moves from the popup's `Open in panel` into the bottom-dock **review surface** (`CodeActionReviewPanel`). It sits where Problems and Todo already live, so it gets the full window width: the files the edit touches on the left with their edit counts, the selected file's diff on the right.
+
+Nothing is chosen here — the action is already picked, and this is where it gets read and accepted. Hence the header's `N edits in M files` and the explicit `Apply` / `Cancel · Esc`. Unticking a file drops all of its edits (`filterEdit`) and turns the header warning-coloured on purpose: a half-applied rename does not compile.

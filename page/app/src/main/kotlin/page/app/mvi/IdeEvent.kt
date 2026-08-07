@@ -99,6 +99,8 @@ internal sealed interface IdeEvent {
     }
 
     sealed interface CodeAction : IdeEvent {
+        data class OpenInPanel(val action: CodeActionEntry) : CodeAction
+        data object ClosePanel : CodeAction
         data class SelectedChange(val index: Int) : CodeAction
         data class Apply(val action: CodeActionEntry) : CodeAction
         data object Dismiss : CodeAction

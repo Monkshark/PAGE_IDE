@@ -237,3 +237,7 @@ val foldSegments = FoldRegions.segmentsFor(value.text, activeFolds)
 `Alt+Enter` 는 캐럿 옆 팝업으로 뜬다. 로컬 수정(dead import 등)은 계산이 끝나 있으므로 **즉시** 그리고, LSP 응답은 헤더에 `searching…` 을 띄운 채 도착하면 목록에 합쳐진다 — 서버를 기다리느라 아무것도 안 보이던 구간이 사라진다
 
 선택된 수정의 diff 가 팝업 안에 최대 6줄까지 붙고, 넘치면 `+N more lines` 로 접힌다. 다른 파일까지 건드리는 수정이면 파일 이름과 편집 수를 함께 보여준다. 액션 종류(quick fix / refactor / source)는 행 오른쪽에 표기한다. 한 번 더 `Alt+Enter` 를 누르면 선택된 수정이 적용된다
+
+여러 파일을 건드리는 수정은 팝업의 `Open in panel` 로 하단 도크의 **검토 화면**(`CodeActionReviewPanel`)으로 넘어간다. Problems·Todo 가 사는 자리라 창 전체 폭을 쓰고, 왼쪽에 편집이 닿는 파일 목록(파일당 편집 수), 오른쪽에 선택한 파일의 diff 가 뜬다
+
+여기서는 액션을 고르지 않는다 — 이미 고른 것을 읽고 승인한다. 그래서 헤더에 `N edits in M files` 와 명시적 `Apply` / `Cancel · Esc` 가 있다. 파일 왼쪽 체크박스로 일부 파일을 빼면 그 파일의 편집이 통째로 빠지고(`filterEdit`), 헤더가 경고색으로 바뀐다 — 반만 적용된 rename 은 컴파일되지 않으므로 의도적으로 눈에 띄게 둔다

@@ -61,13 +61,20 @@ private fun reduceLsp(state: AppState, e: IdeEvent.Lsp): AppState = when (e) {
 }
 
 private fun reduceCodeActionEvent(state: AppState, e: IdeEvent.CodeAction): AppState = when (e) {
+    is IdeEvent.CodeAction.OpenInPanel -> state.copy(
+        codeAction = state.codeAction.copy(open = false, review = e.action),
+    )
+    IdeEvent.CodeAction.ClosePanel -> state.copy(
+        codeAction = state.codeAction.copy(review = null),
+        chrome = state.chrome.copy(editorFocusVersion = state.chrome.editorFocusVersion + 1),
+    )
     is IdeEvent.CodeAction.SelectedChange -> state.copy(
         codeAction = state.codeAction.copy(
             selected = e.index.coerceIn(0, state.codeAction.actions.lastIndex.coerceAtLeast(0)),
         ),
     )
     is IdeEvent.CodeAction.Apply -> state.copy(
-        codeAction = state.codeAction.copy(open = false),
+        codeAction = state.codeAction.copy(open = false, review = null),
         chrome = state.chrome.copy(editorFocusVersion = state.chrome.editorFocusVersion + 1),
     )
     IdeEvent.CodeAction.Dismiss -> state.copy(

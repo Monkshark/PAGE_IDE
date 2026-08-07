@@ -86,6 +86,8 @@ internal class IdeAppState(private val store: IdeStore = IdeStore()) {
         set(value) = store.updateCodeAction { it.copy(selected = value) }
     val codeActionPending: Boolean
         get() = store.codeAction.pending
+    val codeActionReview: CodeActionEntry?
+        get() = store.codeAction.review
 
     var editorFocusVersion: Int
         get() = store.chrome.editorFocusVersion

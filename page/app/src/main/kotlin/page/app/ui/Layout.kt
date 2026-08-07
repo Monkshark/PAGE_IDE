@@ -128,6 +128,9 @@ internal data class RunPanelBinding(
 
 data class CodeActionPreviewBinding(
     val visible: Boolean = false,
+    val review: CodeActionEntry? = null,
+    val onOpenInPanel: (CodeActionEntry) -> Unit = {},
+    val onClosePanel: () -> Unit = {},
     val actions: List<CodeActionEntry> = emptyList(),
     val selected: Int = 0,
     val pending: Boolean = false,
@@ -660,6 +663,20 @@ internal fun IdeMainLayout(
                 }
                 }
             }
+        }
+        val review = codeAction.review
+        if (review != null) {
+            CodeActionReviewPanel(
+                action = review,
+                currentUri = codeAction.uri,
+                currentText = codeAction.text,
+                height = ui.referencesHeight,
+                onApply = { entry ->
+                    codeAction.onClosePanel()
+                    codeAction.onApply(entry)
+                },
+                onDismiss = codeAction.onClosePanel,
+            )
         }
         if (referencesState != null && referencesState.surface == ReferencesSurface.Panel) {
             ReferencesPanel(

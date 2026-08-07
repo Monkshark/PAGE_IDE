@@ -1198,7 +1198,10 @@ fun EditorPanel(
                                 currentText = codeAction.text,
                                 onSelectedChange = codeAction.onSelectedChange,
                                 onApply = codeAction.onApply,
-                                onOpenInPanel = codeAction.onDismiss,
+                                onOpenInPanel = {
+                                    codeAction.actions.getOrNull(codeAction.selected)
+                                        ?.let { entry -> codeAction.onOpenInPanel(entry) }
+                                },
                             )
                         }
                     }
