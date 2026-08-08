@@ -12,7 +12,7 @@
 ![JDK](https://img.shields.io/badge/JDK-21%20toolchain-007396?logo=openjdk&logoColor=white)
 ![Status](https://img.shields.io/badge/status-pre--alpha-orange)
 
-[Documentation](https://monkshark.github.io/page-ide/) · [Devlog](https://monkshark.github.io/categories/page-개발기/) · [한국어 README](README_KR.md)
+[Documentation](https://monkshark.github.io/page-ide/) · [한국어 README](README_KR.md)
 
 </div>
 
@@ -114,17 +114,6 @@ page-ide/
 
 Why the boundaries sit where they do: [architecture guide](https://monkshark.github.io/page-ide/#guides/architecture.md).
 
-## Notable work
-
-Problems worth reading about, written up in the devlog:
-
-- **Kotlin LSP cold start, 145s → 40s.** The language server resolved a Gradle classpath per
-  submodule; a single root resolution covers all of them.
-- **Swift on Windows.** GNU `@LongLink` and PAX tar headers, MSVC SDK linkage, and `Path`/`PATH`
-  collisions in child process environments.
-- **Scroll at 20fps → 130fps.** Viewport culling, per-line layout caching, and moving syntax and
-  fold parsing off the frame path.
-
 ## Contributing
 
 - `main` is protected — branch, open a PR, let CI pass, squash merge.
@@ -138,5 +127,4 @@ Undecided while the project is pre-alpha.
 ## Contact
 
 - Bugs and ideas: [GitHub Issues](https://github.com/monkshark/page-ide/issues)
-- Devlog (Korean): <https://monkshark.github.io/categories/page-개발기/>
 - Email: justinchoo0814@gmail.com

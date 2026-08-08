@@ -12,7 +12,7 @@
 ![JDK](https://img.shields.io/badge/JDK-21%20toolchain-007396?logo=openjdk&logoColor=white)
 ![Status](https://img.shields.io/badge/status-pre--alpha-orange)
 
-[문서](https://monkshark.github.io/page-ide/) · [개발기](https://monkshark.github.io/categories/page-개발기/) · [English README](README.md)
+[문서](https://monkshark.github.io/page-ide/) · [English README](README.md)
 
 </div>
 
@@ -111,17 +111,6 @@ page-ide/
 
 경계를 왜 여기에 그었는지는 [아키텍처 가이드](https://monkshark.github.io/page-ide/#guides/architecture.md)에 있다.
 
-## 기록해둘 만한 작업
-
-개발기에 풀어 쓴 문제들:
-
-- **Kotlin LSP 콜드 스타트 145초 → 40초.** 언어 서버가 서브모듈마다 Gradle classpath 를 해석하고
-  있었다. 루트에서 한 번 해석하면 전부 커버된다.
-- **Windows 에서의 Swift.** GNU `@LongLink`·PAX tar 헤더, MSVC SDK 링크, 자식 프로세스 환경의
-  `Path`/`PATH` 대소문자 충돌.
-- **스크롤 20fps → 130fps.** 뷰포트 컬링, 줄 단위 레이아웃 캐시, 신택스·폴딩 파싱을 프레임
-  경로 밖으로.
-
 ## 기여
 
 - `main` 은 보호된다 — 브런치 → PR → CI 통과 → squash 머지.
@@ -135,5 +124,4 @@ pre-alpha 동안은 미정.
 ## 연락
 
 - 버그·제안: [GitHub Issues](https://github.com/monkshark/page-ide/issues)
-- 개발기: <https://monkshark.github.io/categories/page-개발기/>
 - 이메일: justinchoo0814@gmail.com
