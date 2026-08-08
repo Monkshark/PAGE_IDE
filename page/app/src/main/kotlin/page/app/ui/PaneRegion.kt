@@ -60,6 +60,7 @@ internal fun PaneRegion(
     onApplyRename: (RenameWorkspaceEdit) -> Unit = {},
     onRequestReferences: (Path, Int, Int, String, ReferencesSurface) -> Unit = { _, _, _, _, _ -> },
     referencesState: ReferencesQueryState? = null,
+    codeAction: CodeActionPreviewBinding = CodeActionPreviewBinding(),
     onReferencesClose: () -> Unit = {},
     onReferencesOpenInPanel: () -> Unit = {},
     linePreviewFor: (String, Int) -> String? = { _, _ -> null },
@@ -189,6 +190,7 @@ internal fun PaneRegion(
                     onRequestReferences = active?.path?.let { p ->
                         { line, ch, sym, surface -> onRequestReferences(p, line, ch, sym, surface) }
                     },
+                    codeAction = codeAction,
                     references = referencesState?.takeIf { query ->
                         query.surface == ReferencesSurface.Popup &&
                             active?.path?.toUri()?.toString() == query.originUri

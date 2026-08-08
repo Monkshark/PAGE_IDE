@@ -441,8 +441,8 @@ internal class AppController(
         allDiagnosticsByUri = { router.allDiagnosticsByUri },
         jumpToProblem = jumpToProblem,
         applyRename = applyRename,
-        onCodeActions = { list, uri, text, selected, open ->
-            dispatch(IdeEvent.Internal.CodeActionsResult(list, uri, text, selected, open))
+        onCodeActions = { list, uri, text, selected, open, pending ->
+            dispatch(IdeEvent.Internal.CodeActionsResult(list, uri, text, selected, open, pending))
         },
     )
     val openQuickOpen: () -> Unit = { dispatch(IdeEvent.Palette.QuickOpen) }
@@ -450,7 +450,15 @@ internal class AppController(
     val openDocumentSymbol: () -> Unit = { dispatch(IdeEvent.Palette.DocumentSymbol) }
     val openWorkspaceSymbol: () -> Unit = { dispatch(IdeEvent.Palette.WorkspaceSymbol) }
     val triggerFormat: () -> Unit = { dispatch(IdeEvent.Palette.Format) }
-    val triggerCodeAction: () -> Unit = { dispatch(IdeEvent.Palette.CodeActionTrigger) }
+    val triggerCodeAction: () -> Unit = {
+        val open = appState.codeActionOpen
+        val selected = appState.codeActionList.getOrNull(appState.codeActionSelected)
+        if (open && selected != null) {
+            dispatch(IdeEvent.CodeAction.Apply(selected))
+        } else {
+            dispatch(IdeEvent.Palette.CodeActionTrigger)
+        }
+    }
 
     val toggleFindInFiles: () -> Unit = { dispatch(IdeEvent.Palette.ToggleFindInFiles) }
     val cyclePalette: () -> Unit = { dispatch(IdeEvent.Palette.Cycle) }
@@ -593,6 +601,10 @@ internal class AppController(
         visible = appState.codeActionOpen,
         actions = appState.codeActionList,
         selected = appState.codeActionSelected,
+        pending = appState.codeActionPending,
+        review = appState.codeActionReview,
+        onOpenInPanel = { action -> dispatch(IdeEvent.CodeAction.OpenInPanel(action)) },
+        onClosePanel = { dispatch(IdeEvent.CodeAction.ClosePanel) },
         onSelectedChange = { dispatch(IdeEvent.CodeAction.SelectedChange(it)) },
         uri = appState.codeActionUri,
         text = appState.codeActionText,

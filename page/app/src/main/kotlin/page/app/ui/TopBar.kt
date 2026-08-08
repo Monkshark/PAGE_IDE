@@ -47,6 +47,7 @@ internal fun TopBar(
     onStartRun: () -> Unit,
     onStopRun: () -> Unit,
     onOpenRunDialog: () -> Unit,
+    onRunAction: (page.app.input.ActionSpec) -> Unit = {},
 ) {
     val colors = Glass.colors
     val chrome = LocalWindowChrome.current
@@ -68,11 +69,15 @@ internal fun TopBar(
             ) {
                 AppMarkGlyph(size = 14.dp)
                 Spacer(Modifier.width(8.dp))
-                Text(
-                    text = PageIdentity.NAME,
-                    style = MaterialTheme.typography.titleSmall,
-                    color = colors.text,
-                )
+                if (page.ui.Platform.isMac) {
+                    Text(
+                        text = PageIdentity.NAME,
+                        style = MaterialTheme.typography.titleSmall,
+                        color = colors.text,
+                    )
+                } else {
+                    TitleBarMenus(onRun = onRunAction)
+                }
                 Spacer(Modifier.width(16.dp))
                 Breadcrumb(path = path, workspaceRoot = workspaceRoot)
                 Spacer(Modifier.weight(1f))

@@ -149,6 +149,28 @@ class ActionCatalogTest {
     }
 
     @Test
+    fun `menus carry only runnable global actions, in a fixed order`() {
+        assertEquals(listOf("File", "Edit", "Navigate", "Code", "View", "PAGE"), ActionMenus.all.map { it.title })
+        for (menu in ActionMenus.all) {
+            assertTrue(menu.actions.isNotEmpty(), "${menu.title} would render an empty menu")
+            for (action in menu.actions) {
+                assertEquals(ActionContext.Global, action.context, "${action.id} is not a global action")
+                assertNotNull(action.run, "${action.id} would sit in a menu doing nothing")
+            }
+        }
+    }
+
+    @Test
+    fun `every catalog action a menu offers can show its key`() {
+        for (menu in ActionMenus.all) {
+            for (action in menu.actions) {
+                assertNotNull(ActionCatalog.label(action, mac = false), "${action.id} has no Windows label")
+                assertNotNull(ActionCatalog.label(action, mac = true), "${action.id} has no macOS label")
+            }
+        }
+    }
+
+    @Test
     fun `ids are unique`() {
         val ids = ActionCatalog.all.map { it.id }
         assertTrue(ids.size == ids.toSet().size, "duplicate action id in the catalog")

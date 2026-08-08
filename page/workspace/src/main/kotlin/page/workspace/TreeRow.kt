@@ -27,6 +27,20 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.OpenInNew
+import androidx.compose.material.icons.outlined.ContentCopy
+import androidx.compose.material.icons.outlined.ContentCut
+import androidx.compose.material.icons.outlined.ContentPaste
+import androidx.compose.material.icons.outlined.CreateNewFolder
+import androidx.compose.material.icons.outlined.DeleteOutline
+import androidx.compose.material.icons.outlined.DriveFileRenameOutline
+import androidx.compose.material.icons.outlined.FolderOpen
+import androidx.compose.material.icons.outlined.Hub
+import androidx.compose.material.icons.outlined.Link
+import androidx.compose.material.icons.outlined.NoteAdd
+import androidx.compose.material.icons.outlined.SubdirectoryArrowRight
+import page.ui.CompactMenuSeparator
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -39,6 +53,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draganddrop.DragAndDropEvent
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.draganddrop.DragAndDropTarget
@@ -132,9 +147,13 @@ fun TreeRow(
         else -> Color.Transparent
     }
     val guideColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.12f)
+    val isGenerated = remember(node.path, node.depth) {
+        page.editor.FileTree.isGenerated(node.path, node.depth)
+    }
     val textColor = MaterialTheme.colorScheme.onSurface.copy(alpha = when {
         isBeingDragged -> 0.45f
         isCut -> 0.45f
+        isGenerated -> 0.42f
         else -> 1f
     })
 
@@ -205,6 +224,7 @@ fun TreeRow(
                     })
                 }
                 if (!multi) {
+                    if (isNotEmpty()) add(ContextMenuItem(MENU_SEPARATOR) {})
                     if (onOpenInAtlas != null && !node.isDirectory) {
                         add(ContextMenuItem("Open in Atlas") { onOpenInAtlas(node.path) })
                     }
@@ -301,7 +321,9 @@ fun TreeRow(
                 }
             }
             Spacer(Modifier.width(2.dp))
-            FileTypeIcon(path = node.path, isDirectory = node.isDirectory)
+            Box(modifier = Modifier.alpha(if (isGenerated) 0.42f else 1f)) {
+                FileTypeIcon(path = node.path, isDirectory = node.isDirectory)
+            }
             Spacer(Modifier.width(6.dp))
             Text(
                 text = name,
@@ -325,8 +347,17 @@ fun TreeRow(
             ) {
                 CompactMenuContainer {
                     for (item in contextItems()) {
+                        if (item.label == MENU_SEPARATOR) {
+                            CompactMenuSeparator()
+                            continue
+                        }
+                        val tab = item.label.indexOf('\t')
+                        val text = if (tab >= 0) item.label.substring(0, tab) else item.label
                         CompactMenuItem(
-                            label = item.label,
+                            label = text,
+                            icon = treeMenuIcon(text),
+                            danger = text.startsWith("Delete"),
+                            trailing = if (tab >= 0) item.label.substring(tab + 1) else null,
                             onClick = {
                                 menuAt = null
                                 item.onClick()
@@ -337,4 +368,22 @@ fun TreeRow(
             }
         }
     }
+}
+
+private const val MENU_SEPARATOR = "-"
+
+private fun treeMenuIcon(label: String): androidx.compose.ui.graphics.vector.ImageVector? = when {
+    label.startsWith("New file") -> Icons.Outlined.NoteAdd
+    label.startsWith("New folder") -> Icons.Outlined.CreateNewFolder
+    label.startsWith("Open") -> Icons.AutoMirrored.Outlined.OpenInNew
+    label == "Cut" -> Icons.Outlined.ContentCut
+    label == "Copy" -> Icons.Outlined.ContentCopy
+    label == "Paste" -> Icons.Outlined.ContentPaste
+    label.startsWith("Rename") -> Icons.Outlined.DriveFileRenameOutline
+    label.startsWith("Delete") -> Icons.Outlined.DeleteOutline
+    label.startsWith("Show in Explorer") -> Icons.Outlined.FolderOpen
+    label == "Open in Atlas" -> Icons.Outlined.Hub
+    label == "Copy path" -> Icons.Outlined.Link
+    label == "Copy relative path" -> Icons.Outlined.SubdirectoryArrowRight
+    else -> null
 }

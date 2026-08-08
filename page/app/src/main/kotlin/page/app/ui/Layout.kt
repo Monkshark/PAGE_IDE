@@ -126,10 +126,14 @@ internal data class RunPanelBinding(
     val onOutputClear: () -> Unit,
 )
 
-internal data class CodeActionPreviewBinding(
+data class CodeActionPreviewBinding(
     val visible: Boolean = false,
+    val review: CodeActionEntry? = null,
+    val onOpenInPanel: (CodeActionEntry) -> Unit = {},
+    val onClosePanel: () -> Unit = {},
     val actions: List<CodeActionEntry> = emptyList(),
     val selected: Int = 0,
+    val pending: Boolean = false,
     val onSelectedChange: (Int) -> Unit = {},
     val uri: String? = null,
     val text: String? = null,
@@ -274,7 +278,7 @@ internal fun IdeMainLayout(
     }
     val scopedDiagnostics = mergeDiagnostics(
         diagnosticsInScope(
-            all = lspRouter.allDiagnosticsByUri,
+            all = page.app.lsp.LocalDiagnostics.merged(lspRouter.allDiagnosticsByUri),
             scope = LocalPageSettings.current.lsp.diagnosticsScope,
             focusedPath = editor.focused().book.active?.path,
             openPaths = (editor.primaryPane.book.tabs + editor.secondaryPane.book.tabs).map { it.path }.toSet(),
@@ -314,6 +318,7 @@ internal fun IdeMainLayout(
             onStartRun = onStartRun,
             onStopRun = onStopRun,
             onOpenRunDialog = onOpenRunDialog,
+            onRunAction = onRunAction,
         )
         Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
             ActivityRail(
@@ -446,6 +451,7 @@ internal fun IdeMainLayout(
                                 onApplyRename = onApplyRename,
                                 onRequestReferences = onRequestReferences,
                                 referencesState = referencesState,
+                        codeAction = codeAction,
                                 onReferencesClose = onReferencesClose,
                                 onReferencesOpenInPanel = onReferencesOpenInPanel,
                                 linePreviewFor = linePreviewFor,
@@ -487,6 +493,7 @@ internal fun IdeMainLayout(
                                 onApplyRename = onApplyRename,
                                 onRequestReferences = onRequestReferences,
                                 referencesState = referencesState,
+                        codeAction = codeAction,
                                 onReferencesClose = onReferencesClose,
                                 onReferencesOpenInPanel = onReferencesOpenInPanel,
                                 linePreviewFor = linePreviewFor,
@@ -527,6 +534,7 @@ internal fun IdeMainLayout(
                         onApplyRename = onApplyRename,
                         onRequestReferences = onRequestReferences,
                         referencesState = referencesState,
+                        codeAction = codeAction,
                         onReferencesClose = onReferencesClose,
                         onReferencesOpenInPanel = onReferencesOpenInPanel,
                         linePreviewFor = linePreviewFor,
@@ -589,18 +597,6 @@ internal fun IdeMainLayout(
                     },
                 )
                 }
-            }
-            if (codeActionPreviewVisible) {
-                CodeActionPreviewPanel(
-                    actions = codeActionPreviewActions,
-                    selected = codeActionPreviewSelected,
-                    onSelectedChange = onCodeActionSelectedChange,
-                    currentUri = codeActionPreviewUri,
-                    currentText = codeActionPreviewText,
-                    onApply = onCodeActionApply,
-                    onDismiss = onCodeActionDismiss,
-                    width = 420.dp,
-                )
             }
             }
         }
@@ -668,6 +664,20 @@ internal fun IdeMainLayout(
                 }
             }
         }
+        val review = codeAction.review
+        if (review != null) {
+            CodeActionReviewPanel(
+                action = review,
+                currentUri = codeAction.uri,
+                currentText = codeAction.text,
+                height = ui.referencesHeight,
+                onApply = { entry ->
+                    codeAction.onClosePanel()
+                    codeAction.onApply(entry)
+                },
+                onDismiss = codeAction.onClosePanel,
+            )
+        }
         if (referencesState != null && referencesState.surface == ReferencesSurface.Panel) {
             ReferencesPanel(
                 state = referencesState,
@@ -723,7 +733,11 @@ internal fun IdeMainLayout(
             }
         }
     }
-    if (ui.actionPalette) {
+    AnimatedVisibility(
+        visible = ui.actionPalette,
+        enter = fadeIn(tween(160)),
+        exit = fadeOut(tween(160)),
+    ) {
         page.app.ui.dialog.ActionPaletteDialog(
             onRun = onRunAction,
             onDismiss = { ui.actionPalette = false },

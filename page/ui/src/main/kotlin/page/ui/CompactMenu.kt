@@ -5,6 +5,9 @@ import androidx.compose.foundation.ContextMenuRepresentation
 import androidx.compose.foundation.ContextMenuState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.hoverable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,15 +15,23 @@ import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.size
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
@@ -48,7 +59,7 @@ fun CompactMenuContainer(
                 .background(Glass.colors.surfaceRaised)
                 .width(IntrinsicSize.Max)
                 .widthIn(min = minWidth)
-                .padding(vertical = 2.dp),
+                .padding(vertical = 4.dp),
         ) {
             content()
         }
@@ -61,32 +72,79 @@ fun CompactMenuItem(
     onClick: () -> Unit,
     enabled: Boolean = true,
     trailing: String? = null,
+    icon: ImageVector? = null,
+    danger: Boolean = false,
 ) {
-    val onSurface = MaterialTheme.colorScheme.onSurface
-    val muted = MaterialTheme.colorScheme.onSurfaceVariant
-    val fg = if (enabled) onSurface else muted.copy(alpha = 0.5f)
+    val colors = Glass.colors
+    val interaction = remember { MutableInteractionSource() }
+    val hovered by interaction.collectIsHoveredAsState()
+    val active = hovered && enabled
+    val label色 = when {
+        !enabled -> colors.faint
+        danger -> colors.danger
+        else -> colors.text
+    }
+    val iconTint = when {
+        !enabled -> colors.faint.copy(alpha = 0.6f)
+        danger && active -> colors.danger
+        active -> colors.primary
+        else -> colors.muted
+    }
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .padding(horizontal = 4.dp)
+            .clip(RoundedCornerShape(Glass.radius.xs))
+            .background(
+                when {
+                    !active -> Color.Transparent
+                    danger -> colors.danger.copy(alpha = 0.16f)
+                    else -> colors.primarySoft
+                },
+            )
+            .hoverable(interaction, enabled = enabled)
             .clickable(enabled = enabled) { onClick() }
-            .padding(start = 8.dp, end = 16.dp, top = 3.dp, bottom = 3.dp),
+            .padding(start = 8.dp, end = 12.dp, top = 4.dp, bottom = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
+        horizontalArrangement = Arrangement.spacedBy(9.dp),
     ) {
+        if (icon != null) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = iconTint,
+                modifier = Modifier.size(14.dp),
+            )
+        } else {
+            Spacer(Modifier.size(14.dp))
+        }
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
-            color = fg,
+            color = label色,
         )
         if (trailing != null) {
-            androidx.compose.foundation.layout.Spacer(Modifier.width(24.dp))
+            Spacer(Modifier.weight(1f))
+            Spacer(Modifier.width(20.dp))
             Text(
                 text = trailing,
                 style = MaterialTheme.typography.labelSmall,
-                color = muted.copy(alpha = 0.65f),
+                color = colors.faint,
             )
         }
     }
+}
+
+@Composable
+fun CompactMenuSeparator() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+            .padding(horizontal = 8.dp)
+            .height(1.dp)
+            .background(Glass.colors.separator),
+    )
 }
 
 @Composable

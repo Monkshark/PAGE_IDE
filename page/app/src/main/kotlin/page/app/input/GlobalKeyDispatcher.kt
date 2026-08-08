@@ -5,6 +5,8 @@ import page.lsp.CodeActionEntry
 internal class GlobalKeyDispatcher(
     private val isWindowFocused: () -> Boolean,
     private val codeActionOpen: () -> Boolean,
+    private val codeActionPanelOpen: () -> Boolean,
+    private val closeCodeActionPanel: () -> Unit,
     private val codeActionList: () -> List<CodeActionEntry>,
     private val codeActionSelected: () -> Int,
     private val setCodeActionOpen: (Boolean) -> Unit,
@@ -27,6 +29,13 @@ internal class GlobalKeyDispatcher(
         val ctrl = (e.modifiersEx and java.awt.event.InputEvent.CTRL_DOWN_MASK) != 0
         val alt = (e.modifiersEx and java.awt.event.InputEvent.ALT_DOWN_MASK) != 0
         val shift = (e.modifiersEx and java.awt.event.InputEvent.SHIFT_DOWN_MASK) != 0
+        if (codeActionPanelOpen() && !ctrl && !alt && !shift &&
+            e.keyCode == java.awt.event.KeyEvent.VK_ESCAPE
+        ) {
+            closeCodeActionPanel()
+            requestEditorRefocus()
+            return true
+        }
         if (codeActionOpen() && !ctrl && !alt && !shift) {
             val list = codeActionList()
             val sel = codeActionSelected()

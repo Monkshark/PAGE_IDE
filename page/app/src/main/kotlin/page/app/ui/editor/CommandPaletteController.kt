@@ -19,7 +19,7 @@ internal class CommandPaletteController(
     private val allDiagnosticsByUri: () -> Map<String, List<Diagnostic>>,
     private val jumpToProblem: (Path, Int, Int) -> Unit,
     private val applyRename: (RenameWorkspaceEdit) -> Unit,
-    private val onCodeActions: (List<CodeActionEntry>, String, String, Int, Boolean) -> Unit,
+    private val onCodeActions: (List<CodeActionEntry>, String, String, Int, Boolean, Boolean) -> Unit,
 ) {
     fun openQuickOpen() {
         val root = rootDir()
@@ -123,10 +123,30 @@ internal class CommandPaletteController(
         val active = focused().book.active
         val activePath = active?.path
         val caCtrl = activePath?.let { controllerFor(it) }
-        if (activePath != null
-            && caCtrl != null
-            && caCtrl.status.value == LspController.Status.READY
-        ) {
+        val localActions = if (activePath == null) emptyList() else {
+            val text = focused().editorValue.text
+            val caret = focused().editorValue.selection.start.coerceIn(0, text.length)
+            val (caretLine, _) = offsetToLineChar(text, caret)
+            val uri = activePath.toUri().toString()
+            page.app.lsp.UnusedQuickFixes.actions(
+                uri = uri,
+                text = text,
+                diagnostics = page.app.lsp.LocalDiagnostics.forUri(uri),
+                caretLine = caretLine,
+            )
+        }
+        val serverReady = caCtrl != null && caCtrl.status.value == LspController.Status.READY
+        if (activePath != null && localActions.isNotEmpty()) {
+            onCodeActions(
+                localActions,
+                activePath.toUri().toString(),
+                focused().editorValue.text,
+                0,
+                true,
+                serverReady,
+            )
+        }
+        if (activePath != null && serverReady && caCtrl != null) {
             val text = focused().editorValue.text
             val caret = focused().editorValue.selection.start.coerceIn(0, text.length)
             val (line, character) = offsetToLineChar(text, caret)
@@ -139,7 +159,7 @@ internal class CommandPaletteController(
             }
             caCtrl.codeActions(activePath, line, 0, line, lineLen).whenComplete { actions, err ->
                 if (err == null) {
-                    val raw = actions.orEmpty()
+                    val raw = localActions + actions.orEmpty()
                     val list = raw.map { entry ->
                         val normalized = page.lsp.CodeActionNormalize.normalize(entry.edit, snapshotUri, snapshotText)
                         if (normalized !== entry.edit) {
@@ -149,7 +169,7 @@ internal class CommandPaletteController(
                     }.sortedByDescending { it.isExecutable }
                     val selected = list.indexOfFirst { it.isPreferred }.coerceAtLeast(0)
                     val open = list.isNotEmpty()
-                    onCodeActions(list, snapshotUri, snapshotText, selected, open)
+                    onCodeActions(list, snapshotUri, snapshotText, selected, open, false)
                     if (list.isNotEmpty()) {
                         println("[lsp] codeAction debug ▼ $snapshotUri @($line,$character) — ${list.size} action(s)")
                         for ((idx, entry) in list.withIndex()) {

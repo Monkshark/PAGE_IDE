@@ -30,6 +30,11 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.ContentCopy
+import androidx.compose.material.icons.outlined.ContentCut
+import androidx.compose.material.icons.outlined.ContentPaste
+import androidx.compose.material.icons.outlined.SelectAll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -109,6 +114,7 @@ import page.editor.PageScroll
 data class EditorContextAction(
     val label: String,
     val shortcut: String? = null,
+    val icon: androidx.compose.ui.graphics.vector.ImageVector? = null,
     val onClick: () -> Unit,
 )
 
@@ -711,6 +717,7 @@ fun CodeEditor(
                     val hasSelection = !sel.collapsed
                     CompactMenuItem(
                         label = "Cut",
+                        icon = Icons.Outlined.ContentCut,
                         trailing = clipboardShortcuts.cut,
                         enabled = hasSelection,
                         onClick = {
@@ -724,6 +731,7 @@ fun CodeEditor(
                     )
                     CompactMenuItem(
                         label = "Copy",
+                        icon = Icons.Outlined.ContentCopy,
                         trailing = clipboardShortcuts.copy,
                         enabled = hasSelection,
                         onClick = {
@@ -735,6 +743,7 @@ fun CodeEditor(
                     )
                     CompactMenuItem(
                         label = "Paste",
+                        icon = Icons.Outlined.ContentPaste,
                         trailing = clipboardShortcuts.paste,
                         onClick = {
                             val pasted = clipboard.getText()?.text.orEmpty()
@@ -748,15 +757,18 @@ fun CodeEditor(
                     )
                     CompactMenuItem(
                         label = "Select All",
+                        icon = Icons.Outlined.SelectAll,
                         trailing = clipboardShortcuts.selectAll,
                         onClick = {
                             onValueChange(value.copy(selection = TextRange(0, value.text.length)))
                             menuExpanded = false
                         },
                     )
+                    if (contextMenuActions.isNotEmpty()) CompactMenuSeparator()
                     for (action in contextMenuActions) {
                         CompactMenuItem(
                             label = action.label,
+                            icon = action.icon,
                             trailing = action.shortcut,
                             onClick = {
                                 action.onClick()

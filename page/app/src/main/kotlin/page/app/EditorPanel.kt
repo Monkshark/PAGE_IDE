@@ -29,10 +29,16 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowForward
+import androidx.compose.material.icons.outlined.AccountTree
+import androidx.compose.material.icons.outlined.Hub
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -161,6 +167,7 @@ fun EditorPanel(
     onApplyRename: ((RenameWorkspaceEdit) -> Unit)? = null,
     onRequestReferences: ((line: Int, character: Int, symbolName: String, surface: ReferencesSurface) -> Unit)? = null,
     references: ReferencesQueryState? = null,
+    codeAction: page.app.ui.CodeActionPreviewBinding = page.app.ui.CodeActionPreviewBinding(),
     onReferenceJump: (Path, Int, Int) -> Unit = { _, _, _ -> },
     onReferencesOpenInPanel: () -> Unit = {},
     onReferencesDismiss: () -> Unit = {},
@@ -317,6 +324,18 @@ fun EditorPanel(
     ) {
         if (!pageSettings.editor.dimUnusedSymbols) emptyList()
         else page.shared.syntax.UnusedSymbols.find(value.text, tokens, bracketPairs, usedElsewhere)
+    }
+
+    val unusedUri = remember(activePath) { activePath?.toUri()?.toString() }
+    LaunchedEffect(unusedUri, unusedRanges) {
+        val uri = unusedUri ?: return@LaunchedEffect
+        page.app.lsp.LocalDiagnostics.set(
+            uri,
+            page.app.lsp.UnusedQuickFixes.diagnostics(value.text, unusedRanges),
+        )
+    }
+    DisposableEffect(unusedUri) {
+        onDispose { unusedUri?.let { page.app.lsp.LocalDiagnostics.remove(it) } }
     }
 
     val unnecessaryRanges = remember(value.text, diagnostics, showInlineDiagnostics, unusedRanges) {
@@ -1169,6 +1188,23 @@ fun EditorPanel(
                     }
                 },
                 caretPopup = when {
+                    codeAction.visible && codeAction.actions.isNotEmpty() -> {
+                        {
+                            CodeActionPopup(
+                                actions = codeAction.actions,
+                                selected = codeAction.selected,
+                                pending = codeAction.pending,
+                                currentUri = codeAction.uri,
+                                currentText = codeAction.text,
+                                onSelectedChange = codeAction.onSelectedChange,
+                                onApply = codeAction.onApply,
+                                onOpenInPanel = {
+                                    codeAction.actions.getOrNull(codeAction.selected)
+                                        ?.let { entry -> codeAction.onOpenInPanel(entry) }
+                                },
+                            )
+                        }
+                    }
                     references != null -> {
                         {
                             ReferencesPopup(
@@ -1185,8 +1221,12 @@ fun EditorPanel(
                     }
                     else -> null
                 },
-                caretPopupFocusable = references != null,
-                onCaretPopupDismiss = if (references != null) onReferencesDismiss else null,
+                caretPopupFocusable = references != null || codeAction.visible,
+                onCaretPopupDismiss = when {
+                    codeAction.visible -> codeAction.onDismiss
+                    references != null -> onReferencesDismiss
+                    else -> null
+                },
                 onResolveCtrlHoverLink = { origOff ->
                     val text = latestValue.text
                     val word = wordRangeAt(text, origOff)
@@ -1441,6 +1481,7 @@ fun EditorPanel(
                         add(
                             page.ui.EditorContextAction(
                                 label = "Go to Declaration",
+                                icon = Icons.AutoMirrored.Outlined.ArrowForward,
                                 shortcut = page.ui.ShortcutLabels.of(
                                     page.ui.Binding(Key.B, primary = true),
                                 ),
@@ -1455,6 +1496,7 @@ fun EditorPanel(
                         add(
                             page.ui.EditorContextAction(
                                 label = "Find Usages",
+                                icon = Icons.Outlined.Search,
                                 shortcut = page.ui.ShortcutLabels.of(
                                     page.ui.Binding(Key.F12, shift = true),
                                 ),
@@ -1475,6 +1517,7 @@ fun EditorPanel(
                         add(
                             page.ui.EditorContextAction(
                                 label = "Show in Atlas",
+                                icon = Icons.Outlined.Hub,
                                 shortcut = page.app.input.ActionCatalog.labelOf("page.atlasFocus"),
                             ) { showInAtlas() },
                         )
@@ -1482,7 +1525,10 @@ fun EditorPanel(
                     val callGraph = onShowCallGraph
                     if (callGraph != null) {
                         add(
-                            page.ui.EditorContextAction(label = "Show Call Graph in Atlas") {
+                            page.ui.EditorContextAction(
+                                label = "Show Call Graph in Atlas",
+                                icon = Icons.Outlined.AccountTree,
+                            ) {
                                 val text = value.text
                                 val offset = value.selection.end.coerceIn(0, text.length)
                                 val word = wordRangeAt(text, offset)

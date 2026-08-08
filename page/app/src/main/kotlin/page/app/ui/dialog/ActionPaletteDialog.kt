@@ -119,7 +119,7 @@ fun ActionPaletteDialog(
                     onClick = {},
                 ),
         ) {
-            Column {
+            Column(modifier = Modifier.background(colors.surface)) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically,
