@@ -97,14 +97,16 @@ internal fun TitleMenuDropdown(ui: LayoutUiState, onRun: (ActionSpec) -> Unit) {
         ActionMenus.all.firstOrNull { it.title == open }?.actions.orEmpty()
     }
     if (actions.isEmpty()) return
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-            ) { ui.titleMenu = null },
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier
+                .padding(top = TITLE_BAR_HEIGHT)
+                .fillMaxSize()
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                ) { ui.titleMenu = null },
+        )
         Box(
             modifier = Modifier.offset(
                 x = with(density) { ui.titleMenuX.toDp() },
@@ -130,7 +132,7 @@ internal fun TitleMenuDropdown(ui: LayoutUiState, onRun: (ActionSpec) -> Unit) {
 
 private val TITLE_BAR_HEIGHT = 36.dp
 
-private const val HOVER_OPEN_DELAY_MS = 800L
+private const val HOVER_OPEN_DELAY_MS = 650L
 
 @Composable
 private fun MenuButton(
