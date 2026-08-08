@@ -56,7 +56,11 @@ internal fun TitleBarMenus(ui: LayoutUiState) {
                 ui.titleMenuX = x
                 ui.titleMenu = if (ui.titleMenu == null) TITLE_MENU_COMPACT else null
             },
-            onHover = {},
+            onHover = { x ->
+                ui.titleMenuX = x
+                ui.titleMenu = TITLE_MENU_COMPACT
+            },
+            hoverOpensAfter = { if (ui.titleMenu == null) HOVER_OPEN_DELAY_MS else 0L },
         )
         return
     }
@@ -72,11 +76,12 @@ internal fun TitleBarMenus(ui: LayoutUiState) {
                     ui.titleMenu = if (ui.titleMenu == menu.title) null else menu.title
                 },
                 onHover = { x ->
-                    if (ui.titleMenu != null && ui.titleMenu != menu.title) {
+                    if (ui.titleMenu != menu.title) {
                         ui.titleMenuX = x
                         ui.titleMenu = menu.title
                     }
                 },
+                hoverOpensAfter = { if (ui.titleMenu == null) HOVER_OPEN_DELAY_MS else 0L },
             )
         }
     }
@@ -125,6 +130,8 @@ internal fun TitleMenuDropdown(ui: LayoutUiState, onRun: (ActionSpec) -> Unit) {
 
 private val TITLE_BAR_HEIGHT = 36.dp
 
+private const val HOVER_OPEN_DELAY_MS = 800L
+
 @Composable
 private fun MenuButton(
     label: String,
@@ -132,12 +139,18 @@ private fun MenuButton(
     onPositioned: (Int) -> Unit,
     onClick: (Int) -> Unit,
     onHover: (Int) -> Unit,
+    hoverOpensAfter: () -> Long = { 0L },
 ) {
     val interaction = remember { MutableInteractionSource() }
     val hovered by interaction.collectIsHoveredAsState()
     val colors = Glass.colors
     var x by remember { androidx.compose.runtime.mutableStateOf(0) }
-    LaunchedEffect(hovered) { if (hovered) onHover(x) }
+    LaunchedEffect(hovered) {
+        if (!hovered) return@LaunchedEffect
+        val wait = hoverOpensAfter()
+        if (wait > 0L) kotlinx.coroutines.delay(wait)
+        onHover(x)
+    }
     Text(
         text = label,
         style = MaterialTheme.typography.labelLarge,
