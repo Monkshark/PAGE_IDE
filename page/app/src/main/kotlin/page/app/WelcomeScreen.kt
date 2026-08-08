@@ -11,8 +11,11 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.ContextMenuArea
+import androidx.compose.foundation.ContextMenuItem
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.LocalContextMenuRepresentation
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -44,6 +47,7 @@ import androidx.compose.material.icons.outlined.FolderOpen
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -71,6 +75,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import page.core.PageIdentity
+import page.ui.CompactContextMenuRepresentation
 import page.ui.EditorFontFamily
 import page.ui.Glass
 import java.awt.Cursor
@@ -86,6 +91,8 @@ fun WelcomeScreen(
     onDropPaths: (List<Path>) -> Unit = {},
     recents: List<Path> = emptyList(),
     onOpenRecent: (Path) -> Unit = {},
+    onForgetRecent: (Path) -> Unit = {},
+    onClearRecents: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     var dragHovered by remember { mutableStateOf(false) }
@@ -161,21 +168,34 @@ fun WelcomeScreen(
             if (recents.isNotEmpty()) {
                 Spacer(Modifier.height(26.dp))
                 SectionLabel("Recent")
-                recents.forEach { project ->
-                    ActionRow(
-                        icon = Icons.Outlined.Folder,
-                        title = project.fileName?.toString() ?: project.toString(),
-                        accentHover = true,
-                        onClick = { onOpenRecent(project) },
-                    ) {
-                        Text(
-                            text = displayPath(project),
-                            fontFamily = EditorFontFamily,
-                            fontSize = 11.5.sp,
-                            color = Glass.colors.faint,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
+                CompositionLocalProvider(
+                    LocalContextMenuRepresentation provides CompactContextMenuRepresentation,
+                ) {
+                    recents.forEach { project ->
+                        ContextMenuArea(
+                            items = {
+                                listOf(
+                                    ContextMenuItem("Remove from recent") { onForgetRecent(project) },
+                                    ContextMenuItem("Clear recent projects") { onClearRecents() },
+                                )
+                            },
+                        ) {
+                            ActionRow(
+                                icon = Icons.Outlined.Folder,
+                                title = project.fileName?.toString() ?: project.toString(),
+                                accentHover = true,
+                                onClick = { onOpenRecent(project) },
+                            ) {
+                                Text(
+                                    text = displayPath(project),
+                                    fontFamily = EditorFontFamily,
+                                    fontSize = 11.5.sp,
+                                    color = Glass.colors.faint,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
+                        }
                     }
                 }
             }
