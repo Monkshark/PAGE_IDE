@@ -658,6 +658,7 @@ private fun androidx.compose.ui.window.ApplicationScope.AppContent() {
         val triggerFormatRef = rememberUpdatedState(triggerFormat)
         val triggerCodeActionRef = rememberUpdatedState(triggerCodeAction)
         val codeActionOpenRef = rememberUpdatedState(codeActionOpen)
+        val codeActionReviewRef = rememberUpdatedState(appState.codeActionReview)
         val codeActionListRef = rememberUpdatedState(codeActionList)
         val codeActionSelectedRef = rememberUpdatedState(codeActionSelected)
         val toggleTerminalRef = rememberUpdatedState(toggleTerminal)
@@ -695,6 +696,8 @@ private fun androidx.compose.ui.window.ApplicationScope.AppContent() {
             val dispatcher = GlobalKeyDispatcher(
                 isWindowFocused = { frame.isFocused },
                 codeActionOpen = { codeActionOpenRef.value },
+                codeActionPanelOpen = { codeActionReviewRef.value != null },
+                closeCodeActionPanel = { onIdeEvent(IdeEvent.CodeAction.ClosePanel) },
                 codeActionList = { codeActionListRef.value },
                 codeActionSelected = { codeActionSelectedRef.value },
                 setCodeActionOpen = { codeActionOpen = it },
