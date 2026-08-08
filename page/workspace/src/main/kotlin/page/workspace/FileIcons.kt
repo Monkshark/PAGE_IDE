@@ -8,16 +8,39 @@ object FileIcons {
     fun resourceFor(path: Path, isDirectory: Boolean): String? {
         val name = path.fileName?.toString()?.lowercase() ?: return null
         if (isDirectory) return "$DIR/${folderIconName(name)}.svg"
-        when {
-            name.endsWith(".gradle") || name.endsWith(".gradle.kts") -> return "$DIR/gradle.svg"
-            name == ".gitignore" || name == ".gitattributes" || name == ".gitmodules" -> return "$DIR/git.svg"
-            name == ".editorconfig" -> return "$DIR/editorconfig.svg"
-        }
+        fileIconByName(name)?.let { return "$DIR/$it.svg" }
         val ext = name.substringAfterLast('.', "")
         return EXT[ext]?.let { "$DIR/$it.svg" }
     }
 
     fun documentResource(): String = "$DIR/document.svg"
+
+    private fun fileIconByName(name: String): String? = when {
+        name.endsWith(".gradle") || name.endsWith(".gradle.kts") || name == "gradle.properties" -> "gradle"
+        name == ".gitignore" || name == ".gitattributes" || name == ".gitmodules" -> "git"
+        name == ".editorconfig" -> "editorconfig"
+        name == "dockerfile" || name.startsWith("dockerfile.") || name.endsWith(".dockerfile") ||
+            name == ".dockerignore" || name.startsWith("docker-compose.") || name.startsWith("compose.y") -> "docker"
+        name == "package.json" || name == "package-lock.json" || name == ".npmrc" || name == ".nvmrc" -> "nodejs"
+        name == "pubspec.yaml" || name == "pubspec.lock" -> "flutter"
+        name == "go.mod" || name == "go.sum" || name == "go.work" -> "go"
+        name == "cargo.toml" || name == "cargo.lock" -> "rust"
+        name == "pom.xml" -> "maven"
+        name == "cmakelists.txt" -> "cmake"
+        name == "makefile" || name == "gnumakefile" || name.startsWith("makefile.") -> "makefile"
+        name == "license" || name == "licence" || name == "copying" ||
+            name.startsWith("license.") || name.startsWith("licence.") -> "certificate"
+        name == "gemfile" || name == "gemfile.lock" || name == ".ruby-version" -> "ruby"
+        name.startsWith("tsconfig.") -> "typescript"
+        name.startsWith("vite.config.") -> "vite"
+        name.startsWith("webpack.config.") -> "webpack"
+        name.startsWith("tailwind.config.") -> "tailwindcss"
+        name.startsWith(".eslintrc") || name.startsWith("eslint.config.") -> "eslint"
+        name.startsWith(".prettierrc") || name.startsWith("prettier.config.") -> "prettier"
+        name == ".env" || name.startsWith(".env.") -> "tune"
+        name == "requirements.txt" || name == "pyproject.toml" || name == "pipfile" -> "python"
+        else -> null
+    }
 
     private fun folderIconName(name: String): String = when {
         name == ".git" -> "folder-git"
@@ -44,6 +67,34 @@ object FileIcons {
         name == "server" -> "folder-server"
         name == "client" -> "folder-client"
         name == "css" || name == "styles" || name == "style" -> "folder-css"
+        name == "api" -> "folder-api"
+        name == "core" || name == "common" -> "folder-core"
+        name == "utils" || name == "util" || name == "helpers" || name == "helper" -> "folder-utils"
+        name == "types" || name == "interfaces" || name == "model" || name == "models" ||
+            name == "entity" || name == "entities" -> "folder-interface"
+        name == "venv" || name == ".venv" || name == "__pycache__" || name == ".pytest_cache" -> "folder-python"
+        name == "android" -> "folder-android"
+        name == "ios" -> "folder-ios"
+        name == "packages" || name == "apps" || name == "modules" -> "folder-packages"
+        name == "tools" || name == "tooling" -> "folder-tools"
+        name == "examples" || name == "example" || name == "samples" || name == "sample" ||
+            name == "demo" || name == "demos" -> "folder-examples"
+        name == "fonts" || name == "font" -> "folder-font"
+        name == "logs" || name == "log" -> "folder-log"
+        name == "coverage" -> "folder-coverage"
+        name == "mock" || name == "mocks" || name == "__mocks__" || name == "fixtures" -> "folder-mock"
+        name == "vendor" || name == "vendors" || name == "third_party" || name == "shared" -> "folder-shared"
+        name == "include" || name == "includes" || name == "headers" -> "folder-include"
+        name == "keys" || name == "secrets" || name == ".ssh" || name == "cert" || name == "certs" -> "folder-keys"
+        name == "ci" || name == ".ci" || name == ".husky" || name == ".circleci" -> "folder-ci"
+        name == "hooks" || name == "hook" -> "folder-hook"
+        name == "store" || name == "stores" || name == "redux" || name == "state" -> "folder-store"
+        name == "routes" || name == "router" || name == "routing" -> "folder-routes"
+        name == "middleware" || name == "middlewares" -> "folder-middleware"
+        name == "controllers" || name == "controller" || name == "handlers" -> "folder-controller"
+        name == "views" || name == "view" || name == "screens" || name == "pages" || name == "layouts" -> "folder-views"
+        name == "theme" || name == "themes" -> "folder-theme"
+        name == "video" || name == "videos" || name == "movies" -> "folder-video"
         name == "src" || name == "main" || name == "kotlin" || name == "java" -> "folder-src"
         else -> "folder-base"
     }
@@ -53,17 +104,45 @@ object FileIcons {
         "java" to "java",
         "js" to "javascript", "mjs" to "javascript", "cjs" to "javascript", "jsx" to "javascript",
         "ts" to "typescript", "tsx" to "typescript",
-        "py" to "python",
+        "py" to "python", "pyi" to "python", "pyw" to "python",
         "go" to "go",
         "rs" to "rust",
-        "json" to "json",
+        "c" to "c", "h" to "c",
+        "cc" to "cpp", "cpp" to "cpp", "cxx" to "cpp", "hh" to "cpp", "hpp" to "cpp", "hxx" to "cpp",
+        "cs" to "csharp", "csx" to "csharp", "csproj" to "csharp", "sln" to "csharp",
+        "dart" to "dart",
+        "swift" to "swift",
+        "rb" to "ruby", "rake" to "ruby", "gemspec" to "ruby", "erb" to "ruby",
+        "php" to "php", "phtml" to "php",
+        "vue" to "vue",
+        "svelte" to "svelte",
+        "lua" to "lua",
+        "scala" to "scala", "sbt" to "scala", "sc" to "scala",
+        "sql" to "database", "db" to "database", "sqlite" to "database", "sqlite3" to "database",
+        "graphql" to "graphql", "gql" to "graphql",
+        "proto" to "proto",
+        "tf" to "terraform", "tfvars" to "terraform", "tfstate" to "terraform", "hcl" to "terraform",
+        "ipynb" to "jupyter",
+        "json" to "json", "jsonc" to "json", "json5" to "json",
         "yaml" to "yaml", "yml" to "yaml",
         "md" to "markdown", "markdown" to "markdown",
         "html" to "html", "htm" to "html",
         "css" to "css",
+        "scss" to "sass", "sass" to "sass",
+        "less" to "less",
         "xml" to "xml",
         "svg" to "svg",
-        "png" to "image", "jpg" to "image", "jpeg" to "image", "gif" to "image", "webp" to "image", "bmp" to "image", "ico" to "image",
+        "png" to "image", "jpg" to "image", "jpeg" to "image", "gif" to "image", "webp" to "image",
+        "bmp" to "image", "ico" to "image", "avif" to "image", "tiff" to "image",
+        "pdf" to "pdf",
+        "zip" to "zip", "tar" to "zip", "gz" to "zip", "tgz" to "zip", "bz2" to "zip", "xz" to "zip",
+        "7z" to "zip", "rar" to "zip", "jar" to "zip", "war" to "zip",
+        "ttf" to "font", "otf" to "font", "woff" to "font", "woff2" to "font", "eot" to "font",
+        "mp4" to "video", "webm" to "video", "mov" to "video", "mkv" to "video", "avi" to "video", "m4v" to "video",
+        "mp3" to "audio", "wav" to "audio", "ogg" to "audio", "flac" to "audio", "m4a" to "audio", "aac" to "audio",
+        "log" to "log",
+        "txt" to "document", "text" to "document", "rtf" to "document",
+        "csv" to "table", "tsv" to "table", "xls" to "table", "xlsx" to "table",
         "bat" to "console", "cmd" to "console", "sh" to "console", "bash" to "console", "zsh" to "console",
         "ps1" to "powershell",
         "toml" to "toml",
