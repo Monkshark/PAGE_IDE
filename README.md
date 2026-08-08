@@ -13,6 +13,10 @@
 
 [Documentation](https://monkshark.github.io/page-ide/) · [한국어](README_KR.md)
 
+<!-- demo: record it, then drop the comment and point this at assets/demo.gif
+<img src="assets/demo.gif" alt="PAGE in use" width="880" />
+-->
+
 </div>
 
 PAGE edits, navigates, and runs code across 24 languages, and installs the language servers and
