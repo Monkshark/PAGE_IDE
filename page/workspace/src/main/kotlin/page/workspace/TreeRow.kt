@@ -146,9 +146,13 @@ fun TreeRow(
         else -> Color.Transparent
     }
     val guideColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.12f)
+    val isGenerated = remember(node.path, node.depth) {
+        page.editor.FileTree.isGenerated(node.path, node.depth)
+    }
     val textColor = MaterialTheme.colorScheme.onSurface.copy(alpha = when {
         isBeingDragged -> 0.45f
         isCut -> 0.45f
+        isGenerated -> 0.42f
         else -> 1f
     })
 
@@ -316,7 +320,9 @@ fun TreeRow(
                 }
             }
             Spacer(Modifier.width(2.dp))
-            FileTypeIcon(path = node.path, isDirectory = node.isDirectory)
+            Box(modifier = Modifier.alpha(if (isGenerated) 0.42f else 1f)) {
+                FileTypeIcon(path = node.path, isDirectory = node.isDirectory)
+            }
             Spacer(Modifier.width(6.dp))
             Text(
                 text = name,

@@ -24,6 +24,17 @@ object FileTree {
 
     private const val MAX_RECURSIVE_DIRS = 20_000
 
+    fun isGenerated(path: Path, depth: Int): Boolean {
+        var current: Path? = path
+        var steps = depth
+        while (current != null && steps >= 0) {
+            if (isHeavyDir(current)) return true
+            current = current.parent
+            steps--
+        }
+        return false
+    }
+
     fun isHeavyDir(path: Path): Boolean {
         val name = path.fileName?.toString()?.lowercase() ?: return false
         return name in HEAVY_DIR_NAMES || name.endsWith("-cache") || name.endsWith(".egg-info")

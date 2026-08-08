@@ -57,3 +57,5 @@ Beyond the tree and search, small typing helpers gather here: continuing KDoc co
 ---
 
 - [Back to index](https://monkshark.github.io/page-ide/#README_en.md)
+
+Build output is drawn dimmed in the tree. `FileTree.isGenerated(path, depth)` walks from the node up to the workspace root — no further — looking for names like `build`, `out`, `target`, `node_modules`, `.gradle`, so a project that happens to live under `tmp/` does not dim its own sources. Both the name and the icon drop to 42% opacity.

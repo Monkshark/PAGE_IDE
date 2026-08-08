@@ -57,3 +57,5 @@ flowchart TB
 ---
 
 - [목차로 돌아가기](https://monkshark.github.io/page-ide/#README_kr.md)
+
+빌드 산출물은 트리에서 흐리게 그린다. `FileTree.isGenerated(path, depth)` 가 `build`·`out`·`target`·`node_modules`·`.gradle` 같은 이름을 자기 자신부터 **워크스페이스 루트까지만** 거슬러 확인하므로, 프로젝트가 `tmp/` 아래 있어도 소스가 같이 흐려지지 않는다. 이름과 아이콘 모두 42% 불투명도로 떨어진다
