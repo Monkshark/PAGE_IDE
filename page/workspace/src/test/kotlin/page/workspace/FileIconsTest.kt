@@ -40,6 +40,8 @@ class FileIconsTest {
         "a.less" to "less",
         "yarn.lock" to "lock",
         "a.log" to "log",
+        "notes.txt" to "document",
+        "data.csv" to "table",
         "a.lua" to "lua",
         "Makefile" to "makefile",
         "a.md" to "markdown",

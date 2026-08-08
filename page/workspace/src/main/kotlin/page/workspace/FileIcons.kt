@@ -141,6 +141,8 @@ object FileIcons {
         "mp4" to "video", "webm" to "video", "mov" to "video", "mkv" to "video", "avi" to "video", "m4v" to "video",
         "mp3" to "audio", "wav" to "audio", "ogg" to "audio", "flac" to "audio", "m4a" to "audio", "aac" to "audio",
         "log" to "log",
+        "txt" to "document", "text" to "document", "rtf" to "document",
+        "csv" to "table", "tsv" to "table", "xls" to "table", "xlsx" to "table",
         "bat" to "console", "cmd" to "console", "sh" to "console", "bash" to "console", "zsh" to "console",
         "ps1" to "powershell",
         "toml" to "toml",
