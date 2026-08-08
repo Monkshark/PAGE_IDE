@@ -5,13 +5,13 @@
 # PAGE
 
 [![CI](https://github.com/monkshark/page-ide/actions/workflows/ci.yml/badge.svg)](https://github.com/monkshark/page-ide/actions/workflows/ci.yml)
-[![Docs](https://img.shields.io/badge/docs-monkshark.github.io-4C5AB8)](https://monkshark.github.io/page-ide/)
+[![설계 문서](https://img.shields.io/badge/design%20docs-monkshark.github.io-4C5AB8)](https://monkshark.github.io/page-ide/)
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.1.20-7F52FF?logo=kotlin&logoColor=white)
 ![Status](https://img.shields.io/badge/status-pre--alpha-orange)
 
 **Kotlin 과 Compose Multiplatform 으로 만든 다언어 데스크톱 IDE.**
 
-[문서](https://monkshark.github.io/page-ide/) · [English](README.md)
+[설계 문서](https://monkshark.github.io/page-ide/) · [English](README.md)
 
 <!-- 데모: 녹화 후 아래 주석을 풀고 assets/demo.gif 로 교체
 <img src="assets/demo.gif" alt="PAGE 사용 화면" width="880" />
@@ -50,11 +50,15 @@ cd page-ide
 
 `./gradlew build` 는 전체 모듈을 컴파일하고 테스트를 돌린다.
 
-## 문서
+## 설계 문서
+
+아직 사용 설명서는 없다 — 쓸 수 있게 배포된 것이 없기 때문이다. 지금 있는 문서는 PAGE 를
+고치는 사람을 위한 것이다.
 
 - [개요](https://monkshark.github.io/page-ide/#guides/overview.md) — PAGE 가 무엇을 위한 것이고, 무엇을 하지 않을 것인가
 - [아키텍처](https://monkshark.github.io/page-ide/#guides/architecture.md) — 16개 모듈, 단방향 의존, 스택 결정
 - [시작하기](https://monkshark.github.io/page-ide/#guides/getting_started.md) — PAGE 자체를 실행하고 디버깅하기
+- [내부 구조](https://monkshark.github.io/page-ide/#README_kr.md) — 모듈별 설계 노트
 
 ## 기여
 

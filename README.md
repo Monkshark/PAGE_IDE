@@ -5,13 +5,13 @@
 # PAGE
 
 [![CI](https://github.com/monkshark/page-ide/actions/workflows/ci.yml/badge.svg)](https://github.com/monkshark/page-ide/actions/workflows/ci.yml)
-[![Docs](https://img.shields.io/badge/docs-monkshark.github.io-4C5AB8)](https://monkshark.github.io/page-ide/)
+[![Design docs](https://img.shields.io/badge/design%20docs-monkshark.github.io-4C5AB8)](https://monkshark.github.io/page-ide/)
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.1.20-7F52FF?logo=kotlin&logoColor=white)
 ![Status](https://img.shields.io/badge/status-pre--alpha-orange)
 
 **A multi-language desktop IDE, written in Kotlin with Compose Multiplatform.**
 
-[Documentation](https://monkshark.github.io/page-ide/) · [한국어](README_KR.md)
+[Design docs](https://monkshark.github.io/page-ide/) · [한국어](README_KR.md)
 
 <!-- demo: record it, then drop the comment and point this at assets/demo.gif
 <img src="assets/demo.gif" alt="PAGE in use" width="880" />
@@ -50,11 +50,15 @@ cd page-ide
 
 `./gradlew build` compiles every module and runs the tests.
 
-## Documentation
+## Design docs
 
-- [Overview](https://monkshark.github.io/page-ide/#guides/overview.md) — what PAGE is for, and what it will not do
-- [Architecture](https://monkshark.github.io/page-ide/#guides/architecture.md) — 16 modules, one-way dependencies, stack decisions
-- [Getting started](https://monkshark.github.io/page-ide/#guides/getting_started.md) — running and debugging PAGE itself
+There is no user manual yet — nothing is released to use. What exists is written for whoever
+works on PAGE.
+
+- [Overview](https://monkshark.github.io/page-ide/#guides/overview_en.md) — what PAGE is for, and what it will not do
+- [Architecture](https://monkshark.github.io/page-ide/#guides/architecture_en.md) — 16 modules, one-way dependencies, stack decisions
+- [Getting started](https://monkshark.github.io/page-ide/#guides/getting_started_en.md) — running and debugging PAGE itself
+- [Internals](https://monkshark.github.io/page-ide/#README_en.md) — per-module design notes
 
 ## Contributing
 
