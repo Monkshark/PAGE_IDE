@@ -12,7 +12,6 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ContextMenuArea
-import androidx.compose.foundation.ContextMenuItem
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.LocalContextMenuRepresentation
@@ -41,7 +40,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import page.app.ui.titleBarDrag
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowDownward
+import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.CreateNewFolder
+import androidx.compose.material.icons.outlined.DeleteSweep
 import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.FolderOpen
 import androidx.compose.material3.Icon
@@ -77,6 +78,7 @@ import androidx.compose.ui.unit.sp
 import page.core.PageIdentity
 import page.ui.CompactContextMenuRepresentation
 import page.ui.EditorFontFamily
+import page.ui.IconContextMenuItem
 import page.ui.Glass
 import java.awt.Cursor
 import java.awt.datatransfer.DataFlavor
@@ -175,8 +177,15 @@ fun WelcomeScreen(
                         ContextMenuArea(
                             items = {
                                 listOf(
-                                    ContextMenuItem("Remove from recent") { onForgetRecent(project) },
-                                    ContextMenuItem("Clear recent projects") { onClearRecents() },
+                                    IconContextMenuItem(
+                                        label = "Remove from recent",
+                                        icon = Icons.Outlined.Close,
+                                    ) { onForgetRecent(project) },
+                                    IconContextMenuItem(
+                                        label = "Clear recent projects",
+                                        icon = Icons.Outlined.DeleteSweep,
+                                        danger = true,
+                                    ) { onClearRecents() },
                                 )
                             },
                         ) {
