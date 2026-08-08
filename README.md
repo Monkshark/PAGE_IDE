@@ -8,6 +8,7 @@
 [![Design docs](https://img.shields.io/badge/design%20docs-monkshark.github.io-4C5AB8)](https://monkshark.github.io/page-ide/)
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.1.20-7F52FF?logo=kotlin&logoColor=white)
 ![Status](https://img.shields.io/badge/status-pre--alpha-orange)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 **A multi-language desktop IDE, written in Kotlin with Compose Multiplatform.**
 
@@ -68,8 +69,8 @@ before adding a module.
 
 ## License
 
-Undecided while the project is pre-alpha.
+[MIT](LICENSE)
 
 ## Contact
 
-[GitHub Issues](https://github.com/monkshark/page-ide/issues) · justinchoo0814@gmail.com
+[GitHub Issues](https://github.com/monkshark/page-ide/issues) · justinchoo0814@gmail.com · IG@[void___main](https://www.instagram.com/void___main)

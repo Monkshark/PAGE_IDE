@@ -8,6 +8,7 @@
 [![설계 문서](https://img.shields.io/badge/design%20docs-monkshark.github.io-4C5AB8)](https://monkshark.github.io/page-ide/)
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.1.20-7F52FF?logo=kotlin&logoColor=white)
 ![Status](https://img.shields.io/badge/status-pre--alpha-orange)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 **Kotlin 과 Compose Multiplatform 으로 만든 다언어 데스크톱 IDE.**
 
@@ -61,13 +62,13 @@ cd page-ide
 
 ## 기여
 
-`main` 에는 직접 넣을 수 없습니다. 브런치를 파서 PR 을 열고 CI 가 초록이 되면 그때 머지합니다.
+`main` 에는 직접 넣을 수 없습니다. 브런치를 파서 PR 을 열고 CI 가 통과 되면 그때 머지합니다.
 실제로 돌아가는 코드에는 테스트를 함께 넣어 주세요. 모듈을 새로 만들 생각이라면
 [아키텍처 가이드](https://monkshark.github.io/page-ide/#guides/architecture.md)를 먼저 읽어 보시길 권합니다.
 
 ## 라이선스
 
-MIT
+[MIT](LICENSE)
 
 ## 연락
 
