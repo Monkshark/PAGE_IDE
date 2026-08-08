@@ -19,28 +19,28 @@
 
 </div>
 
-PAGE 는 24개 언어를 편집·탐색·실행하고, 필요한 언어 서버와 툴체인을 스스로 설치한다. 이름이
-곧 만들려는 것이다 — **P**air, **A**tlas, **G**lass, **E**cho: AI 동반자, 코드 그래프,
-디자인 시스템, 그리고 작업의 시간축.
+24개 언어를 편집하고 탐색하고 실행한다. 언어 서버든 툴체인이든 없으면 PAGE 가 알아서 받아
+설치한다. 이름은 만들려는 네 가지를 그대로 딴 것이다. **P**air 는 AI 동반자, **A**tlas 는
+코드 그래프, **G**lass 는 디자인 시스템, **E**cho 는 작업의 시간축.
 
-> pre-alpha. 매일 자기 자신을 만드는 데 쓰지만, 아직 유일한 에디터로 삼을 단계는 아니다.
+> pre-alpha. 매일 자기 자신을 만드는 데 쓰고 있지만 아직 남에게 권할 물건은 아니다.
 
 ## 기능
 
-- 24개 언어 언어 서버 라우팅 — 자동완성, 진단, 정의 이동, 이름 변경
-- 서버 없이도 사용처·죽은 코드·안 쓰는 import 를 찾는 프로젝트 전체 심볼 인덱스
-- 13개 언어 단일 파일 실행, 증분 빌드 캐시와 내장 터미널
-- 툴체인 IDE 내 설치 — JDK, Node, Python, Go, Rust, .NET, Dart, Swift, Clang, MSVC
-- inline diff 가 붙은 코드 액션, 여러 파일을 건드리는 편집을 위한 검토 패널
-- 빌드 메타데이터가 아니라 tree-sitter 로 그리는 import·호출·모듈 그래프
-- 분할 뷰, 폴딩, inlay hint, 테마 9종, 모든 단축키를 담은 액션 테이블 하나
+- 24개 언어에 언어 서버를 붙인다. 자동완성, 진단, 정의 이동, 이름 변경
+- 프로젝트 전체 심볼 인덱스가 있어서 서버가 없어도 사용처와 죽은 코드, 안 쓰는 import 를 찾는다
+- 13개 언어는 파일 하나만 있으면 바로 실행된다. 증분 빌드 캐시와 내장 터미널이 붙는다
+- JDK, Node, Python, Go, Rust, .NET, Dart, Swift, Clang, MSVC 를 IDE 안에서 설치한다
+- 코드 액션에 diff 가 함께 뜬다. 여러 파일을 건드리는 편집은 검토 패널에서 확인하고 적용한다
+- import·호출·모듈 그래프를 빌드 메타데이터가 아니라 tree-sitter 로 그린다
+- 분할 뷰, 폴딩, inlay hint, 테마 9종. 단축키는 전부 액션 테이블 하나에서 나온다
 
 <sub>Kotlin · Java · Python · TypeScript/JavaScript · Go · Rust · C/C++ · Swift · Dart/Flutter ·
 Ruby · PHP · C# · Vue · Svelte · Bash · JSON · YAML · HTML · CSS · SQL · Markdown · Dockerfile</sub>
 
 ## 빌드
 
-아직 릴리스는 없다. JDK 는 Gradle 이 받아오므로 Git 만 있으면 된다.
+릴리스는 아직 없다. JDK 는 Gradle 이 알아서 받으니 Git 만 있으면 된다.
 
 ```bash
 git clone https://github.com/monkshark/page-ide.git
@@ -52,23 +52,23 @@ cd page-ide
 
 ## 설계 문서
 
-아직 사용 설명서는 없다 — 쓸 수 있게 배포된 것이 없기 때문이다. 지금 있는 문서는 PAGE 를
-고치는 사람을 위한 것이다.
+쓸 사람이 아직 없으니 사용 설명서도 없다. 지금 쓰인 문서는 PAGE 를 고치는 쪽을 향해 있다.
 
-- [개요](https://monkshark.github.io/page-ide/#guides/overview.md) — PAGE 가 무엇을 위한 것이고, 무엇을 하지 않을 것인가
-- [아키텍처](https://monkshark.github.io/page-ide/#guides/architecture.md) — 16개 모듈, 단방향 의존, 스택 결정
-- [시작하기](https://monkshark.github.io/page-ide/#guides/getting_started.md) — PAGE 자체를 실행하고 디버깅하기
+- [개요](https://monkshark.github.io/page-ide/#guides/overview.md) — 무엇을 위해 만드는지, 무엇은 만들지 않는지
+- [아키텍처](https://monkshark.github.io/page-ide/#guides/architecture.md) — 모듈 16개와 단방향 의존, 스택을 그렇게 고른 이유
+- [시작하기](https://monkshark.github.io/page-ide/#guides/getting_started.md) — PAGE 를 직접 띄우고 디버깅하기
 - [내부 구조](https://monkshark.github.io/page-ide/#README_kr.md) — 모듈별 설계 노트
 
 ## 기여
 
-`main` 은 보호된다. 브런치를 파고 PR 을 열어 CI 가 초록이 된 뒤 머지한다. 실제로 동작하는
-코드에는 테스트를 붙인다. 모듈을 추가하기 전에 [아키텍처 가이드](https://monkshark.github.io/page-ide/#guides/architecture.md)를 먼저 읽는다.
+`main` 에는 직접 못 넣는다. 브런치를 파서 PR 을 열고 CI 가 초록이 되면 그때 머지한다. 실제로
+돌아가는 코드에는 테스트를 같이 넣어달라. 모듈을 새로 만들 생각이면
+[아키텍처 가이드](https://monkshark.github.io/page-ide/#guides/architecture.md)를 먼저 읽는 게 좋다.
 
 ## 라이선스
 
-pre-alpha 동안은 미정.
+MIT
 
 ## 연락
 
-[GitHub Issues](https://github.com/monkshark/page-ide/issues) · justinchoo0814@gmail.com
+[GitHub Issues](https://github.com/monkshark/page-ide/issues) · justinchoo0814@gmail.com · IG@[void___main](https://www.instagram.com/void___main)
