@@ -340,8 +340,17 @@ fun TreeRow(
             ) {
                 CompactMenuContainer {
                     for (item in contextItems()) {
+                        if (item.label == MENU_SEPARATOR) {
+                            CompactMenuSeparator()
+                            continue
+                        }
+                        val tab = item.label.indexOf('\t')
+                        val text = if (tab >= 0) item.label.substring(0, tab) else item.label
                         CompactMenuItem(
-                            label = item.label,
+                            label = text,
+                            icon = treeMenuIcon(text),
+                            danger = text.startsWith("Delete"),
+                            trailing = if (tab >= 0) item.label.substring(tab + 1) else null,
                             onClick = {
                                 menuAt = null
                                 item.onClick()
