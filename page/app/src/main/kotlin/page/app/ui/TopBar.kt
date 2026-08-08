@@ -47,7 +47,7 @@ internal fun TopBar(
     onStartRun: () -> Unit,
     onStopRun: () -> Unit,
     onOpenRunDialog: () -> Unit,
-    onRunAction: (page.app.input.ActionSpec) -> Unit = {},
+    ui: page.app.state.LayoutUiState,
 ) {
     val colors = Glass.colors
     val chrome = LocalWindowChrome.current
@@ -76,10 +76,8 @@ internal fun TopBar(
                         color = colors.text,
                     )
                 } else {
-                    TitleBarMenus(onRun = onRunAction)
+                    TitleBarMenus(ui = ui)
                 }
-                Spacer(Modifier.width(16.dp))
-                Breadcrumb(path = path, workspaceRoot = workspaceRoot)
                 Spacer(Modifier.weight(1f))
             }
             val currentFileTemplate = activeFilePath?.let { LanguageRunDefaults.forFile(it) }
@@ -120,7 +118,7 @@ internal fun TopBar(
 }
 
 @Composable
-private fun Breadcrumb(path: Path?, workspaceRoot: Path?) {
+internal fun Breadcrumb(path: Path?, workspaceRoot: Path?) {
     val colors = Glass.colors
     val segments = breadcrumbSegments(path, workspaceRoot)
     if (segments.isEmpty()) {

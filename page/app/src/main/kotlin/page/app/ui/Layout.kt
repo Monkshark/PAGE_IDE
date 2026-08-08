@@ -289,6 +289,7 @@ internal fun IdeMainLayout(
     Box(modifier = Modifier.fillMaxSize().onPreviewKeyEvent { event ->
         if (event.type == KeyEventType.KeyDown && event.key == Key.Escape) {
             when {
+                ui.titleMenu != null -> { ui.titleMenu = null; true }
                 installManagerOpen != null -> { installManagerOpen = null; true }
                 settingsPanelOpen -> { onSettingsPanelClose(); true }
                 ui.atlasFileFocus != null -> { onEvent(IdeEvent.Panel.CloseAtlasFile); true }
@@ -318,7 +319,7 @@ internal fun IdeMainLayout(
             onStartRun = onStartRun,
             onStopRun = onStopRun,
             onOpenRunDialog = onOpenRunDialog,
-            onRunAction = onRunAction,
+            ui = ui,
         )
         Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
             ActivityRail(
@@ -733,6 +734,7 @@ internal fun IdeMainLayout(
             }
         }
     }
+    TitleMenuDropdown(ui = ui, onRun = onRunAction)
     AnimatedVisibility(
         visible = ui.actionPalette,
         enter = fadeIn(tween(160)),
