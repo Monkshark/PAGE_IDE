@@ -78,8 +78,6 @@ internal fun TopBar(
                 } else {
                     TitleBarMenus(onRun = onRunAction)
                 }
-                Spacer(Modifier.width(16.dp))
-                Breadcrumb(path = path, workspaceRoot = workspaceRoot)
                 Spacer(Modifier.weight(1f))
             }
             val currentFileTemplate = activeFilePath?.let { LanguageRunDefaults.forFile(it) }
@@ -120,7 +118,7 @@ internal fun TopBar(
 }
 
 @Composable
-private fun Breadcrumb(path: Path?, workspaceRoot: Path?) {
+internal fun Breadcrumb(path: Path?, workspaceRoot: Path?) {
     val colors = Glass.colors
     val segments = breadcrumbSegments(path, workspaceRoot)
     if (segments.isEmpty()) {

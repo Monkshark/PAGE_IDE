@@ -72,7 +72,7 @@ internal fun ActivityRail(
             onClick = { onSelectSideView(SideView.SOURCE_CONTROL) },
             icon = { tint -> SourceControlGlyph(tint = tint, size = 16.dp) },
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.weight(1f))
         RailItem(
             tooltip = "Problems",
             selected = problemsOpen,
@@ -92,7 +92,13 @@ internal fun ActivityRail(
             onClick = onOutputToggle,
             icon = { tint -> OutputGlyph(tint = tint, size = 16.dp) },
         )
-        Spacer(Modifier.weight(1f))
+        Box(
+            modifier = Modifier
+                .padding(horizontal = 12.dp, vertical = 6.dp)
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(Glass.colors.separator),
+        )
         RailItem(
             tooltip = "Settings",
             selected = settingsOpen,

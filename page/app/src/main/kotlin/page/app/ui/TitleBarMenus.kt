@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -77,6 +78,7 @@ internal fun TitleBarMenus(onRun: (ActionSpec) -> Unit) {
                 label = menu.title,
                 open = openMenu == menu.title,
                 onClick = { openMenu = if (openMenu == menu.title) null else menu.title },
+                onHover = { if (openMenu != null && openMenu != menu.title) openMenu = menu.title },
             ) {
                 if (openMenu == menu.title) {
                     MenuPopup(onDismiss = { openMenu = null }) {
@@ -103,10 +105,12 @@ private fun MenuButton(
     label: String,
     open: Boolean,
     onClick: () -> Unit,
+    onHover: () -> Unit = {},
     popup: @Composable () -> Unit,
 ) {
     val interaction = remember { MutableInteractionSource() }
     val hovered by interaction.collectIsHoveredAsState()
+    LaunchedEffect(hovered) { if (hovered) onHover() }
     val colors = Glass.colors
     Box(contentAlignment = Alignment.CenterStart) {
         Text(

@@ -1,5 +1,7 @@
 package page.app.ui
 
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -115,6 +117,16 @@ internal fun PaneRegion(
                 { editor.collapseSplit() }
             } else null,
         )
+        if (active != null) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 12.dp, end = 12.dp, top = 3.dp, bottom = 3.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Breadcrumb(path = active.path, workspaceRoot = workspaceRoot)
+            }
+        }
         FocusIndicator(visible = isFocused && editor.splitEnabled)
         when (kind) {
             FileKind.IMAGE -> PreviewPanel(
