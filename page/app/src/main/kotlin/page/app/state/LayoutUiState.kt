@@ -112,6 +112,8 @@ internal class LayoutUiState(private val store: IdeStore = IdeStore()) {
 
     var quickOpen by mutableStateOf(false)
     var actionPalette by mutableStateOf(false)
+    var titleMenu by mutableStateOf<String?>(null)
+    var titleMenuX by mutableStateOf(0)
     var quickOpenIndex by mutableStateOf<List<IndexedFile>>(emptyList())
     var documentSymbolOpen by mutableStateOf(false)
     var documentSymbolList by mutableStateOf<List<DocumentSymbolEntry>>(emptyList())

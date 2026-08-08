@@ -47,7 +47,7 @@ internal fun TopBar(
     onStartRun: () -> Unit,
     onStopRun: () -> Unit,
     onOpenRunDialog: () -> Unit,
-    onRunAction: (page.app.input.ActionSpec) -> Unit = {},
+    ui: page.app.state.LayoutUiState,
 ) {
     val colors = Glass.colors
     val chrome = LocalWindowChrome.current
@@ -76,7 +76,7 @@ internal fun TopBar(
                         color = colors.text,
                     )
                 } else {
-                    TitleBarMenus(onRun = onRunAction)
+                    TitleBarMenus(ui = ui)
                 }
                 Spacer(Modifier.weight(1f))
             }
