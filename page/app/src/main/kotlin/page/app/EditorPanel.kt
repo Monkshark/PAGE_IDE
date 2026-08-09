@@ -107,6 +107,7 @@ import java.util.concurrent.CompletableFuture
 import kotlinx.coroutines.launch
 import page.lsp.CompletionItem as LspCompletionItem
 import page.lsp.CompletionItemKind as LspCompletionItemKind
+import page.lsp.CodeActionEntry
 import page.lsp.CompletionList
 import page.lsp.SnippetExpander
 import page.lsp.DefinitionTarget
@@ -1188,6 +1189,52 @@ fun EditorPanel(
                     }
                 },
                 caretPopup = when {
+                    renameRequest != null && onRequestRename != null -> {
+                        val active = renameRequest!!
+                        val renameCb = onRequestRename
+                        {
+                            RenamePopup(
+                                request = active,
+                                inProgress = renameInProgress,
+                                error = renameError,
+                                onComputeEdit = { name ->
+                                    renameCb(active.line, active.character, name)
+                                },
+                                onApply = { _, edit ->
+                                    if (edit.isEmpty) {
+                                        renameError = "No changes"
+                                    } else {
+                                        renameInProgress = true
+                                        onApplyRename?.invoke(edit)
+                                        renameInProgress = false
+                                        renameRequest = null
+                                        renameError = null
+                                    }
+                                },
+                                onPreview = { name, edit ->
+                                    if (edit.isEmpty) {
+                                        renameError = "No changes"
+                                    } else {
+                                        codeAction.onOpenInPanel(
+                                            CodeActionEntry(
+                                                title = "Rename to $name",
+                                                kind = "refactor.rename",
+                                                isPreferred = false,
+                                                edit = edit,
+                                                command = null,
+                                            ),
+                                        )
+                                        renameRequest = null
+                                        renameError = null
+                                    }
+                                },
+                                onDismiss = {
+                                    renameRequest = null
+                                    renameError = null
+                                },
+                            )
+                        }
+                    }
                     codeAction.visible && codeAction.actions.isNotEmpty() -> {
                         {
                             CodeActionPopup(
@@ -1221,8 +1268,14 @@ fun EditorPanel(
                     }
                     else -> null
                 },
-                caretPopupFocusable = references != null || codeAction.visible,
+                caretPopupFocusable = references != null || codeAction.visible || renameRequest != null,
                 onCaretPopupDismiss = when {
+                    renameRequest != null -> {
+                        {
+                            renameRequest = null
+                            renameError = null
+                        }
+                    }
                     codeAction.visible -> codeAction.onDismiss
                     references != null -> onReferencesDismiss
                     else -> null
@@ -1574,37 +1627,6 @@ fun EditorPanel(
         }
     }
 
-    val activeRename = renameRequest
-    if (activeRename != null && onRequestRename != null) {
-        RenameDialog(
-            request = activeRename,
-            inProgress = renameInProgress,
-            error = renameError,
-            onDismiss = {
-                if (!renameInProgress) {
-                    renameRequest = null
-                    renameError = null
-                }
-            },
-            onSubmit = { newName ->
-                renameInProgress = true
-                renameError = null
-                onRequestRename(activeRename.line, activeRename.character, newName)
-                    .whenComplete { edit, err ->
-                        renameInProgress = false
-                        when {
-                            err != null -> renameError = err.message ?: err.toString()
-                            edit.isEmpty -> renameError = "No changes"
-                            else -> {
-                                onApplyRename?.invoke(edit)
-                                renameRequest = null
-                                renameError = null
-                            }
-                        }
-                    }
-            },
-        )
-    }
 }
 
 private val CLOSING_PUNCT: Set<Char> = setOf(')', ']', '}', '"', '\'', '`')
