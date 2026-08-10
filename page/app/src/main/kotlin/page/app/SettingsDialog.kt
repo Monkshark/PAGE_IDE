@@ -972,7 +972,12 @@ private fun NumberField(label: String, value: Int, min: Int, max: Int, onChange:
     FieldRow(label = label, fieldWidth = 96.dp) {
         BasicTextField(
             value = text,
-            onValueChange = { raw -> text = raw.filter { it.isDigit() }.take(4) },
+            onValueChange = { raw ->
+                val digits = raw.filter { it.isDigit() }.take(4)
+                text = digits
+                val typed = digits.toIntOrNull()
+                if (typed != null && typed in min..max && typed != value) onChange(typed)
+            },
             singleLine = true,
             cursorBrush = SolidColor(Glass.colors.primary),
             textStyle = LocalTextStyle.current.copy(
