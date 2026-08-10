@@ -37,6 +37,7 @@ import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.KeyboardAlt
 import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.Extension
+import androidx.compose.material.icons.outlined.Brush
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.Save
@@ -93,14 +94,91 @@ private val CenteredLineHeight = LineHeightStyle(
     trim = LineHeightStyle.Trim.Both,
 )
 
-private enum class SettingsCategory(val label: String, val group: String, val icon: ImageVector) {
-    AUTO_SAVE("AutoSave", "Workspace", Icons.Outlined.Save),
-    EDITOR("Editor", "Workspace", Icons.AutoMirrored.Outlined.Notes),
-    LSP("LSP", "Workspace", Icons.Outlined.Extension),
-    AUTO_INPUT("AutoInput", "Workspace", Icons.Outlined.Code),
-    UI("UI", "Appearance", Icons.Outlined.Palette),
-    RUN("Run", "Tasks", Icons.Outlined.PlayArrow),
-    KEYMAP("Keymap", "Appearance", Icons.Outlined.KeyboardAlt),
+internal enum class SettingsCategory(
+    val label: String,
+    val group: String,
+    val icon: ImageVector,
+    val blurb: String,
+    val showsCode: Boolean = false,
+) {
+    EDITING(
+        "Editing", "Editor", Icons.AutoMirrored.Outlined.Notes,
+        "How text behaves while you write it.",
+        showsCode = true,
+    ),
+    TYPING(
+        "Typing", "Editor", Icons.Outlined.Code,
+        "What PAGE inserts for you as you type.",
+    ),
+    AUTO_SAVE(
+        "Auto save", "Editor", Icons.Outlined.Save,
+        "When a dirty tab is flushed to disk.",
+    ),
+    THEME(
+        "Theme", "Appearance", Icons.Outlined.Palette,
+        "The colors of every surface, and how the code area is drawn.",
+        showsCode = true,
+    ),
+    CODE_STYLE(
+        "Code style", "Appearance", Icons.Outlined.Brush,
+        "How the code itself is colored and marked up.",
+        showsCode = true,
+    ),
+    SHORTCUTS(
+        "Shortcuts", "Appearance", Icons.Outlined.KeyboardAlt,
+        "Every action and the keys that reach it.",
+    ),
+    LANGUAGE_SERVERS(
+        "Language servers", "Tools", Icons.Outlined.Extension,
+        "Completion, diagnostics, and where the binaries live.",
+    ),
+    RUN(
+        "Run", "Tools", Icons.Outlined.PlayArrow,
+        "What happens when a run starts.",
+    ),
+}
+
+internal data class SettingsHit(val category: SettingsCategory, val label: String)
+
+internal val SETTINGS_INDEX: List<SettingsHit> = listOf(
+    SettingsHit(SettingsCategory.EDITING, "Tab size"),
+    SettingsHit(SettingsCategory.EDITING, "Insert spaces for Tab"),
+    SettingsHit(SettingsCategory.TYPING, "Auto-pair brackets and quotes"),
+    SettingsHit(SettingsCategory.TYPING, "Auto-close HTML tags"),
+    SettingsHit(SettingsCategory.TYPING, "Backspace deletes empty pair"),
+    SettingsHit(SettingsCategory.AUTO_SAVE, "Save on window deactivation"),
+    SettingsHit(SettingsCategory.AUTO_SAVE, "Save while idle"),
+    SettingsHit(SettingsCategory.AUTO_SAVE, "Save before Run"),
+    SettingsHit(SettingsCategory.AUTO_SAVE, "Save on tab close"),
+    SettingsHit(SettingsCategory.THEME, "Glass palette"),
+    SettingsHit(SettingsCategory.THEME, "Sidebar width"),
+    SettingsHit(SettingsCategory.THEME, "Show tab close button"),
+    SettingsHit(SettingsCategory.THEME, "Font size"),
+    SettingsHit(SettingsCategory.THEME, "Show line numbers"),
+    SettingsHit(SettingsCategory.THEME, "Minimap"),
+    SettingsHit(SettingsCategory.THEME, "Highlight current line"),
+    SettingsHit(SettingsCategory.CODE_STYLE, "Syntax colors"),
+    SettingsHit(SettingsCategory.CODE_STYLE, "Scope guides"),
+    SettingsHit(SettingsCategory.CODE_STYLE, "Rainbow brackets"),
+    SettingsHit(SettingsCategory.CODE_STYLE, "Dim unused symbols"),
+    SettingsHit(SettingsCategory.CODE_STYLE, "Highlight identifier under caret"),
+    SettingsHit(SettingsCategory.SHORTCUTS, "Keyboard shortcuts"),
+    SettingsHit(SettingsCategory.LANGUAGE_SERVERS, "Show inlay hints"),
+    SettingsHit(SettingsCategory.LANGUAGE_SERVERS, "Trigger completion mid-word"),
+    SettingsHit(SettingsCategory.LANGUAGE_SERVERS, "Hover delay"),
+    SettingsHit(SettingsCategory.LANGUAGE_SERVERS, "Inline diagnostics"),
+    SettingsHit(SettingsCategory.LANGUAGE_SERVERS, "Problems panel scope"),
+    SettingsHit(SettingsCategory.LANGUAGE_SERVERS, "Server executable overrides"),
+    SettingsHit(SettingsCategory.RUN, "Clear Output on Run"),
+    SettingsHit(SettingsCategory.RUN, "Open Terminal on Run"),
+)
+
+internal fun searchSettings(query: String): List<SettingsHit> {
+    val q = query.trim()
+    if (q.isEmpty()) return emptyList()
+    return SETTINGS_INDEX.filter {
+        it.label.contains(q, ignoreCase = true) || it.category.label.contains(q, ignoreCase = true)
+    }
 }
 
 @Composable
@@ -111,11 +189,14 @@ internal fun SettingsPanel(
     modifier: Modifier = Modifier,
 ) {
     val opened = remember { settings }
-    var selected by remember { mutableStateOf(SettingsCategory.AUTO_SAVE) }
+    var selected by remember { mutableStateOf(SettingsCategory.EDITING) }
+    var query by remember { mutableStateOf("") }
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(Unit) { runCatching { focusRequester.requestFocus() } }
     val colors = Glass.colors
-    val revert = { if (settings != opened) onApply(opened) }
+    val dirty = settings != opened
+    val revert = { if (dirty) onApply(opened) }
+    val hits = remember(query) { searchSettings(query) }
 
     Column(
         modifier = modifier
@@ -143,6 +224,8 @@ internal fun SettingsPanel(
                 fontSize = Glass.type.title,
             )
             Spacer(Modifier.weight(1f))
+            SearchField(value = query, onChange = { query = it })
+            Spacer(Modifier.width(8.dp))
             CloseButton(onClose)
         }
         Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(colors.separator))
@@ -153,32 +236,130 @@ internal fun SettingsPanel(
                 modifier = Modifier.width(168.dp).fillMaxHeight(),
             )
             Box(modifier = Modifier.width(1.dp).fillMaxHeight().background(colors.separator))
-            SettingsDetailPane(
-                category = selected,
-                draft = settings,
-                onChange = onApply,
-                modifier = Modifier.weight(1f).fillMaxHeight(),
-            )
+            if (query.isNotBlank()) {
+                SearchResults(
+                    query = query,
+                    hits = hits,
+                    onPick = { hit ->
+                        selected = hit.category
+                        query = ""
+                    },
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                )
+            } else {
+                Column(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                    SettingsDetailPane(
+                        category = selected,
+                        draft = settings,
+                        onChange = onApply,
+                        modifier = Modifier.fillMaxWidth().weight(1f),
+                    )
+                    if (selected.showsCode) {
+                        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(colors.separator))
+                        SettingsPreview(
+                            editor = settings.editor,
+                            modifier = Modifier.fillMaxWidth().height(PREVIEW_HEIGHT),
+                        )
+                    }
+                }
+            }
         }
         Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(colors.separator))
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            if (settings != opened) {
-                Text(
-                    text = "Changes apply as you edit",
-                    color = colors.muted,
-                    fontSize = Glass.type.label,
-                    style = TextStyle(lineHeight = Glass.type.label, lineHeightStyle = CenteredLineHeight),
-                )
-                Spacer(Modifier.width(12.dp))
-                GlassButton(label = "Revert", primary = false, onClick = { revert() })
-                Spacer(Modifier.width(8.dp))
-            }
+            Text(
+                text = "Changes apply as you edit",
+                color = colors.faint,
+                fontSize = Glass.type.label,
+                style = TextStyle(lineHeight = Glass.type.label, lineHeightStyle = CenteredLineHeight),
+            )
+            Spacer(Modifier.weight(1f))
+            GlassButton(label = "Revert", primary = false, enabled = dirty, onClick = { revert() })
+            Spacer(Modifier.width(8.dp))
             GlassButton(label = "Done", primary = true, onClick = onClose)
         }
+    }
+}
+
+@Composable
+private fun SearchField(value: String, onChange: (String) -> Unit) {
+    val colors = Glass.colors
+    Box(
+        modifier = Modifier
+            .width(220.dp)
+            .height(28.dp)
+            .clip(RoundedCornerShape(Glass.radius.sm))
+            .background(colors.surfaceL1)
+            .border(1.dp, colors.outline, RoundedCornerShape(Glass.radius.sm))
+            .padding(horizontal = 10.dp),
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        if (value.isEmpty()) {
+            Text(text = "Search settings", color = colors.faint, fontSize = Glass.type.label)
+        }
+        BasicTextField(
+            value = value,
+            onValueChange = onChange,
+            singleLine = true,
+            cursorBrush = SolidColor(colors.primary),
+            textStyle = TextStyle(color = colors.text, fontSize = Glass.type.label),
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}
+
+@Composable
+private fun SearchResults(
+    query: String,
+    hits: List<SettingsHit>,
+    onPick: (SettingsHit) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = Glass.colors
+    val scroll = rememberScrollState()
+    Column(modifier = modifier.padding(horizontal = 20.dp, vertical = 16.dp)) {
+        Text(
+            text = if (hits.isEmpty()) "Nothing matches \"$query\"" else "${hits.size} matching",
+            color = colors.muted,
+            fontSize = Glass.type.label,
+        )
+        Spacer(Modifier.height(12.dp))
+        Column(modifier = Modifier.fillMaxWidth().weight(1f).verticalScroll(scroll)) {
+            for (hit in hits) {
+                SearchResultRow(hit = hit, onClick = { onPick(hit) })
+                Spacer(Modifier.height(2.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun SearchResultRow(hit: SettingsHit, onClick: () -> Unit) {
+    val colors = Glass.colors
+    val interaction = remember { MutableInteractionSource() }
+    val hovered by interaction.collectIsHoveredAsState()
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(Glass.radius.sm))
+            .background(if (hovered) colors.surfaceL2 else Color.Transparent)
+            .hoverable(interaction)
+            .clickable(interactionSource = interaction, indication = null, onClick = onClick)
+            .padding(horizontal = 10.dp, vertical = 7.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = hit.category.icon,
+            contentDescription = null,
+            tint = colors.muted,
+            modifier = Modifier.size(15.dp),
+        )
+        Spacer(Modifier.width(10.dp))
+        Text(text = hit.label, color = colors.text, fontSize = Glass.type.ui)
+        Spacer(Modifier.weight(1f))
+        Text(text = hit.category.label, color = colors.faint, fontSize = Glass.type.label)
     }
 }
 
@@ -295,21 +476,24 @@ private fun SettingsDetailPane(
             fontWeight = FontWeight.SemiBold,
             fontSize = Glass.type.title,
         )
+        Spacer(Modifier.height(2.dp))
+        Hint(category.blurb)
         Spacer(Modifier.height(14.dp))
         Column(modifier = Modifier.fillMaxWidth().weight(1f).verticalScroll(scroll)) {
             when (category) {
                 SettingsCategory.AUTO_SAVE -> AutoSaveSection(draft.autoSave) { onChange(draft.copy(autoSave = it)) }
-                SettingsCategory.EDITOR -> EditorSection(draft.editor) { onChange(draft.copy(editor = it)) }
-                SettingsCategory.LSP -> LspSection(draft.lsp) { onChange(draft.copy(lsp = it)) }
-                SettingsCategory.AUTO_INPUT -> AutoInputSection(draft.autoInput) { onChange(draft.copy(autoInput = it)) }
-                SettingsCategory.UI -> UiSection(
+                SettingsCategory.EDITING -> EditorSection(draft.editor) { onChange(draft.copy(editor = it)) }
+                SettingsCategory.LANGUAGE_SERVERS -> LspSection(draft.lsp) { onChange(draft.copy(lsp = it)) }
+                SettingsCategory.TYPING -> AutoInputSection(draft.autoInput) { onChange(draft.copy(autoInput = it)) }
+                SettingsCategory.THEME -> ThemeSection(
                     o = draft.ui,
                     e = draft.editor,
                     onChange = { onChange(draft.copy(ui = it)) },
                     onEditorChange = { onChange(draft.copy(editor = it)) },
                 )
+                SettingsCategory.CODE_STYLE -> CodeStyleSection(draft.editor) { onChange(draft.copy(editor = it)) }
                 SettingsCategory.RUN -> RunSection(draft.run) { onChange(draft.copy(run = it)) }
-                SettingsCategory.KEYMAP -> KeymapSection()
+                SettingsCategory.SHORTCUTS -> KeymapSection()
             }
         }
     }
@@ -465,7 +649,7 @@ private fun AutoInputSection(o: AutoInputOptions, onChange: (AutoInputOptions) -
 }
 
 @Composable
-private fun UiSection(
+private fun ThemeSection(
     o: UiOptions,
     e: EditorOptions,
     onChange: (UiOptions) -> Unit,
@@ -476,9 +660,9 @@ private fun UiSection(
     Hint("The token set that colors every surface, syntax, and control.")
     Spacer(Modifier.height(10.dp))
     val palettes = GlassPalette.values().toList()
-    Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
-        for (rowPalettes in palettes.chunked(3)) {
-            Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        for (rowPalettes in palettes.chunked(5)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 for (p in rowPalettes) {
                     PaletteSwatch(
                         palette = p,
@@ -487,11 +671,13 @@ private fun UiSection(
                         modifier = Modifier.weight(1f),
                     )
                 }
-                repeat(3 - rowPalettes.size) { Spacer(Modifier.weight(1f)) }
+                repeat(5 - rowPalettes.size) { Spacer(Modifier.weight(1f)) }
             }
         }
     }
-    Spacer(Modifier.height(16.dp))
+    Spacer(Modifier.height(20.dp))
+    SectionLabel("Window")
+    Spacer(Modifier.height(8.dp))
     NumberField(
         label = "Sidebar width (dp)",
         value = o.sidebarWidth,
@@ -540,7 +726,10 @@ private fun UiSection(
         checked = e.highlightCurrentLine,
         onToggle = { onEditorChange(e.copy(highlightCurrentLine = !e.highlightCurrentLine)) },
     )
-    Spacer(Modifier.height(20.dp))
+}
+
+@Composable
+private fun CodeStyleSection(e: EditorOptions, onEditorChange: (EditorOptions) -> Unit) {
     SectionLabel("Syntax colors")
     Spacer(Modifier.height(3.dp))
     Hint("How far the editor separates calls, members and parameters from plain names.")
@@ -555,20 +744,6 @@ private fun UiSection(
             Spacer(Modifier.width(6.dp))
         }
     }
-    Spacer(Modifier.height(18.dp))
-    CheckRow(
-        label = "Dim unused symbols",
-        description = "Fade locals and imports that nothing else in the file refers to.",
-        checked = e.dimUnusedSymbols,
-        onToggle = { onEditorChange(e.copy(dimUnusedSymbols = !e.dimUnusedSymbols)) },
-    )
-    Spacer(Modifier.height(8.dp))
-    CheckRow(
-        label = "Rainbow brackets",
-        description = "Tint each bracket pair and its guide by nesting depth.",
-        checked = e.rainbowBrackets,
-        onToggle = { onEditorChange(e.copy(rainbowBrackets = !e.rainbowBrackets)) },
-    )
     Spacer(Modifier.height(18.dp))
     SectionLabel("Scope guides")
     Spacer(Modifier.height(3.dp))
@@ -585,6 +760,20 @@ private fun UiSection(
         }
     }
     Spacer(Modifier.height(18.dp))
+    CheckRow(
+        label = "Rainbow brackets",
+        description = "Tint each bracket pair and its guide by nesting depth.",
+        checked = e.rainbowBrackets,
+        onToggle = { onEditorChange(e.copy(rainbowBrackets = !e.rainbowBrackets)) },
+    )
+    Spacer(Modifier.height(8.dp))
+    CheckRow(
+        label = "Dim unused symbols",
+        description = "Fade locals and imports that nothing else in the file refers to.",
+        checked = e.dimUnusedSymbols,
+        onToggle = { onEditorChange(e.copy(dimUnusedSymbols = !e.dimUnusedSymbols)) },
+    )
+    Spacer(Modifier.height(8.dp))
     CheckRow(
         label = "Highlight identifier under caret",
         description = "Tint the other places the name at the caret appears.",
@@ -694,7 +883,7 @@ private fun PaletteSwatch(
             .clickable(onClick = onClick),
     ) {
         Column {
-            Row(modifier = Modifier.fillMaxWidth().height(38.dp)) {
+            Row(modifier = Modifier.fillMaxWidth().height(26.dp)) {
                 Box(Modifier.weight(1f).fillMaxHeight().background(c.background))
                 Box(Modifier.weight(1f).fillMaxHeight().background(c.surface))
                 Box(Modifier.weight(1f).fillMaxHeight().background(c.primary))
@@ -705,15 +894,17 @@ private fun PaletteSwatch(
                 color = colors.text,
                 fontSize = Glass.type.label,
                 fontWeight = FontWeight.Medium,
-                modifier = Modifier.padding(start = 10.dp, end = 10.dp, top = 7.dp, bottom = 8.dp),
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                modifier = Modifier.padding(start = 8.dp, end = 8.dp, top = 5.dp, bottom = 6.dp),
             )
         }
         if (selected) {
             Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(6.dp)
-                    .size(16.dp)
+                    .padding(4.dp)
+                    .size(13.dp)
                     .clip(CircleShape)
                     .background(colors.primary),
                 contentAlignment = Alignment.Center,
@@ -722,7 +913,7 @@ private fun PaletteSwatch(
                     imageVector = Icons.Outlined.Check,
                     contentDescription = null,
                     tint = colors.onPrimary,
-                    modifier = Modifier.size(10.dp),
+                    modifier = Modifier.size(9.dp),
                 )
             }
         }
@@ -948,15 +1139,22 @@ private fun ToggleSwitch(checked: Boolean) {
 }
 
 @Composable
-private fun GlassButton(label: String, primary: Boolean, onClick: () -> Unit) {
+private fun GlassButton(
+    label: String,
+    primary: Boolean,
+    enabled: Boolean = true,
+    onClick: () -> Unit,
+) {
     val colors = Glass.colors
     val interaction = remember { MutableInteractionSource() }
     val hovered by interaction.collectIsHoveredAsState()
+    val active = hovered && enabled
     val bg by animateColorAsState(
         targetValue = when {
-            primary && hovered -> colors.primary.copy(alpha = colors.primary.alpha * 0.85f)
+            !enabled -> colors.surfaceL1
+            primary && active -> colors.primary.copy(alpha = colors.primary.alpha * 0.85f)
             primary -> colors.primary
-            hovered -> colors.surfaceL3
+            active -> colors.surfaceL3
             else -> colors.surfaceL2
         },
         animationSpec = tween(120),
@@ -967,14 +1165,27 @@ private fun GlassButton(label: String, primary: Boolean, onClick: () -> Unit) {
             .defaultMinSize(minWidth = 84.dp)
             .clip(RoundedCornerShape(Glass.radius.sm))
             .background(bg)
-            .border(1.dp, if (primary) Color.Transparent else colors.outline, RoundedCornerShape(Glass.radius.sm))
-            .clickable(interactionSource = interaction, indication = null, onClick = onClick)
+            .border(
+                1.dp,
+                when {
+                    !enabled -> colors.separator
+                    primary -> Color.Transparent
+                    else -> colors.outline
+                },
+                RoundedCornerShape(Glass.radius.sm),
+            )
+            .hoverable(interaction, enabled = enabled)
+            .clickable(enabled = enabled, interactionSource = interaction, indication = null, onClick = onClick)
             .padding(horizontal = 16.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text = label,
-            color = if (primary) colors.onPrimary else colors.text,
+            color = when {
+                !enabled -> colors.faint
+                primary -> colors.onPrimary
+                else -> colors.text
+            },
             fontSize = Glass.type.ui,
             fontWeight = if (primary) FontWeight.Medium else FontWeight.Normal,
             style = TextStyle(lineHeight = Glass.type.ui, lineHeightStyle = CenteredLineHeight),
