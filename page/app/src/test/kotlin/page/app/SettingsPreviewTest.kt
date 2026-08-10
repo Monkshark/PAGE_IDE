@@ -36,6 +36,26 @@ class SettingsPreviewTest {
     }
 
     @Test
+    fun `the strip is tall enough to hold every line`() {
+        for (fontSize in listOf(8, 12, 14, 16)) {
+            val editor = EditorOptions.DEFAULT.copy(fontSize = fontSize)
+            val needed = previewSource(editor.tabSize).second.size * fontSize * 1.6f
+            assertTrue(
+                previewHeightFor(editor).value >= needed,
+                "font $fontSize needs ${needed}dp of lines, strip is ${previewHeightFor(editor)}",
+            )
+        }
+    }
+
+    @Test
+    fun `a huge font stops growing the strip`() {
+        for (fontSize in listOf(24, 48)) {
+            val editor = EditorOptions.DEFAULT.copy(fontSize = fontSize)
+            assertEquals(260f, previewHeightFor(editor).value, "font $fontSize")
+        }
+    }
+
+    @Test
     fun `the sample still holds what the preview advertises`() {
         val (code, _) = previewSource(4)
         assertTrue(code.startsWith("import "), "needs an unused import to dim")

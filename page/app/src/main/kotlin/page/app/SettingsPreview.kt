@@ -1,6 +1,8 @@
 package page.app
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,6 +16,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -21,6 +25,8 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import page.shared.syntax.BracketScan
@@ -45,7 +51,14 @@ private val PREVIEW_LINES = listOf(
 
 private const val CARET_LINE = 4
 
-internal val PREVIEW_HEIGHT = 150.dp
+private const val PREVIEW_LINE_SPACING = 1.6f
+private val PREVIEW_CHROME = 34.dp
+private val PREVIEW_MAX_HEIGHT = 260.dp
+
+internal fun previewHeightFor(editor: EditorOptions): Dp {
+    val body = (PREVIEW_LINES.size * editor.fontSize * PREVIEW_LINE_SPACING).dp
+    return (PREVIEW_CHROME + body).coerceAtMost(PREVIEW_MAX_HEIGHT)
+}
 
 internal data class PreviewLine(val depth: Int, val start: Int, val end: Int)
 
@@ -75,7 +88,8 @@ internal fun SettingsPreview(editor: EditorOptions, modifier: Modifier = Modifie
         buildPreview(code, editor, palette, colors.faint, colors.primarySoft)
     }
     val fontSize = editor.fontSize.sp
-    val lineHeight = (editor.fontSize * 1.6f).sp
+    val lineHeight = (editor.fontSize * PREVIEW_LINE_SPACING).sp
+    val scroll = rememberScrollState()
     val indentUnit = remember(editor.tabSize) { " ".repeat(editor.tabSize.coerceIn(1, 16)) }
 
     Column(modifier = modifier.background(colors.background)) {
@@ -100,7 +114,7 @@ internal fun SettingsPreview(editor: EditorOptions, modifier: Modifier = Modifie
         }
         Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(colors.separator))
         Row(modifier = Modifier.fillMaxWidth().weight(1f)) {
-            Column(modifier = Modifier.weight(1f).padding(vertical = 6.dp)) {
+            Column(modifier = Modifier.weight(1f).verticalScroll(scroll).padding(vertical = 5.dp)) {
                 for ((index, line) in lines.withIndex()) {
                     val onCaretLine = editor.highlightCurrentLine && index == CARET_LINE
                     Row(
@@ -164,23 +178,23 @@ internal fun SettingsPreview(editor: EditorOptions, modifier: Modifier = Modifie
 @Composable
 private fun IndentCell(
     unit: String,
-    fontSize: androidx.compose.ui.unit.TextUnit,
-    lineHeight: androidx.compose.ui.unit.TextUnit,
+    fontSize: TextUnit,
+    lineHeight: TextUnit,
     guide: Color?,
 ) {
-    Box {
-        Text(
-            text = unit,
-            fontSize = fontSize,
-            lineHeight = lineHeight,
-            fontFamily = FontFamily.Monospace,
-            color = Color.Transparent,
-            maxLines = 1,
-        )
-        if (guide != null) {
-            Box(modifier = Modifier.width(1.dp).fillMaxHeight().background(guide))
-        }
-    }
+    Text(
+        text = unit,
+        fontSize = fontSize,
+        lineHeight = lineHeight,
+        fontFamily = FontFamily.Monospace,
+        color = Color.Transparent,
+        maxLines = 1,
+        modifier = Modifier.drawBehind {
+            if (guide != null) {
+                drawRect(color = guide, size = Size(1.dp.toPx(), size.height))
+            }
+        },
+    )
 }
 
 @Composable

@@ -258,7 +258,7 @@ internal fun SettingsPanel(
                         Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(colors.separator))
                         SettingsPreview(
                             editor = settings.editor,
-                            modifier = Modifier.fillMaxWidth().height(PREVIEW_HEIGHT),
+                            modifier = Modifier.fillMaxWidth().height(previewHeightFor(settings.editor)),
                         )
                     }
                 }
