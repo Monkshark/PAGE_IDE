@@ -9,9 +9,13 @@ import page.lsp.CodeActionEntry
 import page.lsp.Diagnostic
 import page.lsp.RenameFileChange
 import page.lsp.RenameWorkspaceEdit
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.future.await
+import kotlinx.coroutines.launch
 import java.nio.file.Path
 
 internal class CommandPaletteController(
+    private val scope: CoroutineScope,
     private val ui: LayoutUiState,
     private val rootDir: () -> Path?,
     private val focused: () -> EditorPaneState,
@@ -83,8 +87,9 @@ internal class CommandPaletteController(
             && status == LspController.Status.READY
         ) {
             val uri = activePath.toUri().toString()
-            ctrl.documentSymbols(activePath).whenComplete { syms, err ->
-                if (err == null && syms != null) {
+            scope.launch {
+                val syms = runCatching { ctrl.documentSymbols(activePath).await() }.getOrNull()
+                if (syms != null) {
                     ui.documentSymbolUri = uri
                     ui.documentSymbolList = syms
                     ui.documentSymbolOpen = true
@@ -109,9 +114,9 @@ internal class CommandPaletteController(
             && fmtCtrl != null
             && fmtCtrl.status.value == LspController.Status.READY
         ) {
-            fmtCtrl.formatting(activePath).whenComplete { edits, err ->
-                val list = edits.orEmpty()
-                if (err == null && list.isNotEmpty()) {
+            scope.launch {
+                val list = runCatching { fmtCtrl.formatting(activePath).await() }.getOrNull().orEmpty()
+                if (list.isNotEmpty()) {
                     val change = RenameFileChange(activePath.toUri().toString(), list)
                     applyRename(RenameWorkspaceEdit(listOf(change)))
                 }
@@ -157,8 +162,11 @@ internal class CommandPaletteController(
                 val lineEnd = text.indexOf('\n', lineStart).let { if (it < 0) text.length else it }
                 lineEnd - lineStart
             }
-            caCtrl.codeActions(activePath, line, 0, line, lineLen).whenComplete { actions, err ->
-                if (err == null) {
+            scope.launch {
+                val actions = runCatching {
+                    caCtrl.codeActions(activePath, line, 0, line, lineLen).await()
+                }.getOrNull()
+                run {
                     val raw = localActions + actions.orEmpty()
                     val list = raw.map { entry ->
                         val normalized = page.lsp.CodeActionNormalize.normalize(entry.edit, snapshotUri, snapshotText)

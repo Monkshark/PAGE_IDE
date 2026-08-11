@@ -16,9 +16,13 @@ import page.lsp.ReferenceLocation
 import page.lsp.RenameApply
 import page.lsp.RenameWorkspaceEdit
 import page.lsp.pickSingleOtherReference
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.future.await
+import kotlinx.coroutines.launch
 import java.nio.file.Path
 
 internal class LspEditorInterconnector(
+    private val scope: CoroutineScope,
     private val focused: () -> EditorPaneState,
     private val paneOf: (PaneSide) -> EditorPaneState,
     private val setPane: (PaneSide, EditorPaneState) -> Unit,
@@ -60,16 +64,19 @@ internal class LspEditorInterconnector(
             publishLocalUsages(symbol, origin, surface)
             return
         }
-        ctrl.references(p, line, char, includeDeclaration = true, symbolName = symbol)
-            .whenComplete { results, err ->
-                if (err != null) {
+        scope.launch {
+            val results = runCatching {
+                ctrl.references(p, line, char, includeDeclaration = true, symbolName = symbol).await()
+            }.getOrNull()
+            run {
+                if (results == null) {
                     publishLocalUsages(symbol, origin, surface)
-                    return@whenComplete
+                    return@launch
                 }
-                val list = results.orEmpty()
+                val list = results
                 if (list.isEmpty()) {
                     publishLocalUsages(symbol, origin, surface)
-                    return@whenComplete
+                    return@launch
                 }
                 val autoJump = pickSingleOtherReference(list, origin, line, char)
                 if (autoJump != null) {
@@ -102,6 +109,7 @@ internal class LspEditorInterconnector(
                     )
                 }
             }
+        }
     }
 
     private fun publishLocalUsages(symbol: String, origin: String, surface: ReferencesSurface) {

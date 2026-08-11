@@ -136,6 +136,7 @@ fun main() {
         System.setProperty("apple.laf.useScreenMenuBar", "true")
         System.setProperty("apple.awt.application.name", "PAGE")
     }
+    CrashLog.install()
     PerfRegistry.start(StartupKind.COLD).begin(StartupPhases.COMPOSE_INIT)
     UiFreezeWatchdog.start()
     application {

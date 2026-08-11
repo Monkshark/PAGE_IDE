@@ -136,6 +136,7 @@ internal class AppController(
     }
 
     private val lspEditorInterconnector = LspEditorInterconnector(
+        scope = appScope,
         focused = { focused() },
         paneOf = { side -> paneOf(side) },
         setPane = { side, value -> setPane(side, value) },
@@ -434,6 +435,7 @@ internal class AppController(
     val doRedo = historyController::doRedo
 
     private val paletteController = CommandPaletteController(
+        scope = appScope,
         ui = layoutUiState,
         rootDir = { workspaceState.rootDir },
         focused = { focused() },
