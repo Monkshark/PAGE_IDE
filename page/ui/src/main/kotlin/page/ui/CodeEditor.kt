@@ -101,15 +101,24 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.IntRect
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.window.rememberCursorPositionProvider
 import kotlinx.coroutines.delay
 import kotlin.math.ceil
 import kotlin.math.floor
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.verticalScroll
 import page.editor.EditHistory
 import page.editor.EditSnapshot
 import page.editor.PageScroll
+import page.shared.syntax.KotlinLexer
+import page.shared.syntax.SyntaxPreset
+import page.shared.syntax.colorizeCode
 
 data class EditorContextAction(
     val label: String,
@@ -149,6 +158,8 @@ fun CodeEditor(
     onHover: ((originalOffset: Int?) -> Unit)? = null,
     hoverText: String? = null,
     hoverDiagnostic: HoverDiagnostic? = null,
+    hoverPending: Boolean = false,
+    hoverSyntaxPreset: SyntaxPreset = SyntaxPreset.CALM,
     completionItems: List<CompletionDisplay> = emptyList(),
     completionSelectedIndex: Int = 0,
     completionAnchorOffset: Int? = null,
@@ -235,11 +246,12 @@ fun CodeEditor(
         val resolver = latestResolveCtrlHoverLink
         if (ctrlPressedState && off != null && resolver != null) resolver(off) else null
     }
-    LaunchedEffect(hoverText, hoverDiagnostic) {
-        if (hoverText.isNullOrBlank() && hoverDiagnostic == null) {
-            latchedHoverPosition = null
-        } else {
-            latchedHoverPosition = hoverPosition
+    LaunchedEffect(hoverText, hoverDiagnostic, hoverPending, ctrlPressedState) {
+        val empty = hoverText.isNullOrBlank() && hoverDiagnostic == null && !hoverPending
+        when {
+            !empty -> latchedHoverPosition = hoverPosition
+            ctrlPressedState -> Unit
+            else -> latchedHoverPosition = null
         }
     }
 
@@ -813,13 +825,16 @@ fun CodeEditor(
         val hoverDiagnosticSnapshot = hoverDiagnostic
         val hoverPositionSnapshot = latchedHoverPosition
         if (
-            (!hoverTextSnapshot.isNullOrBlank() || hoverDiagnosticSnapshot != null) &&
+            (!hoverTextSnapshot.isNullOrBlank() || hoverDiagnosticSnapshot != null || hoverPending) &&
             hoverPositionSnapshot != null
         ) {
             HoverPopup(
                 text = hoverTextSnapshot,
                 diagnostic = hoverDiagnosticSnapshot,
                 position = hoverPositionSnapshot,
+                pending = hoverPending,
+                preset = hoverSyntaxPreset,
+                keepOpen = ctrlPressedState,
             )
         }
         if (completionItems.isNotEmpty()) {
@@ -1192,71 +1207,206 @@ private fun CompletionPopup(
 }
 
 @Composable
-private fun HoverPopup(text: String?, diagnostic: HoverDiagnostic?, position: Offset) {
+private fun HoverPopup(
+    text: String?,
+    diagnostic: HoverDiagnostic?,
+    position: Offset,
+    pending: Boolean,
+    preset: SyntaxPreset,
+    keepOpen: Boolean,
+) {
     val segments = remember(text) {
         if (text.isNullOrBlank()) emptyList() else parseHoverMarkdown(text)
     }
+    val signature = segments.firstOrNull()?.takeIf { it.kind == HoverSegmentKind.CODE }
+    val rest = if (signature != null) segments.drop(1) else segments
+    var docsOpen by remember(text, diagnostic) { mutableStateOf(diagnostic == null) }
+    val scroll = rememberScrollState()
+    val hasDocs = rest.isNotEmpty()
+
     Popup(
-        offset = IntOffset(position.x.toInt() + 12, position.y.toInt() + 18),
+        popupPositionProvider = remember(position) { HoverPositionProvider(position) },
         focusable = false,
     ) {
         GlassPopup(modifier = Modifier.widthIn(max = 560.dp)) {
-            Column {
-                if (diagnostic != null) {
-                    DiagnosticHeader(diagnostic)
-                }
-                segments.forEach { seg ->
-                    when (seg.kind) {
-                        HoverSegmentKind.CODE -> {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(Glass.colors.outline.copy(alpha = 0.45f))
-                                    .padding(horizontal = 13.dp, vertical = 9.dp),
-                            ) {
-                                Text(
-                                    text = seg.text,
-                                    style = TextStyle(
-                                        fontFamily = EditorFontFamily,
-                                        fontSize = 13.sp,
-                                        lineHeight = 18.sp,
-                                    ),
-                                    color = Glass.colors.text,
-                                )
-                            }
+            SelectionContainer {
+                Column {
+                    if (diagnostic != null) DiagnosticHeader(diagnostic)
+                    if (signature != null) HoverSignature(signature.text, preset)
+                    if (docsOpen) {
+                        Column(modifier = Modifier.heightIn(max = 320.dp).verticalScroll(scroll)) {
+                            rest.forEach { seg -> HoverSegmentBody(seg, preset) }
+                            if (pending) HoverPendingRow()
                         }
-                        HoverSegmentKind.TEXT -> {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 13.dp, vertical = 8.dp),
-                            ) {
-                                Text(
-                                    text = seg.text,
-                                    style = MaterialTheme.typography.bodySmall.copy(
-                                        fontSize = 13.sp,
-                                        lineHeight = 18.sp,
-                                    ),
-                                    color = Glass.colors.text,
-                                )
-                            }
-                        }
-                        HoverSegmentKind.RULE -> {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 13.dp, vertical = 4.dp)
-                                    .height(1.dp)
-                                    .background(Glass.colors.separator),
-                            )
-                        }
-                        HoverSegmentKind.TAGS -> {
-                            KdocTagList(seg.tags)
-                        }
+                    } else if (pending) {
+                        HoverPendingRow()
                     }
+                    HoverFooter(
+                        hasDocs = hasDocs,
+                        docsOpen = docsOpen,
+                        collapsible = diagnostic != null && hasDocs,
+                        keepOpen = keepOpen,
+                        onToggleDocs = { docsOpen = !docsOpen },
+                    )
                 }
             }
         }
+    }
+}
+
+internal fun hoverPopupOffset(
+    anchor: Offset,
+    anchorBounds: IntRect,
+    windowSize: IntSize,
+    popupContentSize: IntSize,
+): IntOffset {
+    val originX = anchorBounds.left + anchor.x.toInt()
+    val originY = anchorBounds.top + anchor.y.toInt()
+    val x = if (originX + 12 + popupContentSize.width <= windowSize.width) {
+        originX + 12
+    } else {
+        (originX - 12 - popupContentSize.width).coerceAtLeast(0)
+    }
+    val y = if (originY + 18 + popupContentSize.height <= windowSize.height) {
+        originY + 18
+    } else {
+        (originY - 10 - popupContentSize.height).coerceAtLeast(0)
+    }
+    return IntOffset(x, y)
+}
+
+private class HoverPositionProvider(private val anchor: Offset) : PopupPositionProvider {
+    override fun calculatePosition(
+        anchorBounds: IntRect,
+        windowSize: IntSize,
+        layoutDirection: LayoutDirection,
+        popupContentSize: IntSize,
+    ): IntOffset = hoverPopupOffset(anchor, anchorBounds, windowSize, popupContentSize)
+}
+
+@Composable
+private fun HoverSignature(code: String, preset: SyntaxPreset) {
+    val colors = Glass.colors
+    val styled = remember(code, preset, colors.syntax) {
+        colorizeCode(code, KotlinLexer, colors.syntax, preset)
+    }
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(colors.surfaceL1)
+            .padding(horizontal = 13.dp, vertical = 9.dp),
+    ) {
+        Text(
+            text = styled,
+            style = TextStyle(fontFamily = EditorFontFamily, fontSize = 13.sp, lineHeight = 18.sp),
+            color = colors.text,
+        )
+    }
+}
+
+@Composable
+private fun HoverSegmentBody(seg: HoverSegment, preset: SyntaxPreset) {
+    when (seg.kind) {
+        HoverSegmentKind.CODE -> HoverSignature(seg.text, preset)
+        HoverSegmentKind.TEXT -> {
+            Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 13.dp, vertical = 8.dp)) {
+                Text(
+                    text = seg.text,
+                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp, lineHeight = 18.sp),
+                    color = Glass.colors.text,
+                )
+            }
+        }
+        HoverSegmentKind.RULE -> {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 13.dp, vertical = 4.dp)
+                    .height(1.dp)
+                    .background(Glass.colors.separator),
+            )
+        }
+        HoverSegmentKind.TAGS -> KdocTagList(seg.tags)
+    }
+}
+
+@Composable
+private fun HoverPendingRow() {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 13.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .size(7.dp)
+                .background(Glass.colors.primary, CircleShape),
+        )
+        Text(
+            text = "Looking up documentation…",
+            style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+            color = Glass.colors.muted,
+        )
+    }
+}
+
+@Composable
+private fun HoverFooter(
+    hasDocs: Boolean,
+    docsOpen: Boolean,
+    collapsible: Boolean,
+    keepOpen: Boolean,
+    onToggleDocs: () -> Unit,
+) {
+    val colors = Glass.colors
+    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(colors.separator))
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(colors.surfaceL1)
+            .padding(horizontal = 10.dp, vertical = 5.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        HoverHint("F12", "definition")
+        HoverHint("Shift+F12", "usages")
+        Box(Modifier.weight(1f))
+        if (collapsible) {
+            Text(
+                text = if (docsOpen) "Hide docs" else "Show docs",
+                style = MaterialTheme.typography.labelSmall,
+                color = colors.primary,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(Glass.radius.xs))
+                    .clickable(onClick = onToggleDocs)
+                    .padding(horizontal = 6.dp, vertical = 2.dp),
+            )
+        } else if (keepOpen) {
+            Text(
+                text = "held open",
+                style = MaterialTheme.typography.labelSmall,
+                color = colors.primary,
+            )
+        } else {
+            HoverHint("Ctrl", "to keep open")
+        }
+    }
+}
+
+@Composable
+private fun HoverHint(key: String, label: String) {
+    val colors = Glass.colors
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+        Text(
+            text = key,
+            style = MaterialTheme.typography.labelSmall.copy(fontFamily = EditorFontFamily),
+            color = colors.muted,
+            modifier = Modifier
+                .clip(RoundedCornerShape(Glass.radius.xs))
+                .background(colors.surfaceL2)
+                .padding(horizontal = 5.dp, vertical = 1.dp),
+        )
+        Text(text = label, style = MaterialTheme.typography.labelSmall, color = colors.faint)
     }
 }
 
