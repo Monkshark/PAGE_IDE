@@ -368,6 +368,7 @@ fun EditorPanel(
     var hoverOffset by remember(activePath) { mutableStateOf<Int?>(null) }
     var lspHoverInfo by remember(activePath) { mutableStateOf<HoverInfo?>(null) }
     var lspHoverRequestToken by remember(activePath) { mutableStateOf(0) }
+    var lspHoverPending by remember(activePath) { mutableStateOf(false) }
     LaunchedEffect(pendingHoverDiagnostic) {
         val target = pendingHoverDiagnostic
         if (target == null) {
@@ -380,6 +381,7 @@ fun EditorPanel(
     LaunchedEffect(hoverOffset, value.text) {
         val off = hoverOffset
         lspHoverInfo = null
+        lspHoverPending = false
         lspHoverRequestToken += 1
         val token = lspHoverRequestToken
         if (off == null) return@LaunchedEffect
@@ -390,8 +392,11 @@ fun EditorPanel(
         val pos = TextBuffer(text).lineColOf(safeOff)
         delay(pageSettings.lsp.hoverDelayMs.toLong().coerceAtLeast(0L))
         if (token != lspHoverRequestToken) return@LaunchedEffect
+        lspHoverPending = true
         cb(pos.line, pos.col).whenComplete { info, _ ->
-            if (token != lspHoverRequestToken || info == null) return@whenComplete
+            if (token != lspHoverRequestToken) return@whenComplete
+            lspHoverPending = false
+            if (info == null) return@whenComplete
             val lineText = TextBuffer(text).lineAt(pos.line)
             val enriched = info.enrichForPropertyDecl(lineText, pos.col)
             lspHoverInfo = enriched
@@ -1504,6 +1509,8 @@ fun EditorPanel(
                     hoverOffset = origOff
                 },
                 hoverText = lspHoverInfo?.markdown?.takeIf { it.isNotBlank() },
+                hoverPending = lspHoverPending,
+                hoverSyntaxPreset = pageSettings.editor.syntaxPreset,
                 hoverDiagnostic = hoverDiagnostic?.let { d ->
                     page.ui.HoverDiagnostic(
                         severity = when (d.severity) {
