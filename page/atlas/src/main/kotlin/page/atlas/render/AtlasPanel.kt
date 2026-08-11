@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -94,7 +95,7 @@ fun AtlasContent(
     onClose: () -> Unit,
     projectMode: Boolean = false,
     onProjectModeChange: (Boolean) -> Unit = {},
-    viewTab: AtlasViewTab = AtlasViewTab.RELATIONS,
+    viewTab: AtlasViewTab = AtlasViewTab.MODULES,
     onViewTabChange: (AtlasViewTab) -> Unit = {},
     mapView: MapViewState = remember { MapViewState() },
     atlasView: AtlasViewState = remember { AtlasViewState() },
@@ -173,7 +174,7 @@ fun AtlasContent(
     val activeModuleId = remember(moduleGraph) {
         moduleGraph.nodes.firstOrNull { it.kind == NodeKind.ACTIVE }?.id
     }
-    var searchOpen by remember { mutableStateOf(false) }
+    var searchFocusTick by remember { mutableStateOf(0) }
     var searchQuery by remember { mutableStateOf("") }
     var searchIndex by remember { mutableStateOf(-1) }
     var insightFocusOverride by remember(activeFileId) { mutableStateOf<String?>(null) }
@@ -197,10 +198,10 @@ fun AtlasContent(
             .focusable()
             .onPreviewKeyEvent { event ->
                 if (event.type == KeyEventType.KeyDown && event.isCtrlPressed && event.key == Key.F) {
-                    searchOpen = true
+                    searchFocusTick += 1
                     true
                 } else if (event.type == KeyEventType.KeyDown && event.key == Key.Escape &&
-                    viewTab == AtlasViewTab.RELATIONS &&
+                    viewTab == AtlasViewTab.MODULES &&
                     (overviewSelection.kind != OverviewSelection.Kind.NONE || overviewSelection.drillPath.isNotEmpty())
                 ) {
                     overviewSelection = when {
@@ -226,36 +227,20 @@ fun AtlasContent(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(28.dp)
-                .padding(horizontal = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(2.dp),
-        ) {
-            Text(
-                text = "ATLAS",
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.SemiBold,
-                letterSpacing = 0.6.sp,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            Box(modifier = Modifier.weight(1f))
-            HeaderAction("Close", accent = true, onClick = onClose)
-        }
-        Divider()
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(30.dp)
-                .padding(horizontal = 10.dp),
+                .height(36.dp)
+                .padding(start = 10.dp, end = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(3.dp),
         ) {
-            ModeChip("Relations", viewTab == AtlasViewTab.RELATIONS) { onViewTabChange(AtlasViewTab.RELATIONS) }
-            ModeChip("Analysis", viewTab == AtlasViewTab.ANALYSIS) { onViewTabChange(AtlasViewTab.ANALYSIS) }
+            val problemCount = remember(slice) { atlasProblemCount(slice) }
+            for (tab in AtlasViewTab.entries) {
+                ModeChip(
+                    label = tab.label,
+                    selected = viewTab == tab,
+                    badge = if (tab == AtlasViewTab.PROBLEMS && problemCount > 0) problemCount.toString() else null,
+                ) { onViewTabChange(tab) }
+            }
             Box(modifier = Modifier.weight(1f))
-        }
-        Divider()
-        if (searchOpen) {
             AtlasSearchBar(
                 query = searchQuery,
                 onQueryChange = {
@@ -267,14 +252,16 @@ fun AtlasContent(
                 onNext = { focusSearchMatch(1) },
                 onPrev = { focusSearchMatch(-1) },
                 onClose = {
-                    searchOpen = false
                     searchQuery = ""
                     searchIndex = -1
                     runCatching { contentFocus.requestFocus() }
                 },
+                focusTick = searchFocusTick,
+                modifier = Modifier.width(210.dp),
             )
-            Divider()
+            PanelCloseButton(onClose)
         }
+        Divider()
         if (slice.nodes.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 val progress = loadProgress
@@ -287,12 +274,16 @@ fun AtlasContent(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-        } else if (viewTab == AtlasViewTab.RELATIONS) {
+        } else if (viewTab == AtlasViewTab.MODULES) {
             var overviewBoxPos by remember { mutableStateOf(Offset.Zero) }
+            val selectedModuleForSide = overviewSelection.moduleId
+                ?.takeIf { overviewSelection.kind == OverviewSelection.Kind.MODULE }
+                ?.let { id -> moduleGraph.nodes.firstOrNull { it.id == id } }
+            Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .fillMaxWidth()
+                    .fillMaxHeight()
                     .onGloballyPositioned { overviewBoxPos = it.positionInRoot() },
             ) {
                 OverviewCanvas(
@@ -318,25 +309,47 @@ fun AtlasContent(
                     drillOutMillis = drillStepMillis,
                     drillOutEasing = drillOutEasing,
                 )
-                if (overviewSelection.drillPath.isNotEmpty()) {
+                if (overviewSelection.drillPath.isNotEmpty() || moduleGraph.droppedModules > 0) {
                     Column(
                         modifier = Modifier
                             .align(Alignment.TopStart)
                             .padding(8.dp),
                         verticalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
-                        Box(
+                        Row(
                             modifier = Modifier
                                 .background(
                                     MaterialTheme.colorScheme.surface.copy(alpha = 0.93f),
                                     RoundedCornerShape(8.dp),
                                 )
                                 .padding(horizontal = 8.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             OverviewBreadcrumb(
                                 drillPath = overviewSelection.drillPath,
                                 onNavigate = { depth -> requestDrillOut(depth) },
                             )
+                            if (moduleGraph.droppedModules > 0) {
+                                Text(
+                                    text = "·",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.outlineVariant,
+                                )
+                                Text(
+                                    text = "${moduleGraph.nodes.size} of " +
+                                        "${moduleGraph.nodes.size + moduleGraph.droppedModules} modules",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                            if (overviewSelection.drillPath.isNotEmpty()) {
+                                Text(
+                                    text = "Esc to go up",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.outlineVariant,
+                                )
+                            }
                         }
                         val lastIndex = overviewSelection.drillPath.lastIndex
                         overviewSelection.drillPath.forEachIndexed { i, id ->
@@ -367,18 +380,6 @@ fun AtlasContent(
                         }
                     }
                 }
-                val selectedModule = overviewSelection.moduleId
-                    ?.takeIf { overviewSelection.kind == OverviewSelection.Kind.MODULE }
-                    ?.let { id -> moduleGraph.nodes.firstOrNull { it.id == id } }
-                if (selectedModule != null) {
-                    OverviewInspector(
-                        graph = moduleGraph,
-                        module = selectedModule,
-                        onSelectModule = { overviewSelection = overviewSelection.selectModule(it) },
-                        onOpenFile = openFile,
-                        modifier = Modifier.align(Alignment.TopEnd).padding(8.dp),
-                    )
-                }
                 val pathFrom = overviewSelection.moduleId
                     ?.takeIf { overviewSelection.kind == OverviewSelection.Kind.PATH }
                 val pathTo = overviewSelection.pathTarget
@@ -392,32 +393,42 @@ fun AtlasContent(
                         modifier = Modifier.align(Alignment.TopEnd).padding(8.dp),
                     )
                 }
-                if (moduleGraph.droppedModules > 0) {
-                    Text(
-                        text = "Showing largest ${moduleGraph.nodes.size} modules · ${moduleGraph.droppedModules} smaller hidden",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier
-                            .align(Alignment.BottomStart)
-                            .padding(12.dp)
-                            .background(
-                                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.85f),
-                                RoundedCornerShape(8.dp),
-                            )
-                            .padding(horizontal = 8.dp, vertical = 3.dp),
-                    )
-                }
             }
-        } else {
+            if (selectedModuleForSide != null) {
+                Divider(vertical = true)
+                OverviewInspector(
+                    graph = moduleGraph,
+                    module = selectedModuleForSide,
+                    onSelectModule = { overviewSelection = overviewSelection.selectModule(it) },
+                    onOpenFile = openFile,
+                    modifier = Modifier.width(232.dp).fillMaxHeight(),
+                )
+            }
+            }
+        } else if (viewTab == AtlasViewTab.FILE) {
             val insightFocus = remember(slice, activeFileId, selectedId, insightFocusOverride) {
                 insightFocusOverride?.takeIf { id -> slice.nodes.any { it.id == id } }
                     ?: listOf(activeFileId, selectedId)
                         .firstOrNull { id -> id != null && slice.nodes.any { it.id == id } }
             }
             Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                DependencyInsightPanel(
+                FileInsightPanel(
                     slice = slice,
                     focusId = insightFocus,
+                    onOpen = onNodeClick,
+                    onRefocus = { insightFocusOverride = it },
+                )
+            }
+        } else {
+            val problemFocus = remember(slice, activeFileId, selectedId, insightFocusOverride) {
+                insightFocusOverride?.takeIf { id -> slice.nodes.any { it.id == id } }
+                    ?: listOf(activeFileId, selectedId)
+                        .firstOrNull { id -> id != null && slice.nodes.any { it.id == id } }
+            }
+            Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                AtlasProblemsPanel(
+                    slice = slice,
+                    focusId = problemFocus,
                     onOpen = onNodeClick,
                     onRefocus = { insightFocusOverride = it },
                 )
@@ -582,6 +593,37 @@ private fun DrilledCard(
 }
 
 @Composable
+private fun PanelCloseButton(onClose: () -> Unit) {
+    val interaction = remember { MutableInteractionSource() }
+    val hovered by interaction.collectIsHoveredAsState()
+    Box(
+        modifier = Modifier
+            .size(24.dp)
+            .clip(RoundedCornerShape(6.dp))
+            .background(
+                if (hovered) {
+                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
+                } else {
+                    Color.Transparent
+                },
+            )
+            .hoverable(interaction)
+            .clickable(interactionSource = interaction, indication = null) { onClose() },
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = "✕",
+            style = MaterialTheme.typography.labelSmall,
+            color = if (hovered) {
+                MaterialTheme.colorScheme.onSurface
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            },
+        )
+    }
+}
+
+@Composable
 internal fun HeaderAction(label: String, accent: Boolean = false, onClick: () -> Unit) {
     val interaction = remember { MutableInteractionSource() }
     val hovered by interaction.collectIsHoveredAsState()
@@ -603,7 +645,7 @@ internal fun HeaderAction(label: String, accent: Boolean = false, onClick: () ->
 }
 
 @Composable
-private fun ModeChip(label: String, selected: Boolean, onClick: () -> Unit) {
+private fun ModeChip(label: String, selected: Boolean, badge: String? = null, onClick: () -> Unit) {
     val interaction = remember { MutableInteractionSource() }
     val hovered by interaction.collectIsHoveredAsState()
     val bg = when {
@@ -611,13 +653,15 @@ private fun ModeChip(label: String, selected: Boolean, onClick: () -> Unit) {
         hovered -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f)
         else -> Color.Transparent
     }
-    Box(
+    Row(
         modifier = Modifier
             .clip(RoundedCornerShape(7.dp))
             .background(bg)
             .hoverable(interaction)
             .clickable(interactionSource = interaction, indication = null) { onClick() }
             .padding(horizontal = 9.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Text(
             text = label,
@@ -625,7 +669,24 @@ private fun ModeChip(label: String, selected: Boolean, onClick: () -> Unit) {
             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
             color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        if (badge != null) {
+            Text(
+                text = badge,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.error,
+            )
+        }
     }
+}
+
+@Composable
+internal fun Divider(vertical: Boolean) {
+    Box(
+        modifier = Modifier
+            .let { if (vertical) it.width(1.dp).fillMaxHeight() else it.fillMaxWidth().height(1.dp) }
+            .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)),
+    )
 }
 
 @Composable

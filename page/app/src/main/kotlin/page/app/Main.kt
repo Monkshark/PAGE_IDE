@@ -440,8 +440,7 @@ private fun androidx.compose.ui.window.ApplicationScope.AppContent() {
     val atlasViewTab = layoutUiState.atlasViewTab
     val atlasExpanded = layoutUiState.expandedPanel == page.app.mvi.ExpandedPanel.ATLAS
     LaunchedEffect(atlasExpanded, atlasProjectMode, atlasViewTab, atlasProvider, focusedActivePath, focusedActiveText) {
-        val projectScope = atlasViewTab == page.atlas.render.AtlasViewTab.RELATIONS ||
-            atlasViewTab == page.atlas.render.AtlasViewTab.ANALYSIS
+        val projectScope = true
         if (!atlasExpanded || atlasProvider == null ||
             (!projectScope && !atlasProjectMode && focusedActivePath == null)
         ) {

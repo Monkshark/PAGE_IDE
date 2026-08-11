@@ -180,17 +180,17 @@ class SessionCoordinatorTest {
         view.yaw = 1.1f
         view.pitch = 0.3f
         view.zoomUser = 2f
-        layoutUiState.atlasViewTab = AtlasViewTab.ANALYSIS
+        layoutUiState.atlasViewTab = AtlasViewTab.PROBLEMS
         SessionStore.save(ws, coordinator(ws, atlasView = view).snapshot())
 
-        layoutUiState.atlasViewTab = AtlasViewTab.RELATIONS
+        layoutUiState.atlasViewTab = AtlasViewTab.MODULES
         val restored = AtlasViewState()
         runBlocking { coordinator(ws, atlasView = restored).restore(ws) }
 
         assertEquals(1.1f, restored.yaw)
         assertEquals(0.3f, restored.pitch)
         assertEquals(2f, restored.zoomUser)
-        assertEquals(AtlasViewTab.ANALYSIS, layoutUiState.atlasViewTab)
+        assertEquals(AtlasViewTab.PROBLEMS, layoutUiState.atlasViewTab)
     }
 
     @Test

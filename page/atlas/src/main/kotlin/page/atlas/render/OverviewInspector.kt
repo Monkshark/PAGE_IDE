@@ -52,10 +52,7 @@ internal fun OverviewInspector(
 
     Column(
         modifier = modifier
-            .width(210.dp)
-            .heightIn(max = 360.dp)
-            .clip(RoundedCornerShape(10.dp))
-            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.93f))
+            .background(MaterialTheme.colorScheme.surface)
             .verticalScroll(rememberScrollState())
             .padding(vertical = 8.dp),
     ) {

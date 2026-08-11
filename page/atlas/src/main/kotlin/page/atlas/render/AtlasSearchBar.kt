@@ -37,12 +37,15 @@ internal fun AtlasSearchBar(
     onNext: () -> Unit,
     onPrev: () -> Unit,
     onClose: () -> Unit,
+    focusTick: Int = 0,
+    modifier: Modifier = Modifier,
 ) {
     val focusRequester = remember { FocusRequester() }
-    LaunchedEffect(Unit) { runCatching { focusRequester.requestFocus() } }
+    LaunchedEffect(focusTick) {
+        if (focusTick > 0) runCatching { focusRequester.requestFocus() }
+    }
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = modifier
             .height(26.dp)
             .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
