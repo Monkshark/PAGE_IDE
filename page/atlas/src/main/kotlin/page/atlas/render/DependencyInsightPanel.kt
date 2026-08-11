@@ -40,7 +40,7 @@ import page.ui.EditorFontFamily
 private const val HUB_MIN_DEPENDENTS = 8
 
 @Composable
-fun DependencyInsightPanel(
+fun FileInsightPanel(
     slice: GraphSlice,
     focusId: String?,
     onOpen: (FilePath) -> Unit,
@@ -50,19 +50,14 @@ fun DependencyInsightPanel(
     val impact = remember(slice, focusId) {
         focusId?.let { GraphInsights.impact(slice, it) } ?: emptyList()
     }
-    val cycleGroups = remember(slice, focusId) {
-        val groups = GraphInsights.cycleGroups(slice)
-        if (focusId == null) groups
-        else groups.sortedByDescending { group -> group.members.any { it.id == focusId } }
-    }
-    val hubs = remember(slice) {
-        GraphInsights.hubs(slice).filter { it.dependents >= HUB_MIN_DEPENDENTS }
-    }
     val focusLabel = remember(slice, focusId) {
         focusId?.let { id -> slice.nodes.firstOrNull { it.id == id }?.label }
     }
     val ranked = remember(impact) {
         impact.sortedWith(compareBy({ it.depth }, { it.node.label.lowercase() }))
+    }
+    val neighbourhood = remember(slice, focusId) {
+        focusId?.let { GraphInsights.neighborhood(slice, it, limit = 12) }
     }
 
     Box(modifier.fillMaxSize().background(AtlasInk.canvas)) {
@@ -71,7 +66,7 @@ fun DependencyInsightPanel(
             if (wide) {
                 Row(horizontalArrangement = Arrangement.spacedBy(36.dp)) {
                     ImpactColumn(ranked, focusLabel, onRefocus, onOpen, Modifier.weight(1f))
-                    ProblemsColumn(cycleGroups, hubs, onRefocus, onOpen, Modifier.weight(1f))
+                    NeighbourColumn(neighbourhood, onRefocus, onOpen, Modifier.weight(1f))
                 }
             } else {
                 Column(
@@ -79,10 +74,110 @@ fun DependencyInsightPanel(
                     verticalArrangement = Arrangement.spacedBy(28.dp),
                 ) {
                     ImpactColumn(ranked, focusLabel, onRefocus, onOpen, Modifier.fillMaxWidth())
-                    ProblemsColumn(cycleGroups, hubs, onRefocus, onOpen, Modifier.fillMaxWidth())
+                    NeighbourColumn(neighbourhood, onRefocus, onOpen, Modifier.fillMaxWidth())
                 }
             }
         }
+    }
+}
+
+@Composable
+fun AtlasProblemsPanel(
+    slice: GraphSlice,
+    focusId: String?,
+    onOpen: (FilePath) -> Unit,
+    onRefocus: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val cycleGroups = remember(slice, focusId) {
+        val groups = GraphInsights.cycleGroups(slice)
+        if (focusId == null) groups
+        else groups.sortedByDescending { group -> group.members.any { it.id == focusId } }
+    }
+    val hubs = remember(slice) {
+        GraphInsights.hubs(slice).filter { it.dependents >= HUB_MIN_DEPENDENTS }
+    }
+    Box(modifier.fillMaxSize().background(AtlasInk.canvas)) {
+        ProblemsColumn(
+            cycleGroups,
+            hubs,
+            onRefocus,
+            onOpen,
+            Modifier.fillMaxSize().padding(20.dp),
+        )
+    }
+}
+
+fun atlasProblemCount(slice: GraphSlice): Int =
+    GraphInsights.cycleGroups(slice).size +
+        GraphInsights.hubs(slice).count { it.dependents >= HUB_MIN_DEPENDENTS }
+
+@Composable
+private fun NeighbourColumn(
+    neighbourhood: page.atlas.graph.Neighborhood?,
+    onRefocus: (String) -> Unit,
+    onOpen: (FilePath) -> Unit,
+    modifier: Modifier,
+) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(18.dp)) {
+        if (neighbourhood == null) {
+            SectionLabel("NEIGHBOURS")
+            Text("Open a file to see what it touches", style = mono(13.sp, AtlasInk.dim))
+            return@Column
+        }
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                SectionLabel("USED BY")
+                Pill(neighbourhood.incomingTotal.toString())
+            }
+            if (neighbourhood.incoming.isEmpty()) {
+                Text("Nothing imports this file", style = mono(12.sp, AtlasInk.dim))
+            } else {
+                for (n in neighbourhood.incoming) NeighbourRow(n, onRefocus, onOpen)
+            }
+        }
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                SectionLabel("DEPENDS ON")
+                Pill(neighbourhood.outgoingTotal.toString())
+            }
+            if (neighbourhood.outgoing.isEmpty()) {
+                Text("This file imports nothing in view", style = mono(12.sp, AtlasInk.dim))
+            } else {
+                for (n in neighbourhood.outgoing) NeighbourRow(n, onRefocus, onOpen)
+            }
+        }
+    }
+}
+
+@Composable
+private fun NeighbourRow(
+    neighbour: page.atlas.graph.Neighbor,
+    onRefocus: (String) -> Unit,
+    onOpen: (FilePath) -> Unit,
+) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .background(AtlasInk.boxFill, RoundedCornerShape(11.dp))
+            .border(1.dp, Color(0x0DFFFFFF), RoundedCornerShape(11.dp))
+            .pointerInput(neighbour.node.id) {
+                detectTapGestures(
+                    onTap = { onRefocus(neighbour.node.id) },
+                    onDoubleTap = { neighbour.node.path?.toNioPath()?.let(onOpen) },
+                )
+            }
+            .padding(horizontal = 14.dp, vertical = 9.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text(
+            ellipsizeMiddle(neighbour.node.label, 34),
+            style = mono(11.5.sp, AtlasInk.label),
+            maxLines = 1,
+            modifier = Modifier.weight(1f),
+        )
+        Text(neighbour.weight.toString(), style = mono(9.sp, AtlasInk.sub), letterSpacing = 1f)
     }
 }
 
