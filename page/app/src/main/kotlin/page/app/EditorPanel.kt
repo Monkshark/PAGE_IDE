@@ -393,24 +393,21 @@ fun EditorPanel(
         delay(pageSettings.lsp.hoverDelayMs.toLong().coerceAtLeast(0L))
         if (token != lspHoverRequestToken) return@LaunchedEffect
         lspHoverPending = true
-        cb(pos.line, pos.col).whenComplete { info, _ ->
-            if (token != lspHoverRequestToken) return@whenComplete
-            lspHoverPending = false
-            if (info == null) return@whenComplete
-            val lineText = TextBuffer(text).lineAt(pos.line)
-            val enriched = info.enrichForPropertyDecl(lineText, pos.col)
-            lspHoverInfo = enriched
-            if (enriched.needsKdocEnrichment()) {
-                val defCb = onRequestDefinition ?: return@whenComplete
-                defCb(pos.line, pos.col).whenComplete { targets, _ ->
-                    if (token != lspHoverRequestToken) return@whenComplete
-                    val target = targets?.firstOrNull() ?: return@whenComplete
-                    val defText = readDefinitionFileText(target.uri) ?: return@whenComplete
-                    val final = enriched.enrichWithKDocFromDefinition(defText, target.startLine)
-                    if (token == lspHoverRequestToken) lspHoverInfo = final
-                }
-            }
-        }
+        val info = runCatching { cb(pos.line, pos.col).await() }.getOrNull()
+        if (token != lspHoverRequestToken) return@LaunchedEffect
+        lspHoverPending = false
+        if (info == null) return@LaunchedEffect
+        val lineText = TextBuffer(text).lineAt(pos.line)
+        val enriched = info.enrichForPropertyDecl(lineText, pos.col)
+        lspHoverInfo = enriched
+        if (!enriched.needsKdocEnrichment()) return@LaunchedEffect
+        val defCb = onRequestDefinition ?: return@LaunchedEffect
+        val targets = runCatching { defCb(pos.line, pos.col).await() }.getOrNull()
+        if (token != lspHoverRequestToken) return@LaunchedEffect
+        val target = targets?.firstOrNull() ?: return@LaunchedEffect
+        val defText = readDefinitionFileText(target.uri) ?: return@LaunchedEffect
+        val final = enriched.enrichWithKDocFromDefinition(defText, target.startLine)
+        if (token == lspHoverRequestToken) lspHoverInfo = final
     }
 
     val foldExtension = remember(activePath) {
@@ -488,9 +485,8 @@ fun EditorPanel(
         }
         delay(300)
         val lineCount = buffer.lineCount
-        cb(0, 0, lineCount, 0).whenComplete { hints, _ ->
-            inlayHints = hints.orEmpty()
-        }
+        val hints = runCatching { cb(0, 0, lineCount, 0).await() }.getOrNull()
+        inlayHints = hints.orEmpty()
     }
     val inlayHintDisplays = remember(inlayHints, value.text) {
         val text = value.text
@@ -667,9 +663,8 @@ fun EditorPanel(
         val token = item.resolveToken ?: return@LaunchedEffect
         if (resolvedByToken.containsKey(token)) return@LaunchedEffect
         delay(120)
-        resolve(token).whenComplete { resolved, _ ->
-            if (resolved != null) resolvedByToken[token] = resolved
-        }
+        val resolved = runCatching { resolve(token).await() }.getOrNull()
+        if (resolved != null) resolvedByToken[token] = resolved
     }
 
     val clearTabstops: () -> Unit = {
@@ -708,20 +703,18 @@ fun EditorPanel(
                 lspSignatureActiveParam = info.effectiveActiveParameter()
             }
         }
-        cb(pos.line, pos.col, trig, retrigger).whenComplete { info, _ ->
-            if (token != lspSignatureRequestToken) return@whenComplete
+        completionScope.launch {
+            val info = runCatching { cb(pos.line, pos.col, trig, retrigger).await() }.getOrNull()
+            if (token != lspSignatureRequestToken) return@launch
             if (info != null && !info.isEmpty) {
                 apply(info)
-                return@whenComplete
+                return@launch
             }
-            completionScope.launch {
-                delay(180)
-                if (token != lspSignatureRequestToken) return@launch
-                cb(pos.line, pos.col, trig, true).whenComplete { retry, _ ->
-                    if (token != lspSignatureRequestToken) return@whenComplete
-                    apply(retry)
-                }
-            }
+            delay(180)
+            if (token != lspSignatureRequestToken) return@launch
+            val retry = runCatching { cb(pos.line, pos.col, trig, true).await() }.getOrNull()
+            if (token != lspSignatureRequestToken) return@launch
+            apply(retry)
         }
     }
 
@@ -765,14 +758,10 @@ fun EditorPanel(
         completionScope.launch {
             delay(80)
             if (token != completionRequestToken) return@launch
-            cb(pos.line, pos.col, null).whenComplete { list, throwable ->
-                if (throwable != null || list == null) return@whenComplete
-                completionScope.launch {
-                    if (token == completionRequestToken) {
-                        completionItems = list.items
-                        if (completionSelectedIndex >= list.items.size) completionSelectedIndex = 0
-                    }
-                }
+            val list = runCatching { cb(pos.line, pos.col, null).await() }.getOrNull()
+            if (list != null && token == completionRequestToken) {
+                completionItems = list.items
+                if (completionSelectedIndex >= list.items.size) completionSelectedIndex = 0
             }
         }
     }
@@ -864,14 +853,13 @@ fun EditorPanel(
         val cached = token?.let { resolvedByToken[it] }
         val resolve = onResolveCompletion
         if (token != null && resolve != null && cached == null && item.additionalEdits.isEmpty()) {
-            resolve(token)
-                .orTimeout(400, java.util.concurrent.TimeUnit.MILLISECONDS)
-                .whenComplete { resolved, _ ->
-                    completionScope.launch {
-                        if (resolved != null) resolvedByToken[token] = resolved
-                        finishApply(resolved?.additionalEdits?.takeIf { it.isNotEmpty() } ?: item.additionalEdits)
-                    }
-                }
+            completionScope.launch {
+                val resolved = runCatching {
+                    resolve(token).orTimeout(400, java.util.concurrent.TimeUnit.MILLISECONDS).await()
+                }.getOrNull()
+                if (resolved != null) resolvedByToken[token] = resolved
+                finishApply(resolved?.additionalEdits?.takeIf { it.isNotEmpty() } ?: item.additionalEdits)
+            }
         } else {
             finishApply(cached?.additionalEdits?.takeIf { it.isNotEmpty() } ?: item.additionalEdits)
         }
@@ -1140,7 +1128,8 @@ fun EditorPanel(
                     return true
                 }
                 pendingDeclaration = symbolName
-                defCb(pos.line, pos.col).whenComplete { targets, _ ->
+                completionScope.launch {
+                    val targets = runCatching { defCb(pos.line, pos.col).await() }.getOrNull()
                     pendingDeclaration = null
                     val first = targets?.firstOrNull()
                     val atDeclaration = first != null && refCb != null && selfUri != null &&
@@ -1385,7 +1374,8 @@ fun EditorPanel(
                         renameError = null
                         val prepare = onRequestPrepareRename
                         if (prepare != null) {
-                            prepare(pos.line, pos.col).whenComplete { p, _ ->
+                            completionScope.launch {
+                                val p = runCatching { prepare(pos.line, pos.col).await() }.getOrNull()
                                 renameRequest = when {
                                     p == null -> RenameRequestState(pos.line, pos.col, placeholder)
                                     p.isDefaultBehavior -> RenameRequestState(pos.line, pos.col, placeholder)
@@ -1430,7 +1420,8 @@ fun EditorPanel(
                             val text = value.text
                             val caret = value.selection.end.coerceIn(0, text.length)
                             val pos = TextBuffer(text).lineColOf(caret)
-                            cb(pos.line, pos.col).whenComplete { targets, _ ->
+                            completionScope.launch {
+                                val targets = runCatching { cb(pos.line, pos.col).await() }.getOrNull()
                                 val first = targets?.firstOrNull()
                                 if (first != null) nav(first)
                             }

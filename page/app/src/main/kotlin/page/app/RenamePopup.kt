@@ -20,6 +20,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,6 +41,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.future.await
 import page.lsp.RenameWorkspaceEdit
 import page.ui.Glass
@@ -103,6 +105,7 @@ internal fun RenamePopup(
     var scope by remember(request) { mutableStateOf<RenameWorkspaceEdit?>(null) }
     var scoping by remember(request) { mutableStateOf(false) }
     val focus = remember(request) { FocusRequester() }
+    val submitScope = rememberCoroutineScope()
     LaunchedEffect(request) { runCatching { focus.requestFocus() } }
 
     val name = value.text.trim()
@@ -130,8 +133,9 @@ internal fun RenamePopup(
                 if (ready != null) {
                     if (preview) onPreview(name, ready) else onApply(name, ready)
                 } else {
-                    onComputeEdit(name).whenComplete { edit, err ->
-                        if (err == null && edit != null) {
+                    submitScope.launch {
+                        val edit = runCatching { onComputeEdit(name).await() }.getOrNull()
+                        if (edit != null) {
                             if (preview) onPreview(name, edit) else onApply(name, edit)
                         }
                     }
