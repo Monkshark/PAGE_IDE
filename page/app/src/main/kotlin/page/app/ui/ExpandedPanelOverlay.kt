@@ -67,7 +67,7 @@ internal fun ExpandedPanelOverlay(
         contentAlignment = Alignment.Center,
     ) {
         GlassSurface(
-            level = GlassSurfaceLevel.Overlay,
+            level = GlassSurfaceLevel.Raised,
             shape = RoundedCornerShape(Glass.radius.lg),
             modifier = Modifier
                 .fillMaxWidth(0.88f)
