@@ -137,6 +137,7 @@ fun main() {
         System.setProperty("apple.awt.application.name", "PAGE")
     }
     CrashLog.install()
+    page.core.LspStartupStats.onRecord = { entry -> CrashLog.write("[lsp] ${entry.line()}") }
     PerfRegistry.start(StartupKind.COLD).begin(StartupPhases.COMPOSE_INIT)
     UiFreezeWatchdog.start()
     application {
