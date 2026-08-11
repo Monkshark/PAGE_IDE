@@ -228,7 +228,18 @@ class LspController(
                     readyAtMs = System.currentTimeMillis()
                     firstServerFeedbackLogged = false
                     statusDetail.value = "${backend.displayName} ready (capabilities=${result.capabilities != null})"
-                    println("[lsp] READY — capabilities=${result.capabilities != null} (spawn=${spawnMs}ms initialize=${readyAtMs - initializeStartedMs}ms)")
+                    val initializeMs = readyAtMs - initializeStartedMs
+                    println("[lsp] READY — capabilities=${result.capabilities != null} (spawn=${spawnMs}ms initialize=${initializeMs}ms)")
+                    page.core.LspStartupStats.record(
+                        page.core.LspStartupStats.Entry(
+                            backendId = backend.id,
+                            displayName = backend.displayName,
+                            origin = resolution.origin.toString(),
+                            resolveMs = startedAtMs - resolveStartedMs,
+                            spawnMs = spawnMs,
+                            initializeMs = initializeMs,
+                        ),
+                    )
                     prepareRenameSupported = detectPrepareRenameSupport(result.capabilities)
                     println("[lsp] prepareRename support = $prepareRenameSupported")
                     inlayHintSupported = detectInlayHintSupport(result.capabilities)

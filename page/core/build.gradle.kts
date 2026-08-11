@@ -4,4 +4,9 @@ plugins {
 
 dependencies {
     api(libs.kotlinx.coroutines.core)
+    testImplementation(kotlin("test"))
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
