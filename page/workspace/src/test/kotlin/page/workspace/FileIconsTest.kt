@@ -108,6 +108,7 @@ class FileIconsTest {
         "middleware" to "folder-middleware",
         "mocks" to "folder-mock",
         "node_modules" to "folder-node",
+        ".page-ide" to "folder-page",
         "packages" to "folder-packages",
         "plugins" to "folder-plugin",
         "public" to "folder-public",

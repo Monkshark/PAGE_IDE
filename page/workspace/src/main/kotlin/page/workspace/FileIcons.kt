@@ -43,6 +43,7 @@ object FileIcons {
     }
 
     private fun folderIconName(name: String): String = when {
+        name == ".page-ide" -> "folder-page"
         name == ".git" -> "folder-git"
         name == ".gradle" -> "folder-gradle"
         name == "build" || name == "out" || name == "dist" -> "folder-dist"
