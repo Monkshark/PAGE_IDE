@@ -29,6 +29,12 @@ class FileTreeGeneratedTest {
     }
 
     @Test
+    fun `our own cache directory is generated too`() {
+        assertTrue(FileTree.isGenerated(Path.of("/p/.page-ide"), depth = 1))
+        assertTrue(FileTree.isGenerated(Path.of("/p/.page-ide/lsp/jdtls/jdtls.bat"), depth = 4))
+    }
+
+    @Test
     fun `cache suffixes count too`() {
         assertTrue(FileTree.isGenerated(Path.of("/p/.xwin-cache"), depth = 1))
         assertTrue(FileTree.isGenerated(Path.of("/p/thing.egg-info"), depth = 1))
