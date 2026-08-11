@@ -227,27 +227,8 @@ fun AtlasContent(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(28.dp)
-                .padding(horizontal = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(2.dp),
-        ) {
-            Text(
-                text = "ATLAS",
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.SemiBold,
-                letterSpacing = 0.6.sp,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            Box(modifier = Modifier.weight(1f))
-            HeaderAction("Close", accent = true, onClick = onClose)
-        }
-        Divider()
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(30.dp)
-                .padding(horizontal = 10.dp),
+                .height(36.dp)
+                .padding(start = 10.dp, end = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(3.dp),
         ) {
@@ -278,6 +259,7 @@ fun AtlasContent(
                 focusTick = searchFocusTick,
                 modifier = Modifier.width(210.dp),
             )
+            PanelCloseButton(onClose)
         }
         Divider()
         if (slice.nodes.isEmpty()) {
@@ -607,6 +589,37 @@ private fun DrilledCard(
                 dim = false,
             )
         }
+    }
+}
+
+@Composable
+private fun PanelCloseButton(onClose: () -> Unit) {
+    val interaction = remember { MutableInteractionSource() }
+    val hovered by interaction.collectIsHoveredAsState()
+    Box(
+        modifier = Modifier
+            .size(24.dp)
+            .clip(RoundedCornerShape(6.dp))
+            .background(
+                if (hovered) {
+                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
+                } else {
+                    Color.Transparent
+                },
+            )
+            .hoverable(interaction)
+            .clickable(interactionSource = interaction, indication = null) { onClose() },
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = "✕",
+            style = MaterialTheme.typography.labelSmall,
+            color = if (hovered) {
+                MaterialTheme.colorScheme.onSurface
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            },
+        )
     }
 }
 
