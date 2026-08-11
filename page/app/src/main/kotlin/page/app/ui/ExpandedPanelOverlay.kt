@@ -1,6 +1,5 @@
 package page.app.ui
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
@@ -17,7 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -33,6 +31,9 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import page.ui.Glass
+import page.ui.GlassSurface
+import page.ui.GlassSurfaceLevel
 
 @Composable
 internal fun ExpandedPanelOverlay(
@@ -65,7 +66,9 @@ internal fun ExpandedPanelOverlay(
             ) { onClose() },
         contentAlignment = Alignment.Center,
     ) {
-        Surface(
+        GlassSurface(
+            level = GlassSurfaceLevel.Overlay,
+            shape = RoundedCornerShape(Glass.radius.lg),
             modifier = Modifier
                 .fillMaxWidth(0.88f)
                 .fillMaxHeight(0.86f)
@@ -73,10 +76,6 @@ internal fun ExpandedPanelOverlay(
                     interactionSource = cardInteraction,
                     indication = null,
                 ) { },
-            shape = RoundedCornerShape(14.dp),
-            color = MaterialTheme.colorScheme.background,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)),
-            shadowElevation = 18.dp,
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
                 if (title != null) {
