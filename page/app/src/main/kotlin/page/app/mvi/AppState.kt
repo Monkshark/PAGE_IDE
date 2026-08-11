@@ -44,7 +44,7 @@ internal data class LayoutState(
     val atlasOpen: Boolean = false,
     val atlasWidth: Dp = 360.dp,
     val atlasProjectMode: Boolean = false,
-    val atlasViewTab: AtlasViewTab = AtlasViewTab.RELATIONS,
+    val atlasViewTab: AtlasViewTab = AtlasViewTab.MODULES,
     val atlasVcsOverlay: Boolean = true,
     val atlasFollowActive: Boolean = false,
     val atlasFileFocus: String? = null,

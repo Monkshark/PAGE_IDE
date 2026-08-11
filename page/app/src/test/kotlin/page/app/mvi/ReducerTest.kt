@@ -90,11 +90,11 @@ class ReducerTest {
     @Test
     fun `focus in atlas expands on relations tab`() {
         val s = AppState().copy(
-            layout = AppState().layout.copy(atlasOpen = false, atlasViewTab = AtlasViewTab.ANALYSIS),
+            layout = AppState().layout.copy(atlasOpen = false, atlasViewTab = AtlasViewTab.PROBLEMS),
         )
         val focused = reduce(s, IdeEvent.Panel.FocusInAtlas)
         assertEquals(ExpandedPanel.ATLAS, focused.layout.expandedPanel)
-        assertEquals(AtlasViewTab.RELATIONS, focused.layout.atlasViewTab)
+        assertEquals(AtlasViewTab.MODULES, focused.layout.atlasViewTab)
     }
 
     @Test
@@ -139,11 +139,11 @@ class ReducerTest {
     @Test
     fun `atlas view tab defaults to relations and change replaces value`() {
         val s = AppState()
-        assertEquals(AtlasViewTab.RELATIONS, s.layout.atlasViewTab)
-        val analysis = reduce(s, IdeEvent.Panel.AtlasViewTabChanged(AtlasViewTab.ANALYSIS))
-        assertEquals(AtlasViewTab.ANALYSIS, analysis.layout.atlasViewTab)
-        val back = reduce(analysis, IdeEvent.Panel.AtlasViewTabChanged(AtlasViewTab.RELATIONS))
-        assertEquals(AtlasViewTab.RELATIONS, back.layout.atlasViewTab)
+        assertEquals(AtlasViewTab.MODULES, s.layout.atlasViewTab)
+        val analysis = reduce(s, IdeEvent.Panel.AtlasViewTabChanged(AtlasViewTab.PROBLEMS))
+        assertEquals(AtlasViewTab.PROBLEMS, analysis.layout.atlasViewTab)
+        val back = reduce(analysis, IdeEvent.Panel.AtlasViewTabChanged(AtlasViewTab.MODULES))
+        assertEquals(AtlasViewTab.MODULES, back.layout.atlasViewTab)
     }
 
     @Test

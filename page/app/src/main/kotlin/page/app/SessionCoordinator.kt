@@ -77,7 +77,7 @@ internal class SessionCoordinator(
             .toMap()
         layoutUiState.atlasFollowActive = session.atlasFollow
         layoutUiState.atlasViewTab = runCatching { AtlasViewTab.valueOf(session.atlasViewTab) }
-            .getOrDefault(AtlasViewTab.RELATIONS)
+            .getOrDefault(AtlasViewTab.MODULES)
         session.atlasMap?.let { restoreAtlasMap(it) }
     }
 
