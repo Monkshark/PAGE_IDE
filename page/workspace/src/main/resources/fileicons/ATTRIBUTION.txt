@@ -7,3 +7,6 @@ Copyright (c) 2025 Material Extensions.
 
 flutter.svg and css.svg are from Devicon
 (https://github.com/devicons/devicon), also under the MIT License.
+
+folder-page.svg is our own: the folder outline is the Material Icon
+Theme shape, the mark inside it is the PAGE logo.

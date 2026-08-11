@@ -15,7 +15,7 @@ object FileTree {
         "build", "out", "dist", "target", "bin",
         "node_modules", "vendor", "bower_components", "jspm_packages",
         ".git", ".svn", ".hg",
-        ".gradle", ".idea", ".kotlin", ".dart_tool", ".m2",
+        ".gradle", ".idea", ".kotlin", ".dart_tool", ".m2", ".page-ide",
         ".cache", ".xwin-cache", ".ccache", "caches",
         ".venv", "venv", "__pycache__", ".mypy_cache", ".pytest_cache", ".tox",
         ".next", ".nuxt", ".svelte-kit", ".angular", ".parcel-cache", ".turbo",
