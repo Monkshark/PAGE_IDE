@@ -39,12 +39,22 @@ private val stallWatchdog: Thread by lazy {
                 reportedAt = tick
                 val ui = Thread.getAllStackTraces().entries
                     .firstOrNull { it.key.name.startsWith("AWT-EventQueue") }
-                println("[fps] stall ${stalledMs}ms on ${ui?.key?.name}")
-                ui?.value?.take(25)?.forEach { println("    at $it") }
+                val stack = ui?.value
+                if (stack != null && !isWaitingForEvents(stack)) {
+                    println("[fps] stall ${stalledMs}ms on ${ui.key.name}")
+                    stack.take(25).forEach { println("    at $it") }
+                }
             }
         }
     }.apply { isDaemon = true; name = "fps-stall-watchdog" }
 }
+
+/**
+ * An idle editor stops drawing, so the last tick keeps ageing while nothing is wrong. The event
+ * thread parked in [java.awt.EventQueue.getNextEvent] is waiting for input, not stuck.
+ */
+internal fun isWaitingForEvents(stack: Array<StackTraceElement>): Boolean =
+    stack.take(8).any { it.className == "java.awt.EventQueue" && it.methodName == "getNextEvent" }
 
 private fun totalGcMillis(): Long =
     java.lang.management.ManagementFactory.getGarbageCollectorMXBeans()
