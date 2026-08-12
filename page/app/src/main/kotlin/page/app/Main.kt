@@ -643,6 +643,7 @@ private fun androidx.compose.ui.window.ApplicationScope.AppContent() {
             androidx.compose.runtime.withFrameNanos { }
             perf?.end(StartupPhases.FIRST_FRAME)
             println(perf?.summary())
+            page.workspace.FileDialogs.warmUp()
         }
         LaunchedEffect(palette) {
             val c = glassTokensFor(palette).color.background
