@@ -22,8 +22,8 @@ class LspRouter(
     private val workspaceRoot: Path?,
     private val parentScope: CoroutineScope,
 ) {
-    private val controllers = mutableMapOf<String, LspController>()
-    private val deleting = mutableSetOf<String>()
+    private val controllers = java.util.concurrent.ConcurrentHashMap<String, LspController>()
+    private val deleting = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
 
     @Volatile
     var applyEditHandler: ((RenameWorkspaceEdit) -> Boolean)? = null
@@ -57,7 +57,6 @@ class LspRouter(
         return controllers[backend.id]
     }
 
-    @Synchronized
     fun prewarm(backendId: String): Boolean {
         if (backendId in deleting) return false
         if (controllers.containsKey(backendId)) return true
@@ -65,7 +64,10 @@ class LspRouter(
         val env = HashMap(System.getenv())
         PageRuntimeEnv.applyTo(env)
         if (backend.resolveExecutable(env) !is LanguageBackend.Resolution.Found) return false
-        controllers.getOrPut(backend.id) { newController(backend) }
+        synchronized(this) {
+            if (backendId in deleting) return false
+            controllers.getOrPut(backend.id) { newController(backend) }
+        }
         return true
     }
 
@@ -121,7 +123,7 @@ class LspRouter(
     }
 
     val allDiagnosticsByUri: Map<String, List<Diagnostic>>
-        @Synchronized get() = controllers.values
+        get() = controllers.values
             .flatMap { it.diagnosticsByUri.entries }
             .associate { it.key to it.value }
 
@@ -132,7 +134,7 @@ class LspRouter(
     }
 
     val startingActivities: List<LspController.Activity>
-        @Synchronized get() = controllers.entries
+        get() = controllers.entries
             .filter { it.value.status.value == LspController.Status.STARTING }
             .map { (id, ctrl) ->
                 LspController.Activity(
