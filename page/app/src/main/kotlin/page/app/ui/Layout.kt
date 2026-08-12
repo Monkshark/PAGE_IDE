@@ -26,6 +26,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -276,15 +277,22 @@ internal fun IdeMainLayout(
                 }
             }
     }
-    val scopedDiagnostics = mergeDiagnostics(
-        diagnosticsInScope(
-            all = page.app.lsp.LocalDiagnostics.merged(lspRouter.allDiagnosticsByUri),
-            scope = LocalPageSettings.current.lsp.diagnosticsScope,
-            focusedPath = editor.focused().book.active?.path,
-            openPaths = (editor.primaryPane.book.tabs + editor.secondaryPane.book.tabs).map { it.path }.toSet(),
-        ),
-        cycleDiagnostics(atlasProjectCycles),
-    )
+    val diagnosticsScope = LocalPageSettings.current.lsp.diagnosticsScope
+    val scopedDiagnostics by remember(lspRouter) {
+        derivedStateOf {
+            mergeDiagnostics(
+                diagnosticsInScope(
+                    all = page.app.lsp.LocalDiagnostics.merged(lspRouter.allDiagnosticsByUri),
+                    scope = diagnosticsScope,
+                    focusedPath = editor.focused().book.active?.path,
+                    openPaths = (editor.primaryPane.book.tabs + editor.secondaryPane.book.tabs)
+                        .map { it.path }
+                        .toSet(),
+                ),
+                cycleDiagnostics(atlasProjectCycles),
+            )
+        }
+    }
     val scopedProblemsCount = scopedDiagnostics.values.sumOf { it.size }
     Box(modifier = Modifier.fillMaxSize().onPreviewKeyEvent { event ->
         if (event.type == KeyEventType.KeyDown && event.key == Key.Escape) {

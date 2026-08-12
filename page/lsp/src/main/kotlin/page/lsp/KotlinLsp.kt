@@ -80,7 +80,7 @@ object KotlinLsp {
             }
         }
 
-        env["PATH"]?.let { pathEnv ->
+        searchPathOf(env)?.let { pathEnv ->
             val sep = System.getProperty("path.separator") ?: ":"
             for (entry in pathEnv.split(sep)) {
                 if (entry.isBlank()) continue

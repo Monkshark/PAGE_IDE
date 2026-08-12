@@ -73,14 +73,14 @@ class LspController(
         val installerId: String? = null,
     )
 
-    val status: MutableState<Status> = mutableStateOf(Status.IDLE)
+    val status: MutableState<Status> = OffThreadState(Status.IDLE)
     var startedAtMs: Long = System.currentTimeMillis()
         private set
     private var readyAtMs = 0L
     private var firstServerFeedbackLogged = false
-    val statusDetail: MutableState<String> = mutableStateOf("")
-    val missingDefinition: MutableState<LanguageDefinition?> = mutableStateOf(null)
-    val missingAttempted: MutableState<List<String>> = mutableStateOf(emptyList())
+    val statusDetail: MutableState<String> = OffThreadState("")
+    val missingDefinition: MutableState<LanguageDefinition?> = OffThreadState(null)
+    val missingAttempted: MutableState<List<String>> = OffThreadState(emptyList())
     private val _installGuideOpen = MutableStateFlow(false)
     val installGuideOpen: StateFlow<Boolean> = _installGuideOpen
 
@@ -270,7 +270,7 @@ class LspController(
         }
     }
 
-    internal fun startActivity(kind: String, label: String, progress: Float? = null) {
+    internal fun startActivity(kind: String, label: String, progress: Float? = null) = offThread {
         val now = System.currentTimeMillis()
         val existing = activities[kind]
         if (existing == null) {
@@ -280,8 +280,9 @@ class LspController(
         }
     }
 
-    private fun endActivity(kind: String) {
+    private fun endActivity(kind: String) = offThread {
         activities.remove(kind)
+        Unit
     }
 
     private fun logFirstServerFeedback(what: String) {
@@ -370,7 +371,7 @@ class LspController(
         }.map { it.key }
         if (expired.isNotEmpty()) {
             println("[lsp] pruning stale activities (no End received): $expired")
-            expired.forEach { activities.remove(it) }
+            offThread { expired.forEach { activities.remove(it) } }
         }
     }
 
@@ -378,7 +379,7 @@ class LspController(
         if (activities.isEmpty()) return
         val kinds = activities.keys.toList()
         println("[lsp] clearing activities ($reason): $kinds")
-        activities.clear()
+        offThread { activities.clear() }
         progressTitles.clear()
     }
 
@@ -527,7 +528,7 @@ class LspController(
         invalidateInlayHintCache(uri)
         val ws = workspace
         if (ws != null && ws.isOpen(uri)) ws.didClose(uri)
-        diagnosticsByUri.remove(canonicalUri(uri))
+        offThread { diagnosticsByUri.remove(canonicalUri(uri)) }
         pendingDiagnostics.remove(canonicalUri(uri))
         unnecessaryByContent.remove(canonicalUri(uri))
     }
@@ -1460,7 +1461,7 @@ class LspController(
             invalidateCompletionCache(oldUri)
             invalidateInlayHintCache(oldUri)
             if (ws.isOpen(oldUri)) runCatching { ws.didClose(oldUri) }
-            diagnosticsByUri.remove(canonicalUri(oldUri))
+            offThread { diagnosticsByUri.remove(canonicalUri(oldUri)) }
             pendingDiagnostics.remove(canonicalUri(oldUri))
             unnecessaryByContent.remove(canonicalUri(oldUri))
             events.add(oldUri to org.eclipse.lsp4j.FileChangeType.Deleted)
@@ -1477,8 +1478,14 @@ class LspController(
         }
     }
 
+    /**
+     * Tearing a client down waits on its shutdown and then pauses before the respawn, so it never
+     * runs on the caller's thread — a restart is usually asked for from a click handler.
+     */
     fun restart(reason: String) {
-        runWithClientDown(reason) { /* no-op between teardown and bring-up */ }
+        scope.launch(Dispatchers.Default) {
+            runWithClientDown(reason) { /* no-op between teardown and bring-up */ }
+        }
     }
 
     fun runWithClientDown(reason: String, releaseDelayMs: Long = 350L, block: () -> Unit) {
@@ -1497,7 +1504,7 @@ class LspController(
         synchronized(completionCache) { completionCache.clear() }
         lastCompletionByLine.clear()
         synchronized(inlayHintCache) { inlayHintCache.clear() }
-        diagnosticsByUri.clear()
+        offThread { diagnosticsByUri.clear() }
         pendingDiagnostics.clear()
         unnecessaryByContent.clear()
         clearActivities("client down: $reason")

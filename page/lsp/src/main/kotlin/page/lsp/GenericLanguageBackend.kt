@@ -39,7 +39,7 @@ class GenericLanguageBackend(
             if (installed.exists()) return LanguageBackend.Resolution.Found(installed, "PAGE installer")
         }
 
-        env["PATH"]?.let { pathEnv ->
+        searchPathOf(env)?.let { pathEnv ->
             val sep = System.getProperty("path.separator") ?: ":"
             for (entry in pathEnv.split(sep)) {
                 if (entry.isBlank()) continue
