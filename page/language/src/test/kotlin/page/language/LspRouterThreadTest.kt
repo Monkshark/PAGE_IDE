@@ -8,22 +8,20 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.io.path.createTempDirectory
-import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
+/**
+ * The router builds controllers on whatever thread asked for one — prewarming does it on IO. A
+ * controller owns Compose state, so it has to be built inside a snapshot for the composition to see
+ * it. These build controllers directly: starting one would spawn a real language server.
+ */
 class LspRouterThreadTest {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-    private val root = createTempDirectory("page-router-")
-
-    @AfterTest
-    fun tearDown() {
-        root.toFile().deleteRecursively()
-    }
 
     private fun offThread(block: () -> Unit): Throwable? {
         val failure = AtomicReference<Throwable?>(null)
@@ -43,28 +41,30 @@ class LspRouterThreadTest {
 
     @Test
     fun `a controller built off the ui thread is readable afterwards`() {
-        val router = LspRouter(root, scope)
-        val file = root.resolve("Main.kt").also { it.toFile().writeText("fun main() {}\n") }
-
         val built = AtomicReference<LspController?>(null)
-        val failure = offThread { built.set(router.controllerFor(file)) }
+        val failure = offThread {
+            built.set(Snapshot.withMutableSnapshot { LspController(workspaceRoot = null, scope = scope) })
+        }
         assertNull(failure, "building a controller off-thread must not throw")
 
-        val controller = built.get()
-        if (controller != null) {
-            Snapshot.sendApplyNotifications()
-            assertEquals(controller, router.existingControllerFor(file), "the router keeps the controller")
-            controller.status.value
-            controller.diagnosticsByUri.size
-        }
+        Snapshot.sendApplyNotifications()
+        val controller = assertNotNull(built.get())
+        assertEquals(LspController.Status.IDLE, controller.status.value)
+        assertEquals(0, controller.diagnosticsByUri.size)
+        assertEquals(0, controller.activities.size)
     }
 
     @Test
-    fun `asking twice hands back the same controller`() {
-        val router = LspRouter(root, scope)
-        val file = root.resolve("Main.kt").also { it.toFile().writeText("fun main() {}\n") }
-        val first = router.controllerFor(file)
-        val second = router.controllerFor(file)
-        assertEquals(first, second)
+    fun `state written off-thread reaches a later reader`() {
+        val controller = LspController(workspaceRoot = null, scope = scope)
+        val failure = offThread {
+            controller.startActivity("startup", "Starting…")
+            controller.statusDetail.value = "warming up"
+        }
+        assertNull(failure, "writing controller state off-thread must not throw")
+
+        Snapshot.sendApplyNotifications()
+        assertEquals("warming up", controller.statusDetail.value)
+        assertEquals("Starting…", controller.activities["startup"]?.label)
     }
 }
