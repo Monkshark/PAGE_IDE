@@ -185,7 +185,7 @@ class LspController(
             c.onDiagnostics { params -> if (myGeneration == clientGeneration) onDiagnostics(params) }
             c.onLogMessage { mp ->
                 val rendered = if (mp.type == org.eclipse.lsp4j.MessageType.Error) condenseStackTrace(mp.message ?: "") else mp.message
-                println("[lsp:log/${mp.type}] $rendered")
+                println("[lsp:log/${mp.type} +${System.currentTimeMillis() - startedAtMs}ms] $rendered")
                 applyActivityEvent(parseKlsActivity(mp.message))
             }
             c.onShowMessage { mp -> println("[lsp:show/${mp.type}] ${mp.message}") }
