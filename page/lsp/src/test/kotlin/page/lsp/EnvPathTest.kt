@@ -36,14 +36,14 @@ class EnvPathTest {
 
     @Test
     fun `a repeated directory is probed once`() {
-        val path = listOf("C:\\Git\\cmd", "C:\\nvm", "C:\\Git\\cmd").joinToString(sep)
-        assertEquals(listOf("C:\\Git\\cmd", "C:\\nvm"), searchPathEntries(path))
+        val path = listOf("/opt/git/cmd", "/opt/nvm", "/opt/git/cmd").joinToString(sep)
+        assertEquals(listOf("/opt/git/cmd", "/opt/nvm"), searchPathEntries(path))
     }
 
     @Test
     fun `a trailing separator does not make a second directory`() {
-        val path = listOf("C:\\Git\\cmd\\", "C:\\Git\\cmd").joinToString(sep)
-        assertEquals(listOf("C:\\Git\\cmd"), searchPathEntries(path))
+        assertEquals(listOf("/opt/git/cmd"), searchPathEntries(listOf("/opt/git/cmd/", "/opt/git/cmd").joinToString(sep)))
+        assertEquals(listOf("\\\\build\\tools\\bin"), searchPathEntries("\\\\build\\tools\\bin\\"))
     }
 
     @Test
