@@ -106,7 +106,6 @@ internal fun InstallGuideDialog(
     var showHeavyConfirm by remember(installer) { mutableStateOf(false) }
     var heavyConfirmAccepted by remember(installer) { mutableStateOf(false) }
     var outputLines by remember(installer) { mutableStateOf<List<String>>(emptyList()) }
-    var loggedDownloadBucket by remember(installer) { mutableStateOf(-1) }
     var loggedExtracting by remember(installer) { mutableStateOf(false) }
     var installJob by remember(installer) { mutableStateOf<Job?>(null) }
     var showCancelConfirm by remember(installer) { mutableStateOf(false) }
@@ -188,7 +187,6 @@ internal fun InstallGuideDialog(
         cancelled.set(false)
         installProgress = LspInstaller.Progress.Downloading(0, -1)
         outputLines = listOf("> Installing ${active.displayName}" + (selectedVersion?.let { " $it" } ?: ""))
-        loggedDownloadBucket = -1
         loggedExtracting = false
         InstallProgressRegistry.start(active.languageId, active.displayName, cancelled = cancelled)
         installJob = launchScope.launch {
@@ -200,13 +198,8 @@ internal fun InstallGuideDialog(
                     when (p) {
                         is LspInstaller.Progress.CommandOutput ->
                             outputLines = (outputLines + p.line).takeLast(2000)
-                        is LspInstaller.Progress.Downloading -> {
-                            val bucket = downloadBucket(p)
-                            if (bucket > loggedDownloadBucket) {
-                                loggedDownloadBucket = bucket
-                                outputLines = (outputLines + downloadLine(active.displayName, p)).takeLast(2000)
-                            }
-                        }
+                        is LspInstaller.Progress.Downloading ->
+                            outputLines = appendDownloadLine(outputLines, downloadLine(active.displayName, p))
                         is LspInstaller.Progress.Extracting -> {
                             if (!loggedExtracting) {
                                 loggedExtracting = true
@@ -1468,8 +1461,12 @@ private fun HeavyConfirmOverlay(
     }
 }
 
-private fun downloadBucket(p: LspInstaller.Progress.Downloading): Int =
-    if (p.total > 0) ((p.bytesRead * 10) / p.total).toInt() else (p.bytesRead / (4L * 1024 * 1024)).toInt()
+private const val DOWNLOAD_PREFIX = "> Downloading "
+
+internal fun appendDownloadLine(lines: List<String>, line: String): List<String> {
+    val kept = if (lines.lastOrNull()?.startsWith(DOWNLOAD_PREFIX) == true) lines.dropLast(1) else lines
+    return (kept + line).takeLast(2000)
+}
 
 private fun downloadLine(name: String, p: LspInstaller.Progress.Downloading): String {
     val mb = p.bytesRead / 1024.0 / 1024.0

@@ -111,7 +111,7 @@ internal fun dartSiblingLspStatus(lspRouter: LspRouter, activePath: Path?): Pair
     return text to siblingId
 }
 
-private fun detectRuntimeVersions(projectRoot: java.nio.file.Path? = null): Map<String, String> {
+private fun detectRuntimeVersions(): Map<String, String> {
     val vers = mutableMapOf<String, String>()
     val jdk = runCatching { JdkInstaller().activeVersion() }.getOrNull() ?: System.getProperty("java.version")
     if (!jdk.isNullOrBlank()) vers["java"] = jdk
@@ -133,42 +133,11 @@ private fun detectRuntimeVersions(projectRoot: java.nio.file.Path? = null): Map<
     val dotnet = runCatching { DotnetSdkInstaller().activeVersion() }.getOrNull()
         ?: runCatching { captureVersion("dotnet", "--version") }.getOrNull()
     if (!dotnet.isNullOrBlank()) vers["cs"] = dotnet
-    if (projectRoot != null) {
-        var detected = runCatching { BuildFileVersionDetector.detect(projectRoot) }.getOrDefault(emptyList())
-        if (detected.isEmpty()) {
-            detected = runCatching {
-                java.nio.file.Files.list(projectRoot).use { stream ->
-                    stream.filter { java.nio.file.Files.isDirectory(it) }
-                        .flatMap { BuildFileVersionDetector.detect(it).stream() }
-                        .toList()
-                }
-            }.getOrDefault(emptyList())
-        }
-        for (d in detected) {
-            val key = when (d.runtime) {
-                "jdk" -> "java"
-                "node" -> "js"
-                "python-runtime" -> "py"
-                "go-sdk" -> "go"
-                "rust" -> "rs"
-                "dotnet" -> "cs"
-                else -> continue
-            }
-            val hasManaged = when (d.runtime) {
-                "jdk" -> runCatching { JdkInstaller().activeVersion() }.getOrNull() != null
-                "node" -> runCatching { NodeInstaller().activeVersion() }.getOrNull() != null
-                "python-runtime" -> runCatching { PythonInstaller().activeVersion() }.getOrNull() != null
-                "go-sdk" -> runCatching { GoSdkInstaller().activeVersion() }.getOrNull() != null
-                else -> false
-            }
-            if (!hasManaged) vers[key] = d.version
-        }
-    }
     return vers
 }
 
 internal fun detectRuntimeVersionsWithSources(projectRoot: java.nio.file.Path? = null): Triple<Map<String, String>, Map<String, String>, Map<String, String>> {
-    val vers = detectRuntimeVersions(projectRoot)
+    val vers = detectRuntimeVersions()
     val sources = mutableMapOf<String, String>()
     val buildVers = mutableMapOf<String, String>()
     if (projectRoot != null) {

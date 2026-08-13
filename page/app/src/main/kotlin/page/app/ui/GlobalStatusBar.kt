@@ -186,6 +186,18 @@ internal fun GlobalStatusBar(
     }
 }
 
+internal fun isOlderThan(installed: String, required: String): Boolean {
+    fun parts(v: String) = v.split('.').map { it.takeWhile { c -> c.isDigit() }.toIntOrNull() ?: 0 }
+    val have = parts(installed)
+    val want = parts(required)
+    for (i in 0 until maxOf(have.size, want.size)) {
+        val a = have.getOrElse(i) { 0 }
+        val b = want.getOrElse(i) { 0 }
+        if (a != b) return a < b
+    }
+    return false
+}
+
 internal fun runtimeInfoFor(
     activeExt: String,
     runtimeVersions: Map<String, String>,
@@ -193,13 +205,17 @@ internal fun runtimeInfoFor(
     runtimeBuildFileVersions: Map<String, String>,
 ): Triple<String, String, String?>? {
     fun build(name: String, key: String, id: String): Triple<String, String, String?> {
-        val ver = runtimeVersions[key] ?: "?"
+        val ver = runtimeVersions[key]
         val bfVer = runtimeBuildFileVersions[key]
         val src = runtimeSources[key]
-        val mismatch = bfVer != null && ver != "?" && !ver.startsWith(bfVer)
-        val label = if (mismatch) "$name $ver ⚠" else "$name $ver"
+        if (ver == null) {
+            val tooltip = if (bfVer != null) "Project requires $bfVer ($src) — click to install" else "Click to install"
+            return Triple("$name (not installed)", id, tooltip)
+        }
+        val tooOld = bfVer != null && isOlderThan(ver, bfVer)
+        val label = if (tooOld) "$name $ver ⚠" else "$name $ver"
         val tooltip = when {
-            mismatch -> "Project requires $bfVer ($src), using $ver"
+            tooOld -> "Project requires $bfVer ($src), using $ver"
             src != null -> "from $src"
             else -> null
         }
