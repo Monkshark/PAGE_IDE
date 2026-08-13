@@ -205,6 +205,66 @@ class NpmGlobalInstallerTest {
     }
 
     @Test
+    fun installDirIsWhereTheVersionActuallyLands() {
+        useTempHome()
+        val installer = ts()
+        assertEquals(installer.installRoot("5.3.0"), installer.installDir("5.3.0"))
+    }
+
+    @Test
+    fun uninstallRemovesTheVersionAndItsPointer() {
+        useTempHome()
+        val installer = ts()
+        val root = installer.installRoot("5.3.0")
+        val exe = root.resolve(NpmGlobalInstaller.binaryRelative("typescript-language-server"))
+        exe.parent.createDirectories()
+        Files.writeString(exe, "shim")
+        val pointer = LspInstaller.lspHome().resolve("typescript-language-server").resolve("CURRENT")
+        Files.writeString(pointer, "5.3.0")
+        assertTrue(installer.isInstalled())
+
+        installer.uninstall("5.3.0")
+
+        assertFalse(Files.exists(root), "the installed version should be gone, $root still there")
+        assertFalse(Files.exists(pointer), "the active pointer should be gone with it")
+    }
+
+    @Test
+    fun typescriptPeerIsPinnedAwayFromTheGoRewrite() {
+        val peer = LspInstallers.TSSERVER_PEER
+        assertTrue(peer.startsWith("typescript@"), "the peer has to carry a version range, got $peer")
+        assertFalse(peer.endsWith("@latest"), "latest is TypeScript 7, which ships no tsserver.js")
+        assertTrue(peer.contains("5"), "the 5 line is the one that still ships tsserver.js, got $peer")
+    }
+
+    @Test
+    fun peerPackagesReachTheNpmCommand() {
+        useTempHome()
+        val captured = mutableListOf<List<String>>()
+        val runner = object : ProcessRunner {
+            override fun runStreaming(command: List<String>, onLine: (String) -> Unit): Int {
+                captured += command
+                return 0
+            }
+
+            override fun captureOutput(command: List<String>): String = ""
+        }
+        val installer = NpmGlobalInstaller(
+            NpmPackageDescriptor(
+                languageId = "typescript",
+                displayName = "ts",
+                packageName = "typescript-language-server",
+                binaryName = "typescript-language-server",
+                peerPackages = listOf(LspInstallers.TSSERVER_PEER),
+            ),
+            npmFinder = { Path.of("/usr/bin/npm") },
+            processRunner = runner,
+        )
+        installer.install("5.3.0") { }
+        assertTrue(captured.single().contains(LspInstallers.TSSERVER_PEER))
+    }
+
+    @Test
     fun installFailsCleanlyWhenNpmMissing() {
         useTempHome()
         val installer = NpmGlobalInstaller(

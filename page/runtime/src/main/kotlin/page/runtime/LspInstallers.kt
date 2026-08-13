@@ -105,13 +105,21 @@ object LspInstallers {
 
     private fun jdtlsInstaller(): LspInstaller = JdtlsInstaller()
 
+    /**
+     * The language server drives the compiler through `tsserver.js`, and TypeScript 7 does not ship
+     * one — it is the Go rewrite, which speaks a different protocol behind a native binary. Asking
+     * npm for the latest therefore installs a compiler the server cannot talk to and every open of
+     * a `.ts` file dies on initialize. The 5 line is the newest that still carries `tsserver.js`.
+     */
+    internal const val TSSERVER_PEER = "typescript@^5"
+
     private fun typescriptLanguageServerInstaller(): LspInstaller = NpmGlobalInstaller(
         NpmPackageDescriptor(
             languageId = "typescript",
             displayName = "typescript-language-server",
             packageName = "typescript-language-server",
             binaryName = "typescript-language-server",
-            peerPackages = listOf("typescript"),
+            peerPackages = listOf(TSSERVER_PEER),
         ),
     )
 

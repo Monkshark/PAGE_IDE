@@ -73,6 +73,15 @@ class NpmGlobalInstaller(
     fun installRoot(version: String = currentInstalledVersion() ?: descriptor.defaultVersion ?: "latest"): Path =
         LspInstaller.lspHome().resolve(descriptor.installKey).resolve(sanitize(version))
 
+    /**
+     * These packages live under the npm package name, not the language — one server can answer for
+     * several languages, and `vscode-langservers-extracted` alone backs html, css and json. Without
+     * this the inherited answer points at a directory that was never written, so deleting a version
+     * removes nothing and reports success.
+     */
+    override fun installDir(version: String?): Path =
+        if (version == null) installRoot() else installRoot(version)
+
     override fun installedVersions(): List<String> {
         val base = LspInstaller.lspHome().resolve(descriptor.installKey)
         if (!Files.isDirectory(base)) return emptyList()
