@@ -31,4 +31,30 @@ class EnvPathTest {
     fun `an environment without a path has none`() {
         assertNull(searchPathOf(emptyMap()))
     }
+
+    private val sep = System.getProperty("path.separator") ?: ":"
+
+    @Test
+    fun `a repeated directory is probed once`() {
+        val path = listOf("/opt/git/cmd", "/opt/nvm", "/opt/git/cmd").joinToString(sep)
+        assertEquals(listOf("/opt/git/cmd", "/opt/nvm"), searchPathEntries(path))
+    }
+
+    @Test
+    fun `a trailing separator does not make a second directory`() {
+        assertEquals(listOf("/opt/git/cmd"), searchPathEntries(listOf("/opt/git/cmd/", "/opt/git/cmd").joinToString(sep)))
+        assertEquals(listOf("\\\\build\\tools\\bin"), searchPathEntries("\\\\build\\tools\\bin\\"))
+    }
+
+    @Test
+    fun `blank and empty entries are dropped`() {
+        val path = listOf("", "  ", "/usr/bin").joinToString(sep)
+        assertEquals(listOf("/usr/bin"), searchPathEntries(path))
+    }
+
+    @Test
+    fun `an absent path yields nothing to probe`() {
+        assertEquals(emptyList(), searchPathEntries(null))
+        assertEquals(emptyList(), searchPathEntries("   "))
+    }
 }

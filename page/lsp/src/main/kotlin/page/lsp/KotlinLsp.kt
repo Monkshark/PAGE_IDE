@@ -80,16 +80,12 @@ object KotlinLsp {
             }
         }
 
-        searchPathOf(env)?.let { pathEnv ->
-            val sep = System.getProperty("path.separator") ?: ":"
-            for (entry in pathEnv.split(sep)) {
-                if (entry.isBlank()) continue
-                for (name in binNames) {
-                    val candidate = Paths.get(entry, name)
-                    attempted += "PATH=$candidate"
-                    if (candidate.exists() && (isWindows || candidate.isExecutable())) {
-                        return Resolution.Found(candidate, "PATH")
-                    }
+        for (entry in searchPathEntries(searchPathOf(env))) {
+            for (name in binNames) {
+                val candidate = Paths.get(entry, name)
+                attempted += "PATH=$candidate"
+                if (candidate.exists() && (isWindows || candidate.isExecutable())) {
+                    return Resolution.Found(candidate, "PATH")
                 }
             }
         }

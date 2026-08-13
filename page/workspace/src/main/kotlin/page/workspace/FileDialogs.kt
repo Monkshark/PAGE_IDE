@@ -7,6 +7,7 @@ import java.awt.Frame
 import java.io.File
 import java.nio.file.Path
 import javax.swing.JFileChooser
+import javax.swing.filechooser.FileSystemView
 
 object FileDialogs {
 
@@ -20,6 +21,8 @@ object FileDialogs {
     @Volatile
     private var shared: JFileChooser? = null
 
+    private const val EDT_WARMUP_DELAY_MS = 4_000L
+
     private fun chooser(): JFileChooser {
         shared?.let { return it }
         synchronized(this) {
@@ -28,9 +31,25 @@ object FileDialogs {
         }
     }
 
+    /**
+     * Most of the chooser's price is the shortcut panel asking the Windows shell, over COM, for the
+     * folders and icons it puts down its left side. That answer is cached process-wide and can be
+     * fetched from any thread, so it is bought here rather than on the event thread. What is left
+     * still has to be built on the event thread, and is, once the opening rush is over — but a user
+     * who reaches for Open first now waits for the smaller half.
+     */
     fun warmUp() {
         if (shared != null) return
-        EventQueue.invokeLater { runCatching { chooser() } }
+        Thread({
+            runCatching {
+                val view = FileSystemView.getFileSystemView()
+                view.chooserShortcutPanelFiles
+                view.roots
+                view.homeDirectory
+            }
+            runCatching { Thread.sleep(EDT_WARMUP_DELAY_MS) }
+            EventQueue.invokeLater { runCatching { chooser() } }
+        }, "file-dialog-warmup").apply { isDaemon = true }.start()
     }
 
     fun open(parent: Frame): Path? {

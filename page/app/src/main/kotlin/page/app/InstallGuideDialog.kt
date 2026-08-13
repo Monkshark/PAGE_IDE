@@ -616,12 +616,25 @@ internal fun InstallGuideDialog(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Text(
-                            text = statusLine,
-                            color = Glass.colors.muted,
-                            style = LocalTextStyle.current.copy(fontSize = 10.sp, lineHeight = 13.sp),
-                            modifier = Modifier.weight(1f),
-                        )
+                        if (installing) {
+                            if (onMinimize != null) {
+                                InstallGuideButton(
+                                    label = "Minimize",
+                                    primary = false,
+                                    enabled = true,
+                                    width = 124.dp,
+                                    onClick = onMinimize,
+                                )
+                            }
+                            Box(Modifier.weight(1f))
+                        } else {
+                            Text(
+                                text = statusLine,
+                                color = Glass.colors.muted,
+                                style = LocalTextStyle.current.copy(fontSize = 10.sp, lineHeight = 13.sp),
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
                         if (canInAppInstall && !precheckBlocked) {
                             val mode = remember(
                                 installProgress,
@@ -647,16 +660,6 @@ internal fun InstallGuideDialog(
                             val enableInstall = !installing && !versionsLoading &&
                                 selectedVersion != null
                             if (installing) {
-                                if (onMinimize != null) {
-                                    InstallGuideButton(
-                                        label = "Minimize",
-                                        primary = false,
-                                        enabled = true,
-                                        width = 124.dp,
-                                        onClick = onMinimize,
-                                    )
-                                    Spacer(Modifier.width(8.dp))
-                                }
                                 InstallGuideButton(
                                     label = "Cancel",
                                     primary = false,

@@ -75,6 +75,31 @@ class GenericLanguageBackendResolutionTest {
     }
 
     @Test
+    fun nothingInstalledIsRecordedInAttempts() {
+        val backend = GenericLanguageBackend(definition = definition())
+
+        val result = backend.resolveExecutable(emptyMap())
+
+        assertTrue(result is LanguageBackend.Resolution.NotFound)
+        assertTrue(
+            result.attempted.any { it.startsWith("installer=") },
+            "a reader should see the managed install was considered, got ${result.attempted}",
+        )
+    }
+
+    @Test
+    fun aRepeatedPathDirectoryIsListedOnce() {
+        val sep = System.getProperty("path.separator") ?: ":"
+        val dir = Files.createTempDirectory("probe-").toString()
+        val backend = GenericLanguageBackend(definition = definition())
+
+        val result = backend.resolveExecutable(mapOf("PATH" to listOf(dir, dir).joinToString(sep)))
+
+        assertTrue(result is LanguageBackend.Resolution.NotFound)
+        assertEquals(1, result.attempted.count { it.startsWith("PATH=") })
+    }
+
+    @Test
     fun missingOverrideRecordedInAttempts() {
         val ghost = Path.of("/definitely/does/not/exist/demo-ls")
         val backend = GenericLanguageBackend(
