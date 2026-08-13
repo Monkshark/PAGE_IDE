@@ -12,8 +12,10 @@ object FileDialogs {
 
     /**
      * The first [JFileChooser] costs a fifth of a second to build — Swing installs its look and feel,
-     * the Windows places bar and a text field before anything shows. One chooser is kept and reused so
-     * that price is paid once, and [warmUp] pays it while the user is still reading the welcome screen.
+     * the Windows places bar and a text field before anything shows, and the places bar reaches into
+     * the shell over COM. It has to happen on the event thread, so only its timing can be chosen: one
+     * chooser is kept and reused, and [warmUp] buys it once the opening rush has died down rather than
+     * during it, where it showed up as a dropped-frame dip.
      */
     @Volatile
     private var shared: JFileChooser? = null
