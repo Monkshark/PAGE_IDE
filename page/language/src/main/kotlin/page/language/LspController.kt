@@ -1478,10 +1478,6 @@ class LspController(
         }
     }
 
-    /**
-     * Tearing a client down waits on its shutdown and then pauses before the respawn, so it never
-     * runs on the caller's thread — a restart is usually asked for from a click handler.
-     */
     fun restart(reason: String) {
         scope.launch(Dispatchers.Default) {
             runWithClientDown(reason) { /* no-op between teardown and bring-up */ }

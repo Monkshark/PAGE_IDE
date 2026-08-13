@@ -11,13 +11,6 @@ import javax.swing.filechooser.FileSystemView
 
 object FileDialogs {
 
-    /**
-     * The first [JFileChooser] costs a fifth of a second to build — Swing installs its look and feel,
-     * the Windows places bar and a text field before anything shows, and the places bar reaches into
-     * the shell over COM. It has to happen on the event thread, so only its timing can be chosen: one
-     * chooser is kept and reused, and [warmUp] buys it once the opening rush has died down rather than
-     * during it, where it showed up as a dropped-frame dip.
-     */
     @Volatile
     private var shared: JFileChooser? = null
 
@@ -31,13 +24,6 @@ object FileDialogs {
         }
     }
 
-    /**
-     * Most of the chooser's price is the shortcut panel asking the Windows shell, over COM, for the
-     * folders and icons it puts down its left side. That answer is cached process-wide and can be
-     * fetched from any thread, so it is bought here rather than on the event thread. What is left
-     * still has to be built on the event thread, and is, once the opening rush is over — but a user
-     * who reaches for Open first now waits for the smaller half.
-     */
     fun warmUp() {
         if (shared != null) return
         Thread({
