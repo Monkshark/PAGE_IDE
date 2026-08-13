@@ -205,6 +205,31 @@ class NpmGlobalInstallerTest {
     }
 
     @Test
+    fun installDirIsWhereTheVersionActuallyLands() {
+        useTempHome()
+        val installer = ts()
+        assertEquals(installer.installRoot("5.3.0"), installer.installDir("5.3.0"))
+    }
+
+    @Test
+    fun uninstallRemovesTheVersionAndItsPointer() {
+        useTempHome()
+        val installer = ts()
+        val root = installer.installRoot("5.3.0")
+        val exe = root.resolve(NpmGlobalInstaller.binaryRelative("typescript-language-server"))
+        exe.parent.createDirectories()
+        Files.writeString(exe, "shim")
+        val pointer = LspInstaller.lspHome().resolve("typescript-language-server").resolve("CURRENT")
+        Files.writeString(pointer, "5.3.0")
+        assertTrue(installer.isInstalled())
+
+        installer.uninstall("5.3.0")
+
+        assertFalse(Files.exists(root), "the installed version should be gone, $root still there")
+        assertFalse(Files.exists(pointer), "the active pointer should be gone with it")
+    }
+
+    @Test
     fun installFailsCleanlyWhenNpmMissing() {
         useTempHome()
         val installer = NpmGlobalInstaller(

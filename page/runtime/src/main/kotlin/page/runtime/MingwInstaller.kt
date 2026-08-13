@@ -140,6 +140,11 @@ class MingwInstaller(
 
     fun installRoot(version: String): Path = installBase().resolve(sanitize(version))
 
+    override fun installDir(version: String?): Path {
+        val v = version ?: currentInstalledVersion() ?: return installBase()
+        return installRoot(v)
+    }
+
     private fun installBase(): Path = LspInstaller.lspHome().resolve("mingw")
 
     fun currentInstalledVersion(): String? {
