@@ -25,6 +25,29 @@ val fpsOverlayEnabled: Boolean by lazy {
         System.getenv("PAGE_DEBUG_FPS")?.equals("true", ignoreCase = true) == true
 }
 
+internal fun renderApiLine(window: java.awt.Window?): String {
+    val requested = System.getProperty("skiko.renderApi")
+        ?: System.getenv("SKIKO_RENDER_API")
+        ?: "default"
+    val effective = window?.let { effectiveRenderApi(it) } ?: "unknown"
+    return if (effective.equals(requested, ignoreCase = true)) "  render                 $effective"
+    else "  render                 $effective (asked for $requested)"
+}
+
+private fun effectiveRenderApi(root: java.awt.Container): String? {
+    for (child in root.components) {
+        val api = runCatching {
+            child.javaClass.methods
+                .firstOrNull { it.name == "getRenderApi" && it.parameterCount == 0 }
+                ?.invoke(child)
+                ?.toString()
+        }.getOrNull()
+        if (api != null) return api
+        if (child is java.awt.Container) effectiveRenderApi(child)?.let { return it }
+    }
+    return null
+}
+
 @Volatile private var lastTickMs: Long = 0L
 
 private val stallWatchdog: Thread by lazy {
