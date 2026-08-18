@@ -157,6 +157,93 @@ class FilePickerModelTest {
     }
 
     @Test
+    fun `a dot name counts as hidden on every platform`() {
+        assertTrue(FilePickerModel.isHidden(".cargo", null))
+        assertTrue(FilePickerModel.isHidden(".build", false))
+        assertFalse(FilePickerModel.isHidden("build", null))
+        assertTrue(FilePickerModel.isHidden("AppData", true), "windows marks some plain names hidden")
+    }
+
+    @Test
+    fun `hiding config folders leaves the ordinary ones`() {
+        val entries = listOf(
+            PickerEntry(Path.of(".cargo"), ".cargo", true, 0L, isHidden = true),
+            PickerEntry(Path.of("Desktop"), "Desktop", true, 0L),
+            PickerEntry(Path.of(".gradle"), ".gradle", true, 0L, isHidden = true),
+            PickerEntry(Path.of("go"), "go", true, 0L),
+        )
+        assertEquals(
+            listOf("Desktop", "go"),
+            FilePickerModel.visible(entries, "", PickMode.OPEN_FOLDER, showHidden = false).map { it.name },
+        )
+        assertEquals(4, FilePickerModel.visible(entries, "", PickMode.OPEN_FOLDER, showHidden = true).size)
+        assertEquals(2, FilePickerModel.hiddenCount(entries))
+    }
+
+    @Test
+    fun `the filter still applies while hidden entries are away`() {
+        val entries = listOf(
+            PickerEntry(Path.of(".gradle"), ".gradle", true, 0L, isHidden = true),
+            PickerEntry(Path.of("gradle"), "gradle", true, 0L),
+            PickerEntry(Path.of("go"), "go", true, 0L),
+        )
+        assertEquals(
+            listOf("gradle"),
+            FilePickerModel.visible(entries, "grad", PickMode.OPEN_FOLDER, showHidden = false).map { it.name },
+        )
+    }
+
+    @Test
+    fun `a real listing marks dot folders hidden`() {
+        val root = sample()
+        Files.createDirectories(root.resolve(".cargo"))
+        val listing = FilePickerModel.list(root)
+        assertTrue(listing is PickerListing.Ready)
+        val hidden = (listing as PickerListing.Ready).entries.first { it.name == ".cargo" }
+        assertTrue(hidden.isHidden)
+        assertFalse(listing.entries.first { it.name == "src" }.isHidden)
+    }
+
+    @Test
+    fun `the trail runs from the root down to the folder`() {
+        val root = sample()
+        val trail = FilePickerModel.trail(root.resolve("src"))
+        assertEquals(root.resolve("src").toAbsolutePath().normalize(), trail.last())
+        assertEquals(root.toAbsolutePath().normalize(), trail[trail.lastIndex - 1])
+        assertNull(trail.first().parent, "the first step should be a filesystem root")
+    }
+
+    @Test
+    fun `only the deepest levels get a column`() {
+        val trail = listOf("/a", "/a/b", "/a/b/c", "/a/b/c/d", "/a/b/c/d/e").map { Path.of(it) }
+        val columns = FilePickerModel.columns(trail, max = 3)
+        assertEquals(listOf("/a/b/c", "/a/b/c/d", "/a/b/c/d/e").map { Path.of(it) }, columns)
+    }
+
+    @Test
+    fun `a short trail keeps every level`() {
+        val trail = listOf("/a", "/a/b").map { Path.of(it) }
+        assertEquals(trail, FilePickerModel.columns(trail, max = 3))
+        assertEquals(emptyList(), FilePickerModel.columns(emptyList(), max = 3))
+    }
+
+    @Test
+    fun `a column knows which of its children the trail went through`() {
+        val trail = listOf("/a", "/a/b", "/a/b/c").map { Path.of(it) }
+        assertEquals(Path.of("/a/b"), FilePickerModel.childOnTrail(trail, Path.of("/a")))
+        assertEquals(Path.of("/a/b/c"), FilePickerModel.childOnTrail(trail, Path.of("/a/b")))
+        assertNull(FilePickerModel.childOnTrail(trail, Path.of("/a/b/c")), "the last column leads nowhere")
+        assertNull(FilePickerModel.childOnTrail(trail, Path.of("/elsewhere")))
+    }
+
+    @Test
+    fun `a column is titled by its own name and a root by its letter`() {
+        assertEquals("b", FilePickerModel.columnLabel(Path.of("/a/b")))
+        val root = FilePickerModel.roots().firstOrNull()
+        if (root != null) assertTrue(FilePickerModel.columnLabel(root).isNotBlank())
+    }
+
+    @Test
     fun `each mode names its own button`() {
         assertEquals("Open", FilePickerModel.confirmLabel(PickMode.OPEN_FOLDER))
         assertEquals("Save", FilePickerModel.confirmLabel(PickMode.SAVE_AS))

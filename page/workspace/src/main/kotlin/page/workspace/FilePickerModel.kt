@@ -11,6 +11,7 @@ data class PickerEntry(
     val name: String,
     val isDirectory: Boolean,
     val sizeBytes: Long,
+    val isHidden: Boolean = false,
 )
 
 sealed class PickerListing {
@@ -53,9 +54,15 @@ object FilePickerModel {
         stream.use {
             for (child in it) {
                 val name = child.fileName?.toString() ?: continue
-                val directory = runCatching { Files.isDirectory(child) }.getOrDefault(false)
-                val size = if (directory) 0L else runCatching { Files.size(child) }.getOrDefault(0L)
-                entries += PickerEntry(child, name, directory, size)
+                val dos = runCatching {
+                    Files.readAttributes(child, java.nio.file.attribute.DosFileAttributes::class.java)
+                }.getOrNull()
+                val basic = dos ?: runCatching {
+                    Files.readAttributes(child, java.nio.file.attribute.BasicFileAttributes::class.java)
+                }.getOrNull()
+                val directory = basic?.isDirectory ?: false
+                val size = if (directory) 0L else basic?.size() ?: 0L
+                entries += PickerEntry(child, name, directory, size, isHidden(name, dos?.isHidden))
             }
         }
         return PickerListing.Ready(sortEntries(entries))
@@ -74,12 +81,24 @@ object FilePickerModel {
                 .thenBy(String.CASE_INSENSITIVE_ORDER) { it.name },
         )
 
-    fun visible(entries: List<PickerEntry>, query: String, mode: PickMode): List<PickerEntry> {
+    internal fun isHidden(name: String, dosHidden: Boolean?): Boolean =
+        name.startsWith(".") || dosHidden == true
+
+    fun visible(
+        entries: List<PickerEntry>,
+        query: String,
+        mode: PickMode,
+        showHidden: Boolean = true,
+    ): List<PickerEntry> {
         val trimmed = query.trim()
-        if (trimmed.isEmpty()) return entries
-        return entries.filter { it.isDirectory || !picksDirectories(mode) }
+        var out = entries
+        if (!showHidden) out = out.filter { !it.isHidden }
+        if (trimmed.isEmpty()) return out
+        return out.filter { it.isDirectory || !picksDirectories(mode) }
             .filter { it.name.contains(trimmed, ignoreCase = true) }
     }
+
+    fun hiddenCount(entries: List<PickerEntry>): Int = entries.count { it.isHidden }
 
     fun crumbs(dir: Path): List<Crumb> {
         val absolute = runCatching { dir.toAbsolutePath().normalize() }.getOrDefault(dir)
@@ -97,6 +116,32 @@ object FilePickerModel {
     }
 
     fun parentOf(dir: Path): Path? = runCatching { dir.toAbsolutePath().normalize().parent }.getOrNull()
+
+    fun trail(dir: Path): List<Path> {
+        val absolute = runCatching { dir.toAbsolutePath().normalize() }.getOrDefault(dir)
+        val out = ArrayDeque<Path>()
+        var walk: Path? = absolute
+        while (walk != null) {
+            out.addFirst(walk)
+            walk = walk.parent
+        }
+        return out.toList()
+    }
+
+    fun columns(trail: List<Path>, max: Int = 3): List<Path> {
+        if (trail.isEmpty()) return emptyList()
+        if (trail.size <= max) return trail
+        return trail.subList(trail.size - max, trail.size)
+    }
+
+    fun childOnTrail(trail: List<Path>, column: Path): Path? {
+        val index = trail.indexOf(column)
+        if (index < 0 || index == trail.lastIndex) return null
+        return trail[index + 1]
+    }
+
+    fun columnLabel(dir: Path): String =
+        dir.fileName?.toString() ?: dir.toString().trimEnd('\\', '/').ifEmpty { dir.toString() }
 
     fun roots(): List<Path> = runCatching { java.io.File.listRoots().map { it.toPath() } }.getOrDefault(emptyList())
 
