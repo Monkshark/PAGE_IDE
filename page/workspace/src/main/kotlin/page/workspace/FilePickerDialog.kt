@@ -1,6 +1,14 @@
 package page.workspace
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.hoverable
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
+import androidx.compose.foundation.window.WindowDraggableArea
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -193,7 +201,7 @@ fun FilePickerDialog(
                     }
                 },
         ) {
-            PickerHeader(mode)
+            WindowDraggableArea { PickerHeader(mode, onDismiss) }
             PickerCrumbs(
                 current = current,
                 query = query,
@@ -229,6 +237,7 @@ fun FilePickerDialog(
                         selected = if (isCurrent) selected else null,
                         mode = mode,
                         emptyNote = if (isCurrent && query.isNotBlank()) "No match for “$query”" else "Nothing here",
+                        isCurrent = isCurrent,
                         onSelect = { entry -> current = column; selected = entry },
                         onEnter = { entry -> if (entry.isDirectory) current = entry.path else { current = column; selected = entry; confirm() } },
                         modifier = Modifier.weight(1f).fillMaxHeight(),
@@ -250,10 +259,10 @@ fun FilePickerDialog(
 }
 
 @Composable
-private fun PickerHeader(mode: PickMode) {
+private fun PickerHeader(mode: PickMode, onClose: () -> Unit) {
     val colors = Glass.colors
     Row(
-        modifier = Modifier.fillMaxWidth().height(40.dp).padding(horizontal = 14.dp),
+        modifier = Modifier.fillMaxWidth().height(38.dp).padding(start = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
@@ -274,8 +283,32 @@ private fun PickerHeader(mode: PickMode) {
                 color = colors.primary,
             )
         }
+        Box(modifier = Modifier.weight(1f).fillMaxHeight())
+        PickerCloseButton(onClose)
     }
     Box(Modifier.fillMaxWidth().height(1.dp).background(Glass.colors.separator))
+}
+
+@Composable
+private fun PickerCloseButton(onClose: () -> Unit) {
+    val colors = Glass.colors
+    val interaction = remember { MutableInteractionSource() }
+    val hovered by interaction.collectIsHoveredAsState()
+    Box(
+        modifier = Modifier
+            .width(42.dp)
+            .fillMaxHeight()
+            .background(if (hovered) Color(0xFFE81123) else Color.Transparent)
+            .hoverable(interaction)
+            .clickable(interactionSource = interaction, indication = null, onClick = onClose),
+        contentAlignment = Alignment.Center,
+    ) {
+        Canvas(modifier = Modifier.size(11.dp)) {
+            val glyph = if (hovered) Color.White else colors.muted
+            drawLine(glyph, Offset(0f, 0f), Offset(size.width, size.height), 1.4f, StrokeCap.Round)
+            drawLine(glyph, Offset(size.width, 0f), Offset(0f, size.height), 1.4f, StrokeCap.Round)
+        }
+    }
 }
 
 @Composable
@@ -532,36 +565,68 @@ private fun PickerColumn(
     selected: PickerEntry?,
     mode: PickMode,
     emptyNote: String,
+    isCurrent: Boolean,
     onSelect: (PickerEntry) -> Unit,
     onEnter: (PickerEntry) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = Glass.colors
-    Column(modifier = modifier) {
-        Text(
-            text = title.uppercase(),
-            style = LocalTextStyle.current.copy(fontSize = 10.sp, letterSpacing = 1.sp).centered(),
-            color = colors.faint,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(start = 35.dp, end = 12.dp, top = 9.dp, bottom = 5.dp),
-        )
+    Column(modifier = modifier.background(if (isCurrent) colors.surfaceL2 else colors.surfaceL1)) {
+        Row(
+            modifier = Modifier.fillMaxWidth().height(24.dp).padding(start = 35.dp, end = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = title.uppercase(),
+                style = LocalTextStyle.current.copy(fontSize = 10.sp, letterSpacing = 1.sp).centered(),
+                color = colors.faint,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f, fill = false),
+            )
+            Box(modifier = Modifier.weight(1f))
+            if (listing is PickerListing.Ready) {
+                Text(
+                    text = entries.size.toString(),
+                    style = LocalTextStyle.current
+                        .copy(fontSize = 10.sp, fontFamily = FontFamily.Monospace).centered(),
+                    color = colors.faint,
+                )
+            }
+        }
         when {
             listing == null -> PickerMessage("Reading…")
             listing is PickerListing.Denied -> PickerMessage("Cannot open", listing.reason)
             entries.isEmpty() -> PickerMessage(emptyNote)
-            else -> LazyColumn(modifier = Modifier.fillMaxSize(), state = rememberLazyListState()) {
+            else -> LazyColumn(
+                modifier = Modifier.fillMaxSize().padding(horizontal = 4.dp, vertical = 2.dp),
+                state = rememberLazyListState(),
+            ) {
                 itemsIndexed(entries, key = { _, e -> e.path.toString() }) { _, entry ->
                     val dimmed = FilePickerModel.picksDirectories(mode) && !entry.isDirectory
                     val onTrail = entry.path == openChild
                     val highlighted = entry == selected || onTrail
+                    val interaction = remember(entry.path) { MutableInteractionSource() }
+                    val hovered by interaction.collectIsHoveredAsState()
+                    val rowShape = RoundedCornerShape(Glass.radius.xs)
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(28.dp)
-                            .background(if (highlighted) colors.primarySoft else Color.Transparent)
+                            .height(26.dp)
+                            .clip(rowShape)
+                            .background(
+                                when {
+                                    highlighted -> colors.primarySoft
+                                    hovered && !dimmed -> colors.surfaceL3
+                                    else -> Color.Transparent
+                                },
+                            )
+                            .then(if (onTrail) Modifier.drawBehind {
+                                drawRect(colors.primary, size = Size(2f * density, size.height))
+                            } else Modifier)
+                            .hoverable(interaction)
                             .then(if (dimmed) Modifier else Modifier.clickable { onSelect(entry); onEnter(entry) })
-                            .padding(horizontal = 12.dp),
+                            .padding(horizontal = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
@@ -642,11 +707,15 @@ private fun PickerFooter(
     val colors = Glass.colors
     Box(Modifier.fillMaxWidth().height(1.dp).background(colors.separator))
     Row(
-        modifier = Modifier.fillMaxWidth().height(48.dp).background(colors.surfaceL1).padding(horizontal = 14.dp),
+        modifier = Modifier.fillMaxWidth().height(46.dp).padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Column(modifier = Modifier.weight(1f)) {
+        Row(
+            modifier = Modifier.weight(1f),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
             Text(
                 text = (if (overwriting != null) "Already exists" else "Selected").uppercase(),
                 style = LocalTextStyle.current.copy(fontSize = 10.sp, letterSpacing = 1.sp).centered(),
