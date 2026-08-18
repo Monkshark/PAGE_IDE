@@ -275,6 +275,8 @@ private fun ManagerDetailPane(
     var availableVersions by remember(entry.id) { mutableStateOf<List<String>>(emptyList()) }
     var loading by remember(entry.id) { mutableStateOf(true) }
     var confirmDeleteVersion by remember(entry.id) { mutableStateOf<String?>(null) }
+    var deletingVersion by remember(entry.id) { mutableStateOf<String?>(null) }
+    var deleteProgress by remember(entry.id) { mutableStateOf(0f) }
     var sysDetail by remember(entry.id) { mutableStateOf<SystemInstall?>(null) }
     val scope = rememberCoroutineScope()
 
@@ -303,14 +305,23 @@ private fun ManagerDetailPane(
     fun deleteVersion(version: String) {
         val inst = installer ?: return
         val wasActive = activeVersion == version
+        deletingVersion = version
+        deleteProgress = 0f
         scope.launch(Dispatchers.IO) {
             if (wasActive) runCatching { onBeforeDelete(entry.id) }
             try {
-                runCatching { inst.uninstall(version) }
+                runCatching {
+                    inst.uninstall(version) { removed, total ->
+                        val fraction = if (total > 0) removed.toFloat() / total else 0f
+                        scope.launch(Dispatchers.Main) { deleteProgress = fraction }
+                    }
+                }
             } finally {
                 if (wasActive) runCatching { onAfterDelete(entry.id) }
             }
             withContext(Dispatchers.Main) {
+                deletingVersion = null
+                deleteProgress = 0f
                 refreshVersions()
                 InstallState.changed()
                 onVersionChanged()
@@ -380,7 +391,8 @@ private fun ManagerDetailPane(
                 installedVersions.forEachIndexed { idx, v ->
                     if (idx > 0) Box(Modifier.fillMaxWidth().height(1.dp).background(Glass.colors.separator))
                     val isCurrent = v == activeVersion
-                    val isConfirming = confirmDeleteVersion == v
+                    val isDeleting = deletingVersion == v
+                    val isConfirming = confirmDeleteVersion == v && !isDeleting
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -389,7 +401,35 @@ private fun ManagerDetailPane(
                             .padding(horizontal = 12.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        if (isConfirming) {
+                        if (isDeleting) {
+                            Text(
+                                text = v,
+                                color = Glass.colors.muted,
+                                style = centeredStyle.copy(fontFamily = FontFamily.Monospace),
+                            )
+                            Spacer(Modifier.width(10.dp))
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(3.dp)
+                                    .clip(RoundedCornerShape(Glass.radius.xs))
+                                    .background(Glass.colors.surfaceL1),
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth(deleteProgress.coerceIn(0f, 1f))
+                                        .height(3.dp)
+                                        .clip(RoundedCornerShape(Glass.radius.xs))
+                                        .background(Glass.colors.danger),
+                                )
+                            }
+                            Spacer(Modifier.width(10.dp))
+                            Text(
+                                text = "Removing… ${(deleteProgress.coerceIn(0f, 1f) * 100).toInt()}%",
+                                color = Glass.colors.muted,
+                                style = centeredStyle.copy(fontSize = 11.sp),
+                            )
+                        } else if (isConfirming) {
                             Text(text = "Delete $v?", color = Glass.colors.danger, style = centeredStyle)
                             Spacer(Modifier.weight(1f))
                             Text(

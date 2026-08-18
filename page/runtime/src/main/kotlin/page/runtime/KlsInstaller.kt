@@ -81,13 +81,17 @@ object KlsInstaller {
         return null
     }
 
-    fun uninstallLabel(label: String, home: Path = userHome()) {
+    fun uninstallLabel(
+        label: String,
+        home: Path = userHome(),
+        onProgress: (removed: Int, total: Int) -> Unit = { _, _ -> },
+    ) {
         val wasActive = activeLabel(home) == label
         val root = installRootForLabel(label, home)
         if (root != null) {
-            deleteRecursively(root)
+            deleteRecursively(root, onProgress)
         } else if (isInstalled(installRoot(home))) {
-            deleteRecursively(installRoot(home))
+            deleteRecursively(installRoot(home), onProgress)
         }
         if (wasActive) runCatching { Files.deleteIfExists(currentPointer(home)) }
     }
@@ -264,12 +268,6 @@ object KlsInstaller {
         if (lastReport != read) onProgress(Progress.Downloading(read, total))
     }
 
-    private fun deleteRecursively(path: Path) {
-        if (!Files.exists(path)) return
-        Files.walk(path).use { stream ->
-            stream.sorted(Comparator.reverseOrder()).forEach { p ->
-                runCatching { Files.delete(p) }
-            }
-        }
-    }
+    private fun deleteRecursively(path: Path, onProgress: (removed: Int, total: Int) -> Unit = { _, _ -> }) =
+        ArchiveExtractors.deleteRecursively(path, onProgress)
 }

@@ -43,8 +43,8 @@ class KlsLspInstaller : LspInstaller {
         return true
     }
 
-    override fun uninstall(version: String) {
-        KlsInstaller.uninstallLabel(version)
+    override fun uninstall(version: String, onProgress: (removed: Int, total: Int) -> Unit) {
+        KlsInstaller.uninstallLabel(version, onProgress = onProgress)
     }
 
     override fun availableVersions(): List<String> {
