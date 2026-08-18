@@ -25,6 +25,7 @@ data class Binding(
 
 object Platform {
     val isMac: Boolean = (System.getProperty("os.name") ?: "").lowercase().contains("mac")
+    val isWindows: Boolean = (System.getProperty("os.name") ?: "").lowercase().contains("win")
 }
 
 fun KeyEvent.isPrimaryPressed(mac: Boolean = Platform.isMac): Boolean =

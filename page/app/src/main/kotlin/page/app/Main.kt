@@ -632,6 +632,13 @@ private fun androidx.compose.ui.window.ApplicationScope.AppContent() {
         onKeyEvent = handleShortcut,
     ) {
         SystemMenuBar(onRun = app.runAction)
+        LaunchedEffect(windowState.placement) {
+            if (windowState.placement == androidx.compose.ui.window.WindowPlacement.Maximized) {
+                page.ui.WindowCorners.reset(window)
+            } else {
+                page.ui.WindowCorners.round(window)
+            }
+        }
         LaunchedEffect(Unit) {
             frameRef.value = window
             val perf = PerfRegistry.instance
@@ -644,7 +651,6 @@ private fun androidx.compose.ui.window.ApplicationScope.AppContent() {
             perf?.end(StartupPhases.FIRST_FRAME)
             println(perf?.summary())
             println(page.app.ui.renderApiLine(window))
-            page.workspace.FileDialogs.warmUp()
         }
         LaunchedEffect(palette) {
             val c = glassTokensFor(palette).color.background
@@ -768,8 +774,8 @@ private fun androidx.compose.ui.window.ApplicationScope.AppContent() {
                 } else if (showWelcome) {
                     var recents by remember(showWelcome) { mutableStateOf(RecentProjects.load()) }
                     WelcomeScreen(
-                        onOpenFolder = { frameRef.value?.let { openFolder(it) } },
-                        onNewProject = { frameRef.value?.let { newProject(it) } },
+                        onOpenFolder = { openFolder() },
+                        onNewProject = { newProject() },
                         recents = recents,
                         onOpenRecent = { openFolderPath(it) },
                         onForgetRecent = { project ->
@@ -873,6 +879,13 @@ private fun androidx.compose.ui.window.ApplicationScope.AppContent() {
                         .align(Alignment.TopEnd)
                         .padding(top = 42.dp, end = 14.dp),
                 )
+                app.pendingPick?.let { pick ->
+                    page.workspace.FilePickerDialog(
+                        request = pick,
+                        palette = palette,
+                        onDismiss = { app.dismissPick() },
+                    )
+                }
                 }
             }
         }

@@ -642,9 +642,16 @@ private fun SectionHeader() {
         Text(
             text = "PROJECT",
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontSize = 10.sp,
-            fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
-            letterSpacing = 0.8.sp,
+            style = androidx.compose.material3.LocalTextStyle.current.copy(
+                fontSize = 10.sp,
+                fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
+                letterSpacing = 0.8.sp,
+                lineHeight = 10.sp,
+                lineHeightStyle = androidx.compose.ui.text.style.LineHeightStyle(
+                    alignment = androidx.compose.ui.text.style.LineHeightStyle.Alignment.Center,
+                    trim = androidx.compose.ui.text.style.LineHeightStyle.Trim.Both,
+                ),
+            ),
         )
     }
 }

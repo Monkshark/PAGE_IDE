@@ -80,6 +80,15 @@ internal class AppController(
     private val todo: TodoController get() = todoProvider()
     private val symbolUsage: SymbolUsageController get() = symbolUsageProvider()
 
+    private val pendingPickState =
+        androidx.compose.runtime.mutableStateOf<page.workspace.PickRequest?>(null)
+
+    val pendingPick: page.workspace.PickRequest? get() = pendingPickState.value
+
+    fun dismissPick() {
+        pendingPickState.value = null
+    }
+
     private fun paneOf(side: PaneSide): EditorPaneState = editorWorkspace.paneOf(side)
 
     private fun setPane(side: PaneSide, value: EditorPaneState) = editorWorkspace.setPane(side, value)
@@ -217,6 +226,9 @@ internal class AppController(
             pubSyncController.onFileSaved(path)
         },
         openWorkspaceFolder = openWorkspaceFolder,
+        requestPick = { pendingPickState.value = it },
+        workspaceRoot = { workspaceState.rootDir },
+        recentProjects = { RecentProjects.load() },
     )
     val openFile = fileMenuController::openFile
     val saveFile = fileMenuController::saveFile
@@ -497,9 +509,9 @@ internal class AppController(
     private val actionHost = object : ActionHost {
         override val hasSearch: Boolean get() = focused().search != null
 
-        override fun openFile() { frameProvider()?.let { this@AppController.openFile(it) } }
-        override fun openFolder() { frameProvider()?.let { this@AppController.openFolder(it) } }
-        override fun saveFile() { frameProvider()?.let { this@AppController.saveFile(it) } }
+        override fun openFile() = this@AppController.openFile()
+        override fun openFolder() = this@AppController.openFolder()
+        override fun saveFile() = this@AppController.saveFile()
         override fun closeActiveTab() = this@AppController.closeActiveTab()
         override fun openSettings() = this@AppController.openSettings()
         override fun refreshTree() { workspaceState.treeRevision++ }
