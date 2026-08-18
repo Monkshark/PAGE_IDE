@@ -228,6 +228,7 @@ internal class AppController(
         openWorkspaceFolder = openWorkspaceFolder,
         requestPick = { pendingPickState.value = it },
         workspaceRoot = { workspaceState.rootDir },
+        recentProjects = { RecentProjects.load() },
     )
     val openFile = fileMenuController::openFile
     val saveFile = fileMenuController::saveFile

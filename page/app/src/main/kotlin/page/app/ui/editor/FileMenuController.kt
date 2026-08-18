@@ -18,9 +18,10 @@ internal class FileMenuController(
     private val openWorkspaceFolder: (Path) -> Unit,
     private val requestPick: (PickRequest) -> Unit,
     private val workspaceRoot: () -> Path?,
+    private val recentProjects: () -> List<Path>,
 ) {
     fun openFile() {
-        requestPick(PickRequest(PickMode.OPEN_FILE, workspaceRoot()) { picked -> openInTab(picked) })
+        requestPick(PickRequest(PickMode.OPEN_FILE, workspaceRoot(), recents = recentProjects()) { picked -> openInTab(picked) })
     }
 
     fun saveFile() {
@@ -40,7 +41,7 @@ internal class FileMenuController(
             }
         } else {
             val text = pane.editorValue.text
-            requestPick(PickRequest(PickMode.SAVE_AS, workspaceRoot(), "Untitled.txt") { target ->
+            requestPick(PickRequest(PickMode.SAVE_AS, workspaceRoot(), "Untitled.txt", recentProjects()) { target ->
                 FileDocument.save(target, text)
                 mutateFocused { it.copy(book = it.book.openOrFocus(target, text)) }
             })
@@ -84,7 +85,7 @@ internal class FileMenuController(
     }
 
     fun openFolder() {
-        requestPick(PickRequest(PickMode.OPEN_FOLDER, workspaceRoot()) { picked -> openWorkspaceFolder(picked) })
+        requestPick(PickRequest(PickMode.OPEN_FOLDER, workspaceRoot(), recents = recentProjects()) { picked -> openWorkspaceFolder(picked) })
     }
 
     fun openFolderPath(picked: Path) {
@@ -92,14 +93,14 @@ internal class FileMenuController(
     }
 
     fun newFile() {
-        requestPick(PickRequest(PickMode.SAVE_AS, workspaceRoot(), "Untitled.txt") { target ->
+        requestPick(PickRequest(PickMode.SAVE_AS, workspaceRoot(), "Untitled.txt", recentProjects()) { target ->
             FileDocument.save(target, "")
             openInTab(target)
         })
     }
 
     fun newProject() {
-        requestPick(PickRequest(PickMode.NEW_PROJECT, workspaceRoot()) { target ->
+        requestPick(PickRequest(PickMode.NEW_PROJECT, workspaceRoot(), recents = recentProjects()) { target ->
             runCatching { java.nio.file.Files.createDirectories(target) }
             openWorkspaceFolder(target)
         })

@@ -23,11 +23,16 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Visibility
+import androidx.compose.material.icons.outlined.VisibilityOff
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -44,9 +49,14 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.window.DialogWindow
+import androidx.compose.ui.window.WindowPosition
+import androidx.compose.ui.window.rememberDialogState
+import page.ui.GlassTheme
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.Dispatchers
@@ -58,30 +68,54 @@ data class PickRequest(
     val mode: PickMode,
     val startIn: Path? = null,
     val suggestedName: String = "",
+    val recents: List<Path> = emptyList(),
     val onPick: (Path) -> Unit,
 )
 
+private fun TextStyle.centered(): TextStyle = copy(
+    lineHeight = fontSize,
+    lineHeightStyle = LineHeightStyle(
+        alignment = LineHeightStyle.Alignment.Center,
+        trim = LineHeightStyle.Trim.Both,
+    ),
+)
+
 @Composable
-fun FilePickerDialog(request: PickRequest, onDismiss: () -> Unit) {
-    val colors = Glass.colors
+fun FilePickerDialog(
+    request: PickRequest,
+    palette: page.ui.GlassPalette,
+    onDismiss: () -> Unit,
+) {
     val mode = request.mode
 
     var current by remember(request) { mutableStateOf(FilePickerModel.startingDirectory(request.startIn)) }
-    var listing by remember(request) { mutableStateOf<PickerListing?>(null) }
     var selected by remember(request) { mutableStateOf<PickerEntry?>(null) }
     var query by remember(request) { mutableStateOf("") }
     var name by remember(request) { mutableStateOf(request.suggestedName) }
     var overwriting by remember(request) { mutableStateOf<Path?>(null) }
+    var showHidden by remember(request) { mutableStateOf(false) }
 
+    val listings = remember(request) { mutableStateMapOf<Path, PickerListing>() }
+    val trail = remember(current) { FilePickerModel.trail(current) }
+    val columns = remember(trail) { FilePickerModel.columns(trail) }
+
+    LaunchedEffect(columns) {
+        for (column in columns) {
+            if (listings.containsKey(column)) continue
+            val result = withContext(Dispatchers.IO) { FilePickerModel.list(column) }
+            listings[column] = result
+        }
+    }
     LaunchedEffect(current) {
-        listing = null
         selected = null
         query = ""
-        listing = withContext(Dispatchers.IO) { FilePickerModel.list(current) }
     }
 
+    val listing = listings[current]
     val entries = (listing as? PickerListing.Ready)?.entries.orEmpty()
-    val shown = remember(entries, query, mode) { FilePickerModel.visible(entries, query, mode) }
+    val shown = remember(entries, query, mode, showHidden) {
+        FilePickerModel.visible(entries, query, mode, showHidden)
+    }
     val nameProblem = if (FilePickerModel.needsName(mode)) FilePickerModel.nameError(name) else null
     val confirmable = FilePickerModel.canConfirm(mode, current, selected, name) && listing is PickerListing.Ready
 
@@ -108,22 +142,26 @@ fun FilePickerDialog(request: PickRequest, onDismiss: () -> Unit) {
     val focus = remember(request) { FocusRequester() }
     LaunchedEffect(request) { runCatching { focus.requestFocus() } }
 
-    val shape = RoundedCornerShape(Glass.radius.md)
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.45f))
-            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { onDismiss() },
-        contentAlignment = Alignment.Center,
+    val state = rememberDialogState(
+        position = WindowPosition.Aligned(Alignment.Center),
+        width = 860.dp,
+        height = 600.dp,
+    )
+    DialogWindow(
+        onCloseRequest = onDismiss,
+        state = state,
+        title = FilePickerModel.title(mode),
+        resizable = true,
+        undecorated = true,
+        alwaysOnTop = true,
     ) {
+        LaunchedEffect(window) { page.ui.WindowCorners.round(window) }
+        GlassTheme(palette) {
         Column(
             modifier = Modifier
-                .width(760.dp)
-                .height(540.dp)
-                .clip(shape)
-                .background(colors.surfaceL2)
-                .border(1.dp, colors.outline, shape)
-                .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { }
+                .fillMaxSize()
+                .background(Glass.colors.surfaceL2)
+                .border(1.dp, Glass.colors.outline)
                 .focusRequester(focus)
                 .onPreviewKeyEvent { event ->
                     if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
@@ -156,23 +194,45 @@ fun FilePickerDialog(request: PickRequest, onDismiss: () -> Unit) {
                 },
         ) {
             PickerHeader(mode)
-            PickerCrumbs(current, query, { current = it }, { query = it }, ::goUp)
+            PickerCrumbs(
+                current = current,
+                query = query,
+                showHidden = showHidden,
+                hiddenCount = FilePickerModel.hiddenCount(entries),
+                onNavigate = { current = it },
+                onQuery = { query = it },
+                onToggleHidden = { showHidden = !showHidden },
+                onUp = ::goUp,
+            )
             if (FilePickerModel.needsName(mode)) {
                 PickerNameField(name, nameProblem) { name = it }
             }
             Row(modifier = Modifier.fillMaxWidth().weight(1f)) {
-                PickerRail(current) { current = it }
-                Box(modifier = Modifier.width(1.dp).fillMaxHeight().background(colors.separator))
-                Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
-                    when (val state = listing) {
-                        null -> PickerMessage("Reading $current…")
-                        is PickerListing.Denied -> PickerMessage("This folder could not be opened", state.reason)
-                        is PickerListing.Ready -> if (shown.isEmpty()) {
-                            PickerMessage(if (query.isBlank()) "Nothing in this folder" else "No match for “$query”")
-                        } else {
-                            PickerList(shown, selected, mode, { selected = it }, ::enter)
-                        }
+                PickerRail(current, request.recents) { current = it }
+                Box(modifier = Modifier.width(1.dp).fillMaxHeight().background(Glass.colors.separator))
+                columns.forEachIndexed { index, column ->
+                    if (index > 0) {
+                        Box(modifier = Modifier.width(1.dp).fillMaxHeight().background(Glass.colors.separator))
                     }
+                    val isCurrent = column == current
+                    val columnEntries = FilePickerModel.visible(
+                        (listings[column] as? PickerListing.Ready)?.entries.orEmpty(),
+                        "",
+                        mode,
+                        showHidden,
+                    )
+                    PickerColumn(
+                        title = FilePickerModel.columnLabel(column),
+                        listing = listings[column],
+                        entries = if (isCurrent) shown else columnEntries,
+                        openChild = FilePickerModel.childOnTrail(trail, column),
+                        selected = if (isCurrent) selected else null,
+                        mode = mode,
+                        emptyNote = if (isCurrent && query.isNotBlank()) "No match for “$query”" else "Nothing here",
+                        onSelect = { entry -> current = column; selected = entry },
+                        onEnter = { entry -> if (entry.isDirectory) current = entry.path else { current = column; selected = entry; confirm() } },
+                        modifier = Modifier.weight(1f).fillMaxHeight(),
+                    )
                 }
             }
             PickerFooter(
@@ -185,6 +245,7 @@ fun FilePickerDialog(request: PickRequest, onDismiss: () -> Unit) {
                 onKeepEditing = { overwriting = null },
             )
         }
+        }
     }
 }
 
@@ -192,13 +253,13 @@ fun FilePickerDialog(request: PickRequest, onDismiss: () -> Unit) {
 private fun PickerHeader(mode: PickMode) {
     val colors = Glass.colors
     Row(
-        modifier = Modifier.fillMaxWidth().height(44.dp).padding(horizontal = 14.dp),
+        modifier = Modifier.fillMaxWidth().height(40.dp).padding(horizontal = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Text(
             text = FilePickerModel.title(mode),
-            style = LocalTextStyle.current.copy(fontSize = 13.sp, fontWeight = FontWeight.SemiBold),
+            style = LocalTextStyle.current.copy(fontSize = 13.sp, fontWeight = FontWeight.SemiBold).centered(),
             color = colors.text,
         )
         Box(
@@ -209,7 +270,7 @@ private fun PickerHeader(mode: PickMode) {
         ) {
             Text(
                 text = FilePickerModel.modeTag(mode),
-                style = LocalTextStyle.current.copy(fontSize = 10.sp, letterSpacing = 0.6.sp),
+                style = LocalTextStyle.current.copy(fontSize = 10.sp, letterSpacing = 0.6.sp).centered(),
                 color = colors.primary,
             )
         }
@@ -221,8 +282,11 @@ private fun PickerHeader(mode: PickMode) {
 private fun PickerCrumbs(
     current: Path,
     query: String,
+    showHidden: Boolean,
+    hiddenCount: Int,
     onNavigate: (Path) -> Unit,
     onQuery: (String) -> Unit,
+    onToggleHidden: () -> Unit,
     onUp: () -> Unit,
 ) {
     val colors = Glass.colors
@@ -232,12 +296,19 @@ private fun PickerCrumbs(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Text(
-            text = "↑",
-            style = LocalTextStyle.current.copy(fontSize = 12.sp),
-            color = colors.muted,
-            modifier = Modifier.clip(RoundedCornerShape(Glass.radius.xs)).clickable { onUp() }.padding(horizontal = 6.dp, vertical = 2.dp),
-        )
+        Box(
+            modifier = Modifier
+                .size(22.dp)
+                .clip(RoundedCornerShape(Glass.radius.xs))
+                .clickable { onUp() },
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = "↑",
+                style = LocalTextStyle.current.copy(fontSize = 12.sp).centered(),
+                color = colors.muted,
+            )
+        }
         Row(
             modifier = Modifier.weight(1f),
             verticalAlignment = Alignment.CenterVertically,
@@ -245,12 +316,12 @@ private fun PickerCrumbs(
         ) {
             crumbs.forEachIndexed { index, crumb ->
                 if (index > 0) {
-                    Text(text = "›", style = LocalTextStyle.current.copy(fontSize = 11.sp), color = colors.faint)
+                    Text(text = "›", style = LocalTextStyle.current.copy(fontSize = 11.sp).centered(), color = colors.faint)
                 }
                 val here = index == crumbs.lastIndex
                 Text(
                     text = crumb.label,
-                    style = LocalTextStyle.current.copy(fontSize = 11.sp, fontFamily = FontFamily.Monospace),
+                    style = LocalTextStyle.current.copy(fontSize = 11.sp, fontFamily = FontFamily.Monospace).centered(),
                     color = if (here) colors.text else colors.muted,
                     maxLines = 1,
                     modifier = Modifier
@@ -262,6 +333,8 @@ private fun PickerCrumbs(
             }
         }
         Spacer(Modifier.width(8.dp))
+        HiddenToggle(on = showHidden, count = hiddenCount, onClick = onToggleHidden)
+        Spacer(Modifier.width(6.dp))
         PickerField(
             value = query,
             placeholder = "Filter by name",
@@ -270,6 +343,30 @@ private fun PickerCrumbs(
         )
     }
     Box(Modifier.fillMaxWidth().height(1.dp).background(Glass.colors.separator))
+}
+
+@Composable
+private fun HiddenToggle(on: Boolean, count: Int, onClick: () -> Unit) {
+    val colors = Glass.colors
+    if (count == 0 && !on) return
+    val tip = if (on) "Hide the $count config folders" else "Show $count hidden folders"
+    page.ui.GlassTooltip(text = tip) {
+        Box(
+            modifier = Modifier
+                .size(22.dp)
+                .clip(RoundedCornerShape(Glass.radius.xs))
+                .background(if (on) colors.primarySoft else Color.Transparent)
+                .clickable { onClick() },
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = if (on) Icons.Outlined.Visibility else Icons.Outlined.VisibilityOff,
+                contentDescription = null,
+                tint = if (on) colors.primary else colors.faint,
+                modifier = Modifier.size(14.dp),
+            )
+        }
+    }
 }
 
 @Composable
@@ -282,7 +379,7 @@ private fun PickerNameField(name: String, problem: String?, onName: (String) -> 
     ) {
         Text(
             text = "Name",
-            style = LocalTextStyle.current.copy(fontSize = 11.sp),
+            style = LocalTextStyle.current.copy(fontSize = 11.sp).centered(),
             color = colors.muted,
             modifier = Modifier.width(42.dp),
         )
@@ -290,7 +387,7 @@ private fun PickerNameField(name: String, problem: String?, onName: (String) -> 
         if (problem != null) {
             Text(
                 text = problem,
-                style = LocalTextStyle.current.copy(fontSize = 11.sp),
+                style = LocalTextStyle.current.copy(fontSize = 11.sp).centered(),
                 color = colors.danger,
             )
         }
@@ -321,7 +418,7 @@ private fun PickerField(
         if (value.isEmpty()) {
             Text(
                 text = placeholder,
-                style = LocalTextStyle.current.copy(fontSize = 11.sp),
+                style = LocalTextStyle.current.copy(fontSize = 11.sp).centered(),
                 color = colors.faint,
             )
         }
@@ -329,7 +426,11 @@ private fun PickerField(
             value = value,
             onValueChange = onValue,
             singleLine = true,
-            textStyle = TextStyle(fontSize = 11.sp, color = colors.text, fontFamily = FontFamily.Monospace),
+            textStyle = TextStyle(
+                fontSize = 11.sp,
+                color = colors.text,
+                fontFamily = FontFamily.Monospace,
+            ).centered(),
             cursorBrush = SolidColor(colors.primary),
             modifier = Modifier.fillMaxWidth(),
         )
@@ -337,21 +438,27 @@ private fun PickerField(
 }
 
 @Composable
-private fun PickerRail(current: Path, onNavigate: (Path) -> Unit) {
-    val colors = Glass.colors
+private fun PickerRail(current: Path, recents: List<Path>, onNavigate: (Path) -> Unit) {
     val roots = remember { FilePickerModel.roots() }
     val home = remember { FilePickerModel.homeDirectory() }
     Column(
-        modifier = Modifier.width(168.dp).fillMaxHeight().verticalScroll(rememberScrollState()).padding(vertical = 10.dp),
+        modifier = Modifier.width(150.dp).fillMaxHeight().verticalScroll(rememberScrollState()).padding(vertical = 8.dp),
     ) {
+        if (recents.isNotEmpty()) {
+            RailLabel("Recent")
+            recents.take(5).forEach { project ->
+                RailItem(project.fileName?.toString() ?: project.toString(), project, current, onNavigate)
+            }
+            Spacer(Modifier.height(10.dp))
+        }
         RailLabel("Pinned")
         RailItem("Home", home, current, onNavigate)
         RailItem("Desktop", home.resolve("Desktop"), current, onNavigate)
         RailItem("Documents", home.resolve("Documents"), current, onNavigate)
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(10.dp))
         RailLabel("Drives")
         roots.forEach { root ->
-            RailItem(root.toString(), root, current, onNavigate)
+            RailItem(root.toString().trimEnd('\\', '/'), root, current, onNavigate, drive = true)
         }
     }
 }
@@ -360,30 +467,36 @@ private fun PickerRail(current: Path, onNavigate: (Path) -> Unit) {
 private fun RailLabel(text: String) {
     Text(
         text = text.uppercase(),
-        style = LocalTextStyle.current.copy(fontSize = 10.sp, letterSpacing = 1.sp),
+        style = LocalTextStyle.current.copy(fontSize = 10.sp, letterSpacing = 1.sp).centered(),
         color = Glass.colors.faint,
-        modifier = Modifier.padding(start = 14.dp, end = 14.dp, bottom = 5.dp),
+        modifier = Modifier.padding(start = 35.dp, end = 12.dp, bottom = 5.dp),
     )
 }
 
 @Composable
-private fun RailItem(label: String, path: Path, current: Path, onNavigate: (Path) -> Unit) {
+private fun RailItem(
+    label: String,
+    path: Path,
+    current: Path,
+    onNavigate: (Path) -> Unit,
+    drive: Boolean = false,
+) {
     val colors = Glass.colors
     val on = runCatching { path.toAbsolutePath().normalize() == current }.getOrDefault(false)
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(26.dp)
+            .height(24.dp)
             .background(if (on) colors.primarySoft else Color.Transparent)
             .clickable { onNavigate(path) }
-            .padding(horizontal = 14.dp),
+            .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        FileTypeIcon(path = path, isDirectory = true, size = 16.dp)
+        if (drive) DriveGlyph() else FileTypeIcon(path = path, isDirectory = true, size = 15.dp)
         Text(
             text = label,
-            style = LocalTextStyle.current.copy(fontSize = 12.sp),
+            style = LocalTextStyle.current.copy(fontSize = 12.sp).centered(),
             color = if (on) colors.text else colors.muted,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
@@ -392,51 +505,98 @@ private fun RailItem(label: String, path: Path, current: Path, onNavigate: (Path
 }
 
 @Composable
-private fun PickerList(
-    entries: List<PickerEntry>,
-    selected: PickerEntry?,
-    mode: PickMode,
-    onSelect: (PickerEntry) -> Unit,
-    onEnter: (PickerEntry) -> Unit,
-) {
+private fun DriveGlyph() {
     val colors = Glass.colors
-    val state = rememberLazyListState()
-    LaunchedEffect(selected) {
-        val index = entries.indexOf(selected)
-        if (index >= 0) runCatching { state.animateScrollToItem(index) }
-    }
-    LazyColumn(modifier = Modifier.fillMaxSize(), state = state) {
-        itemsIndexed(entries, key = { _, e -> e.path.toString() }) { _, entry ->
-            val dimmed = FilePickerModel.picksDirectories(mode) && !entry.isDirectory
-            val isSelected = entry == selected
-            Row(
+    Column(
+        modifier = Modifier.size(15.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterVertically),
+    ) {
+        repeat(2) {
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(30.dp)
-                    .background(if (isSelected) colors.primarySoft else Color.Transparent)
-                    .then(if (dimmed) Modifier else Modifier.clickable { onSelect(entry); if (entry.isDirectory) onEnter(entry) })
-                    .padding(horizontal = 14.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(9.dp),
-            ) {
-                Box(modifier = Modifier.size(16.dp), contentAlignment = Alignment.Center) {
-                    FileTypeIcon(path = entry.path, isDirectory = entry.isDirectory, size = 16.dp)
-                }
-                Text(
-                    text = entry.name,
-                    style = LocalTextStyle.current.copy(fontSize = 12.sp),
-                    color = if (dimmed) colors.faint else colors.text,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f),
-                )
-                Text(
-                    text = if (entry.isDirectory) "" else FilePickerModel.formatSize(entry.sizeBytes),
-                    style = LocalTextStyle.current.copy(fontSize = 11.sp, fontFamily = FontFamily.Monospace),
-                    color = colors.faint,
-                )
-                if (entry.isDirectory) {
-                    Text(text = "›", style = LocalTextStyle.current.copy(fontSize = 11.sp), color = colors.faint)
+                    .height(5.dp)
+                    .clip(RoundedCornerShape(1.5.dp))
+                    .background(colors.faint),
+            )
+        }
+    }
+}
+
+@Composable
+private fun PickerColumn(
+    title: String,
+    listing: PickerListing?,
+    entries: List<PickerEntry>,
+    openChild: Path?,
+    selected: PickerEntry?,
+    mode: PickMode,
+    emptyNote: String,
+    onSelect: (PickerEntry) -> Unit,
+    onEnter: (PickerEntry) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = Glass.colors
+    Column(modifier = modifier) {
+        Text(
+            text = title.uppercase(),
+            style = LocalTextStyle.current.copy(fontSize = 10.sp, letterSpacing = 1.sp).centered(),
+            color = colors.faint,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(start = 35.dp, end = 12.dp, top = 9.dp, bottom = 5.dp),
+        )
+        when {
+            listing == null -> PickerMessage("Reading…")
+            listing is PickerListing.Denied -> PickerMessage("Cannot open", listing.reason)
+            entries.isEmpty() -> PickerMessage(emptyNote)
+            else -> LazyColumn(modifier = Modifier.fillMaxSize(), state = rememberLazyListState()) {
+                itemsIndexed(entries, key = { _, e -> e.path.toString() }) { _, entry ->
+                    val dimmed = FilePickerModel.picksDirectories(mode) && !entry.isDirectory
+                    val onTrail = entry.path == openChild
+                    val highlighted = entry == selected || onTrail
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(28.dp)
+                            .background(if (highlighted) colors.primarySoft else Color.Transparent)
+                            .then(if (dimmed) Modifier else Modifier.clickable { onSelect(entry); onEnter(entry) })
+                            .padding(horizontal = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        FileTypeIcon(path = entry.path, isDirectory = entry.isDirectory, size = 15.dp)
+                        Text(
+                            text = entry.name,
+                            style = LocalTextStyle.current.copy(fontSize = 12.sp).centered(),
+                            color = if (dimmed) colors.faint else colors.text,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f),
+                        )
+                        Box(
+                            modifier = Modifier.width(46.dp),
+                            contentAlignment = Alignment.CenterEnd,
+                        ) {
+                            if (entry.isDirectory) {
+                                Text(
+                                    text = "›",
+                                    style = LocalTextStyle.current.copy(fontSize = 11.sp).centered(),
+                                    color = if (onTrail) colors.primary else colors.faint,
+                                )
+                            } else {
+                                Text(
+                                    text = FilePickerModel.formatSize(entry.sizeBytes),
+                                    style = LocalTextStyle.current.copy(
+                                        fontSize = 10.sp,
+                                        fontFamily = FontFamily.Monospace,
+                                    ).centered(),
+                                    color = colors.faint,
+                                    maxLines = 1,
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -453,7 +613,7 @@ private fun PickerMessage(title: String, detail: String? = null) {
     ) {
         Text(
             text = title,
-            style = LocalTextStyle.current.copy(fontSize = 12.sp),
+            style = LocalTextStyle.current.copy(fontSize = 12.sp).centered(),
             color = colors.muted,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
@@ -462,7 +622,7 @@ private fun PickerMessage(title: String, detail: String? = null) {
             Spacer(Modifier.height(5.dp))
             Text(
                 text = detail,
-                style = LocalTextStyle.current.copy(fontSize = 11.sp),
+                style = LocalTextStyle.current.copy(fontSize = 11.sp).centered(),
                 color = colors.faint,
             )
         }
@@ -482,19 +642,19 @@ private fun PickerFooter(
     val colors = Glass.colors
     Box(Modifier.fillMaxWidth().height(1.dp).background(colors.separator))
     Row(
-        modifier = Modifier.fillMaxWidth().height(52.dp).background(colors.surfaceL1).padding(horizontal = 14.dp),
+        modifier = Modifier.fillMaxWidth().height(48.dp).background(colors.surfaceL1).padding(horizontal = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = if (overwriting != null) "ALREADY EXISTS" else "SELECTED",
-                style = LocalTextStyle.current.copy(fontSize = 10.sp, letterSpacing = 0.8.sp),
+                text = (if (overwriting != null) "Already exists" else "Selected").uppercase(),
+                style = LocalTextStyle.current.copy(fontSize = 10.sp, letterSpacing = 1.sp).centered(),
                 color = if (overwriting != null) colors.warn else colors.faint,
             )
             Text(
                 text = overwriting?.toString() ?: path,
-                style = LocalTextStyle.current.copy(fontSize = 11.sp, fontFamily = FontFamily.Monospace),
+                style = LocalTextStyle.current.copy(fontSize = 11.sp, fontFamily = FontFamily.Monospace).centered(),
                 color = colors.text,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -513,7 +673,7 @@ private fun PickerFooter(
 @Composable
 private fun PickerButton(label: String, primary: Boolean, enabled: Boolean, onClick: () -> Unit) {
     val colors = Glass.colors
-    val shape = RoundedCornerShape(Glass.radius.sm)
+    val shape = RoundedCornerShape(Glass.radius.md)
     val background = when {
         !enabled -> colors.surfaceL3
         primary -> colors.primary
@@ -539,7 +699,7 @@ private fun PickerButton(label: String, primary: Boolean, enabled: Boolean, onCl
             style = LocalTextStyle.current.copy(
                 fontSize = 12.sp,
                 fontWeight = if (primary) FontWeight.SemiBold else FontWeight.Normal,
-            ),
+            ).centered(),
             color = foreground,
         )
     }
