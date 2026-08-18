@@ -1,11 +1,19 @@
 {
-  "updatedAt": "2026-08-17T04:09:14.361Z",
+  "updatedAt": "2026-08-18T04:04:14.552Z",
   "owner": "rust-lang",
   "repo": "rust-analyzer",
   "releases": [
     {
       "tag": "nightly",
-      "publishedAt": "2026-08-17T00:42:37Z"
+      "publishedAt": "2026-08-18T00:42:05Z"
+    },
+    {
+      "tag": "2026-08-17.4",
+      "publishedAt": "2026-08-17T13:01:09Z"
+    },
+    {
+      "tag": "2026-08-17",
+      "publishedAt": "2026-08-17T06:12:15Z"
     },
     {
       "tag": "2026-08-10.1",
@@ -194,14 +202,6 @@
     {
       "tag": "2025-08-04",
       "publishedAt": "2025-08-04T06:06:05Z"
-    },
-    {
-      "tag": "2025-07-28",
-      "publishedAt": "2025-07-28T04:53:25Z"
-    },
-    {
-      "tag": "2025-07-21",
-      "publishedAt": "2025-07-21T05:47:17Z"
     }
   ]
 }
