@@ -7,13 +7,23 @@ object FileIcons {
 
     fun resourceFor(path: Path, isDirectory: Boolean): String? {
         val name = path.fileName?.toString()?.lowercase() ?: return null
-        if (isDirectory) return "$DIR/${folderIconName(name)}.svg"
+        if (isDirectory) {
+            if (isUserHome(path)) return "$DIR/folder-home.svg"
+            return "$DIR/${folderIconName(name)}.svg"
+        }
         fileIconByName(name)?.let { return "$DIR/$it.svg" }
         val ext = name.substringAfterLast('.', "")
         return EXT[ext]?.let { "$DIR/$it.svg" }
     }
 
     fun documentResource(): String = "$DIR/document.svg"
+
+    internal fun isUserHome(path: Path, home: String? = System.getProperty("user.home")): Boolean {
+        if (home.isNullOrBlank()) return false
+        return runCatching {
+            path.toAbsolutePath().normalize() == java.nio.file.Path.of(home).toAbsolutePath().normalize()
+        }.getOrDefault(false)
+    }
 
     private fun fileIconByName(name: String): String? = when {
         name.endsWith(".gradle") || name.endsWith(".gradle.kts") || name == "gradle.properties" -> "gradle"
@@ -96,6 +106,15 @@ object FileIcons {
         name == "views" || name == "view" || name == "screens" || name == "pages" || name == "layouts" -> "folder-views"
         name == "theme" || name == "themes" -> "folder-theme"
         name == "video" || name == "videos" || name == "movies" -> "folder-video"
+        name == "desktop" -> "folder-desktop"
+        name == "downloads" || name == "download" -> "folder-download"
+        name == "documents" || name == "my documents" -> "folder-docs"
+        name == "pictures" || name == "photos" || name == "my pictures" -> "folder-images"
+        name == "music" || name == "my music" -> "folder-audio"
+        name == "users" || name == "home" -> "folder-home"
+        name == "onedrive" || name == "dropbox" || name == "google drive" -> "folder-shared"
+        name == "favorites" || name == "links" || name == "searches" -> "folder-secure"
+        name == "saved games" || name == "3d objects" || name == "contacts" -> "folder-archive"
         name == "java" -> "folder-java"
         name == "kotlin" -> "folder-kotlin"
         name == "javascript" || name == "js" -> "folder-javascript"

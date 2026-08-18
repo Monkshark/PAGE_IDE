@@ -6,6 +6,7 @@ import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -127,6 +128,15 @@ class FileIconsTest {
         "tools" to "folder-tools",
         "utils" to "folder-utils",
         "videos" to "folder-video",
+        "Desktop" to "folder-desktop",
+        "Downloads" to "folder-download",
+        "Documents" to "folder-docs",
+        "Pictures" to "folder-images",
+        "Music" to "folder-audio",
+        "Users" to "folder-home",
+        "OneDrive" to "folder-shared",
+        "Favorites" to "folder-secure",
+        "3D Objects" to "folder-archive",
         "views" to "folder-views",
         "java" to "folder-java",
         "kotlin" to "folder-kotlin",
@@ -194,6 +204,14 @@ class FileIconsTest {
             assertNotNull(loader.getResource("fileicons/$icon.svg"), icon)
         }
         assertNotNull(loader.getResource(FileIcons.documentResource()))
+    }
+
+    @Test
+    fun `the profile folder is a home no matter what it is called`() {
+        val home = java.nio.file.Path.of(System.getProperty("user.home"))
+        assertTrue(FileIcons.isUserHome(home))
+        assertFalse(FileIcons.isUserHome(home.resolve("Desktop")))
+        assertEquals("fileicons/folder-home.svg", FileIcons.resourceFor(home, isDirectory = true))
     }
 
     @Test
