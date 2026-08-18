@@ -4,8 +4,8 @@ import page.app.EditorPaneState
 import page.app.PaneSide
 import page.editor.FileDocument
 import page.editor.FileKinds
-import page.workspace.FileDialogs
-import java.awt.Frame
+import page.workspace.PickMode
+import page.workspace.PickRequest
 import java.nio.file.Path
 
 internal class FileMenuController(
@@ -16,12 +16,14 @@ internal class FileMenuController(
     private val mutatePane: (PaneSide, (EditorPaneState) -> EditorPaneState) -> Unit,
     private val didSave: (Path, String) -> Unit,
     private val openWorkspaceFolder: (Path) -> Unit,
+    private val requestPick: (PickRequest) -> Unit,
+    private val workspaceRoot: () -> Path?,
 ) {
-    fun openFile(parent: Frame) {
-        FileDialogs.open(parent)?.let { picked -> openInTab(picked) }
+    fun openFile() {
+        requestPick(PickRequest(PickMode.OPEN_FILE, workspaceRoot()) { picked -> openInTab(picked) })
     }
 
-    fun saveFile(parent: Frame) {
+    fun saveFile() {
         val pane = focused()
         val active = pane.book.active
         if (active != null) {
@@ -37,11 +39,11 @@ internal class FileMenuController(
                 }
             }
         } else {
-            val target = FileDialogs.saveAs(parent)
-            if (target != null) {
-                FileDocument.save(target, pane.editorValue.text)
-                mutateFocused { it.copy(book = it.book.openOrFocus(target, pane.editorValue.text)) }
-            }
+            val text = pane.editorValue.text
+            requestPick(PickRequest(PickMode.SAVE_AS, workspaceRoot(), "Untitled.txt") { target ->
+                FileDocument.save(target, text)
+                mutateFocused { it.copy(book = it.book.openOrFocus(target, text)) }
+            })
         }
     }
 
@@ -81,25 +83,25 @@ internal class FileMenuController(
         return saved
     }
 
-    fun openFolder(parent: Frame) {
-        FileDialogs.openDirectory(parent)?.let { picked -> openWorkspaceFolder(picked) }
+    fun openFolder() {
+        requestPick(PickRequest(PickMode.OPEN_FOLDER, workspaceRoot()) { picked -> openWorkspaceFolder(picked) })
     }
 
     fun openFolderPath(picked: Path) {
         openWorkspaceFolder(picked)
     }
 
-    fun newFile(parent: Frame) {
-        val target = FileDialogs.saveAs(parent)
-        if (target != null) {
+    fun newFile() {
+        requestPick(PickRequest(PickMode.SAVE_AS, workspaceRoot(), "Untitled.txt") { target ->
             FileDocument.save(target, "")
             openInTab(target)
-        }
+        })
     }
 
-    fun newProject(parent: Frame) {
-        val target = FileDialogs.newProjectDirectory(parent) ?: return
-        runCatching { java.nio.file.Files.createDirectories(target) }
-        openWorkspaceFolder(target)
+    fun newProject() {
+        requestPick(PickRequest(PickMode.NEW_PROJECT, workspaceRoot()) { target ->
+            runCatching { java.nio.file.Files.createDirectories(target) }
+            openWorkspaceFolder(target)
+        })
     }
 }
