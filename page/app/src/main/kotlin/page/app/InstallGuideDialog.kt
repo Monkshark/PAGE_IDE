@@ -105,7 +105,8 @@ internal fun InstallGuideDialog(
     var showUpstream by remember(installer) { mutableStateOf(false) }
     var showHeavyConfirm by remember(installer) { mutableStateOf(false) }
     var heavyConfirmAccepted by remember(installer) { mutableStateOf(false) }
-    var outputLines by remember(installer) { mutableStateOf<List<String>>(emptyList()) }
+    val logId = installer?.languageId ?: definition.id
+    val outputLines = InstallProgressRegistry.log(logId)
     var loggedExtracting by remember(installer) { mutableStateOf(false) }
     var installJob by remember(installer) { mutableStateOf<Job?>(null) }
     var showCancelConfirm by remember(installer) { mutableStateOf(false) }
@@ -131,6 +132,9 @@ internal fun InstallGuideDialog(
         if (p == null || p is LspInstaller.Progress.Done || p is LspInstaller.Progress.Failed) {
             installedVersion = installer.activeVersion()
             installedVersions = installer.installedVersions()
+            if (p is LspInstaller.Progress.Done) {
+                installedVersion?.let { selectedVersion = it }
+            }
         }
     }
     val scope = rememberCoroutineScope()
@@ -144,9 +148,6 @@ internal fun InstallGuideDialog(
         if (re != null) {
             val reProgress = re.progress
             installProgress = reProgress ?: LspInstaller.Progress.Downloading(0, -1)
-            if (reProgress is LspInstaller.Progress.CommandOutput) {
-                outputLines = (outputLines + reProgress.line).takeLast(2000)
-            }
         } else if (installProgress != null &&
             installProgress !is LspInstaller.Progress.Done &&
             installProgress !is LspInstaller.Progress.Failed
@@ -186,7 +187,7 @@ internal fun InstallGuideDialog(
         if (InstallProgressRegistry.get(active.languageId) != null) return
         cancelled.set(false)
         installProgress = LspInstaller.Progress.Downloading(0, -1)
-        outputLines = listOf("> Installing ${active.displayName}" + (selectedVersion?.let { " $it" } ?: ""))
+        InstallProgressRegistry.startLog(logId, "> Installing ${active.displayName}" + (selectedVersion?.let { " $it" } ?: ""))
         loggedExtracting = false
         InstallProgressRegistry.start(active.languageId, active.displayName, cancelled = cancelled)
         installJob = launchScope.launch {
@@ -197,32 +198,39 @@ internal fun InstallGuideDialog(
                     InstallProgressRegistry.update(active.languageId, p)
                     when (p) {
                         is LspInstaller.Progress.CommandOutput ->
-                            outputLines = (outputLines + p.line).takeLast(2000)
+                            InstallProgressRegistry.appendLog(logId, p.line)
                         is LspInstaller.Progress.Downloading ->
-                            outputLines = appendDownloadLine(outputLines, downloadLine(active.displayName, p))
+                            InstallProgressRegistry.setLog(
+                                logId,
+                                appendDownloadLine(
+                                    InstallProgressRegistry.log(logId),
+                                    downloadLine(active.displayName, p),
+                                ),
+                            )
                         is LspInstaller.Progress.Extracting -> {
                             if (!loggedExtracting) {
                                 loggedExtracting = true
-                                outputLines = (outputLines + "> ${p.message}").takeLast(2000)
+                                InstallProgressRegistry.appendLog(logId, "> ${p.message}")
                             }
                         }
                         is LspInstaller.Progress.Done ->
-                            outputLines = (outputLines + "> Installed at ${p.executable}").takeLast(2000)
+                            InstallProgressRegistry.appendLog(logId, "> Installed at ${p.executable}")
                         is LspInstaller.Progress.Failed ->
-                            outputLines = (outputLines + "> Failed: ${p.error.message ?: p.error::class.simpleName}").takeLast(2000)
+                            InstallProgressRegistry.appendLog(logId, "> Failed: ${p.error.message ?: p.error::class.simpleName}")
                     }
                 }
                 if (!cancelled.get() && LspInstaller.isWindows() && active.languageId == "clangd") {
                     val mingw = MingwInstaller()
                     if (!mingw.isInstalled()) {
-                        outputLines = outputLines + "" + "> Installing MinGW-w64 (UCRT64) for libc headers (stdio.h etc.)..."
+                        InstallProgressRegistry.appendLog(logId, "")
+                        InstallProgressRegistry.appendLog(logId, "> Installing MinGW-w64 (UCRT64) for libc headers (stdio.h etc.)...")
                         InstallProgressRegistry.start("mingw-toolchain", "MinGW-w64 (UCRT64)")
                         mingw.install(null) { p ->
                             if (cancelled.get()) return@install
                             installProgress = p
                             InstallProgressRegistry.update("mingw-toolchain", p)
                             if (p is LspInstaller.Progress.CommandOutput) {
-                                outputLines = (outputLines + p.line).takeLast(2000)
+                                InstallProgressRegistry.appendLog(logId, p.line)
                             }
                         }
                         InstallProgressRegistry.finish("mingw-toolchain")
@@ -231,14 +239,15 @@ internal fun InstallGuideDialog(
                 if (!cancelled.get() && LspInstaller.isWindows() && active.languageId == "swift") {
                     val sdk = WindowsSdkInstaller()
                     if (!sdk.isInstalled()) {
-                        outputLines = outputLines + "" + "> Installing Windows SDK (MSVC CRT + headers via xwin) for Swift..."
+                        InstallProgressRegistry.appendLog(logId, "")
+                        InstallProgressRegistry.appendLog(logId, "> Installing Windows SDK (MSVC CRT + headers via xwin) for Swift...")
                         InstallProgressRegistry.start("windows-sdk", "Windows SDK (MSVC, xwin)")
                         sdk.install(null) { p ->
                             if (cancelled.get()) return@install
                             installProgress = p
                             InstallProgressRegistry.update("windows-sdk", p)
                             if (p is LspInstaller.Progress.CommandOutput) {
-                                outputLines = (outputLines + p.line).takeLast(2000)
+                                InstallProgressRegistry.appendLog(logId, p.line)
                             }
                         }
                         InstallProgressRegistry.finish("windows-sdk")
@@ -264,7 +273,7 @@ internal fun InstallGuideDialog(
         installJob = null
         installer?.let { InstallProgressRegistry.finish(it.languageId) }
         installProgress = null
-        outputLines = emptyList()
+        InstallProgressRegistry.clearLog(logId)
         showCancelConfirm = false
         val target = installer?.installDir(selectedVersion)?.toFile() ?: return
         scope.launch(Dispatchers.IO) {
@@ -794,10 +803,8 @@ private fun CancelConfirmOverlay(
     }
 }
 
-private fun installLocationOf(installer: LspInstaller, version: String?): String {
-    val v = version ?: installer.defaultVersion() ?: "latest"
-    return LspInstaller.lspHome().resolve(installer.languageId).resolve(v).toString()
-}
+private fun installLocationOf(installer: LspInstaller, version: String?): String =
+    installer.installDir(version).toString()
 
 private fun installProgressFraction(progress: LspInstaller.Progress?): Float = when (val p = progress) {
     null -> 0f
