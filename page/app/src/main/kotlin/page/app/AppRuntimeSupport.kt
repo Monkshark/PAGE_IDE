@@ -26,6 +26,7 @@ internal fun registerAllBackends() {
             envSetup = { env ->
                 PageRuntimeEnv.applyTo(env)
                 if (def.id == "java") PageRuntimeEnv.pinJavaRuntime(env)
+                if (def.id == "ruby") RubyBootstrapInstaller().applyRuntimeEnv(env)
             },
             initializationOptionsProvider = when (def.id) {
                 "rust" -> { root -> CargoWorkspaceDetector.linkedProjects(root) }
