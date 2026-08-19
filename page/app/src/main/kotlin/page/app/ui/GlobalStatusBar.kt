@@ -106,10 +106,19 @@ internal fun GlobalStatusBar(
             installerId = e.installerId,
         )
     }
+    val removalActivities = InstallProgressRegistry.removals.values.map { r ->
+        LspController.Activity(
+            kind = "remove",
+            label = "Removing ${r.version}",
+            startedAtMs = 0L,
+            progress = r.fraction,
+            installerId = r.installerId,
+        )
+    }
     val pubActivities = PubSyncRegistry.entries.values.map { e ->
         LspController.Activity(kind = "pub", label = e.label, startedAtMs = e.startedAtMs)
     }
-    val lspActivities = (globalStarting + ctrlActivities + installActivities + pubActivities)
+    val lspActivities = (globalStarting + ctrlActivities + installActivities + removalActivities + pubActivities)
         .distinctBy { it.kind + it.label }
         .sortedBy { it.startedAtMs }
 
