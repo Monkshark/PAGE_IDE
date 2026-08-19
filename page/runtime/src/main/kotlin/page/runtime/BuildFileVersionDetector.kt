@@ -19,6 +19,7 @@ object BuildFileVersionDetector {
         detectGo(projectRoot)?.let(results::add)
         detectRust(projectRoot)?.let(results::add)
         detectDotnet(projectRoot)?.let(results::add)
+        detectRuby(projectRoot)?.let(results::add)
         return results
     }
 
@@ -38,6 +39,7 @@ object BuildFileVersionDetector {
         "js", "node" -> detectNode(projectRoot)
         "py", "python", "python-runtime" -> detectPython(projectRoot)
         "go", "go-sdk" -> detectGo(projectRoot)
+        "rb", "ruby" -> detectRuby(projectRoot)
         else -> null
     }
 
@@ -97,6 +99,18 @@ object BuildFileVersionDetector {
         readFile(root.resolve("go.mod"))?.let { content ->
             val match = Regex("(?m)^go\\s+(\\d+\\.\\d+[\\d.]*)").find(content)
             if (match != null) return DetectedVersion("go-sdk", match.groupValues[1], "go.mod")
+        }
+        return null
+    }
+
+    private fun detectRuby(root: Path): DetectedVersion? {
+        readFile(root.resolve(".ruby-version"))?.trim()
+            ?.removePrefix("ruby-")
+            ?.takeIf { it.isNotBlank() }
+            ?.let { return DetectedVersion("ruby", it, ".ruby-version") }
+        readFile(root.resolve("Gemfile"))?.let { content ->
+            val match = Regex("""(?m)^\s*ruby\s+["'](?:~>\s*)?(\d+\.\d+[\d.]*)["']""").find(content)
+            if (match != null) return DetectedVersion("ruby", match.groupValues[1], "Gemfile")
         }
         return null
     }

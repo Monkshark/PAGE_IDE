@@ -405,6 +405,7 @@ internal fun IdeMainLayout(
                 if (installManagerOpen != null) {
                     InstallManagerPanel(
                         initialSelection = installManagerOpen,
+                        removalScope = runtimeScope,
                         onClose = { installManagerOpen = null },
                         onInstallRequested = { id ->
                             installManagerOpen = null
@@ -808,7 +809,7 @@ internal fun IdeMainLayout(
         val def = runtimeDefs[runtimeDialogId] ?: page.lsp.LanguageRegistry.byId(runtimeDialogId)
         val buildFileKey = when (runtimeDialogId) {
             "jdk" -> "java"; "node" -> "js"; "python-runtime" -> "py"
-            "go-sdk" -> "go"; "rust-runtime" -> "rs"; "dotnet-runtime" -> "cs"
+            "go-sdk" -> "go"; "rust-runtime" -> "rs"; "dotnet-runtime" -> "cs"; "ruby" -> "rb"
             else -> null
         }
         val suggested = buildFileKey?.let { runtimeBuildFileVersions.value[it] }
