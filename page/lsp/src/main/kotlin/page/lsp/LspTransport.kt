@@ -6,6 +6,8 @@ import java.io.OutputStream
 interface LspTransport : AutoCloseable {
     val input: InputStream
     val output: OutputStream
+
+    val exit: java.util.concurrent.CompletableFuture<Int>? get() = null
 }
 
 class StreamTransport(
@@ -27,6 +29,9 @@ class ProcessTransport(
     override val input: InputStream = process.inputStream
     override val output: OutputStream = process.outputStream
     val errorStream: InputStream = process.errorStream
+
+    override val exit: java.util.concurrent.CompletableFuture<Int> =
+        process.onExit().thenApply { it.exitValue() }
 
     private val stderrPump: Thread = Thread({
         try {

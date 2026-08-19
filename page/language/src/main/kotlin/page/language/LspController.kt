@@ -201,6 +201,21 @@ class LspController(
             }
             val initializeStartedMs = System.currentTimeMillis()
             val startFuture = c.start()
+            c.serverExit?.whenComplete { code, _ ->
+                if (myGeneration != clientGeneration || status.value != Status.STARTING) return@whenComplete
+                val why = lastStderr.get()?.takeIf { it.isNotBlank() }
+                println("[lsp] server exited with code $code before it answered initialize")
+                startFuture.cancel(true)
+                endActivity(STARTUP_KIND)
+                clearActivities("server exited")
+                offThread {
+                    status.value = Status.FAILED
+                    statusDetail.value = buildString {
+                        append("${backend.displayName} stopped with exit code $code before it started")
+                        if (why != null) append(" — $why")
+                    }
+                }
+            }
             scope.launch {
                 val timeoutMs = 300_000L
                 kotlinx.coroutines.delay(timeoutMs)
@@ -1291,8 +1306,11 @@ class LspController(
 
     private val stderrSuppressed = java.util.concurrent.atomic.AtomicInteger(0)
 
+    private val lastStderr = java.util.concurrent.atomic.AtomicReference<String?>(null)
+
     private fun onLspStderr(line: String) {
         val trimmed = line.trimEnd()
+        if (trimmed.isNotBlank()) lastStderr.set(trimmed.take(200))
         val ltrim = trimmed.trimStart()
         val isFrame = ltrim.startsWith("at ") || (ltrim.startsWith("...") && ltrim.endsWith(" more"))
         if (isFrame) {

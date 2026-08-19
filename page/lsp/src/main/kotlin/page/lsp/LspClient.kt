@@ -60,6 +60,8 @@ class LspClient(
     private val stateRef = AtomicReference(LspState.NOT_STARTED)
     val state: LspState get() = stateRef.get()
 
+    val serverExit: CompletableFuture<Int>? get() = transport.exit
+
     private var server: LanguageServer? = null
     private var listening: Future<Void>? = null
 
