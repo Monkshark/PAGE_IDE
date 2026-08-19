@@ -400,6 +400,23 @@ class RubyBootstrapInstaller(
         return listOf(msys2Ucrt, msys2Usr, rubyBin, gemBin, current).joinToString(sep)
     }
 
+    fun applyRuntimeEnv(env: MutableMap<String, String>, version: String? = currentInstalledVersion()) {
+        val resolved = version ?: return
+        val gemHome = gemHomeFor(resolved)
+        if (!Files.isDirectory(gemHome)) return
+        env["GEM_HOME"] = gemHome.toString()
+        env["GEM_PATH"] = gemHome.toString()
+        val separator = if (isWindows) ";" else ":"
+        val pathKey = env.keys.firstOrNull { it.equals("PATH", ignoreCase = true) } ?: "PATH"
+        val ours = listOf(
+            rubyRoot(resolved).resolve("bin").toString(),
+            gemHome.resolve("bin").toString(),
+        )
+        val current = env[pathKey].orEmpty()
+        env[pathKey] = if (current.isBlank()) ours.joinToString(separator)
+        else ours.joinToString(separator) + separator + current
+    }
+
     private fun buildInstallEnv(version: String, gemHome: Path): Map<String, String> {
         val base = mutableMapOf(
             "GEM_HOME" to gemHome.toString(),
@@ -424,7 +441,9 @@ class RubyBootstrapInstaller(
 
     fun currentInstalledVersion(): String? {
         val pointer = rubyBase().resolve("CURRENT")
-        return runCatching { Files.readString(pointer).trim().takeIf { it.isNotEmpty() } }.getOrNull()
+        val version = runCatching { Files.readString(pointer).trim().takeIf { it.isNotEmpty() } }.getOrNull()
+            ?: return null
+        return version.takeIf { findInstalledSolargraph(it) != null }
     }
 
     private fun writePointer(version: String) {

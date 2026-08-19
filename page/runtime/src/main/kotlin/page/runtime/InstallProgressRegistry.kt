@@ -67,4 +67,57 @@ object InstallProgressRegistry {
     }
 
     fun get(installerId: String): Entry? = _entries[installerId]
+
+    data class Removal(val installerId: String, val version: String, val fraction: Float)
+
+    private val _removals: SnapshotStateMap<String, Removal> = mutableStateMapOf()
+
+    val removals: Map<String, Removal> get() = _removals
+
+    fun startRemoval(installerId: String, version: String) {
+        _removals["$installerId/$version"] = Removal(installerId, version, 0f)
+    }
+
+    fun updateRemoval(installerId: String, version: String, fraction: Float) {
+        val key = "$installerId/$version"
+        val existing = _removals[key] ?: return
+        _removals[key] = existing.copy(fraction = fraction.coerceIn(0f, 1f))
+    }
+
+    fun finishRemoval(installerId: String, version: String) {
+        _removals.remove("$installerId/$version")
+    }
+
+    fun removalOf(installerId: String, version: String): Removal? = _removals["$installerId/$version"]
+
+    fun isRemoving(installerId: String): Boolean = _removals.values.any { it.installerId == installerId }
+
+    private const val LOG_LIMIT = 2000
+
+    private val _logs: SnapshotStateMap<String, SnapshotStateList<String>> = mutableStateMapOf()
+
+    fun log(installerId: String): List<String> = _logs[installerId] ?: emptyList()
+
+    fun startLog(installerId: String, firstLine: String) {
+        _logs[installerId] = mutableStateListOf(firstLine)
+    }
+
+    fun appendLog(installerId: String, line: String) {
+        val lines = _logs.getOrPut(installerId) { mutableStateListOf() }
+        lines.add(line)
+        while (lines.size > LOG_LIMIT) lines.removeAt(0)
+    }
+
+    fun replaceLastLog(installerId: String, line: String) {
+        val lines = _logs.getOrPut(installerId) { mutableStateListOf() }
+        if (lines.isEmpty()) lines.add(line) else lines[lines.lastIndex] = line
+    }
+
+    fun setLog(installerId: String, lines: List<String>) {
+        _logs[installerId] = mutableStateListOf<String>().apply { addAll(lines.takeLast(LOG_LIMIT)) }
+    }
+
+    fun clearLog(installerId: String) {
+        _logs.remove(installerId)
+    }
 }

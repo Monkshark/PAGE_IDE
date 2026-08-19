@@ -105,6 +105,7 @@ internal fun InstallManagerPanel(
     onVersionChanged: () -> Unit = {},
     onBeforeDelete: suspend (lspId: String) -> Unit = {},
     onAfterDelete: suspend (lspId: String) -> Unit = {},
+    removalScope: kotlinx.coroutines.CoroutineScope? = null,
     modifier: Modifier = Modifier,
 ) {
     val entries = remember { buildManagerEntries() }
@@ -142,6 +143,7 @@ internal fun InstallManagerPanel(
                 onVersionChanged = onVersionChanged,
                 onBeforeDelete = onBeforeDelete,
                 onAfterDelete = onAfterDelete,
+                removalScope = removalScope,
                 modifier = Modifier.weight(1f).fillMaxHeight(),
             )
         } else {
@@ -176,8 +178,15 @@ private fun ManagerSidebar(
             Text(
                 text = "Install Manager",
                 color = Glass.colors.text,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold,
+                style = LocalTextStyle.current.copy(
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    lineHeight = 13.sp,
+                    lineHeightStyle = LineHeightStyle(
+                        alignment = LineHeightStyle.Alignment.Center,
+                        trim = LineHeightStyle.Trim.Both,
+                    ),
+                ),
             )
             Spacer(Modifier.weight(1f))
             page.app.ui.PanelCloseButton(onClose = onClose)
@@ -264,6 +273,7 @@ private fun ManagerDetailPane(
     onVersionChanged: () -> Unit = {},
     onBeforeDelete: suspend (lspId: String) -> Unit = {},
     onAfterDelete: suspend (lspId: String) -> Unit = {},
+    removalScope: kotlinx.coroutines.CoroutineScope? = null,
     modifier: Modifier = Modifier,
 ) {
     val installer = remember(entry.id) { LspInstallers.forId(entry.id) }
@@ -275,8 +285,7 @@ private fun ManagerDetailPane(
     var availableVersions by remember(entry.id) { mutableStateOf<List<String>>(emptyList()) }
     var loading by remember(entry.id) { mutableStateOf(true) }
     var confirmDeleteVersion by remember(entry.id) { mutableStateOf<String?>(null) }
-    var deletingVersion by remember(entry.id) { mutableStateOf<String?>(null) }
-    var deleteProgress by remember(entry.id) { mutableStateOf(0f) }
+
     var sysDetail by remember(entry.id) { mutableStateOf<SystemInstall?>(null) }
     val scope = rememberCoroutineScope()
 
@@ -305,23 +314,21 @@ private fun ManagerDetailPane(
     fun deleteVersion(version: String) {
         val inst = installer ?: return
         val wasActive = activeVersion == version
-        deletingVersion = version
-        deleteProgress = 0f
-        scope.launch(Dispatchers.IO) {
+        InstallProgressRegistry.startRemoval(entry.id, version)
+        (removalScope ?: scope).launch(Dispatchers.IO) {
             if (wasActive) runCatching { onBeforeDelete(entry.id) }
             try {
                 runCatching {
                     inst.uninstall(version) { removed, total ->
                         val fraction = if (total > 0) removed.toFloat() / total else 0f
-                        scope.launch(Dispatchers.Main) { deleteProgress = fraction }
+                        InstallProgressRegistry.updateRemoval(entry.id, version, fraction)
                     }
                 }
             } finally {
                 if (wasActive) runCatching { onAfterDelete(entry.id) }
             }
             withContext(Dispatchers.Main) {
-                deletingVersion = null
-                deleteProgress = 0f
+                InstallProgressRegistry.finishRemoval(entry.id, version)
                 refreshVersions()
                 InstallState.changed()
                 onVersionChanged()
@@ -391,7 +398,9 @@ private fun ManagerDetailPane(
                 installedVersions.forEachIndexed { idx, v ->
                     if (idx > 0) Box(Modifier.fillMaxWidth().height(1.dp).background(Glass.colors.separator))
                     val isCurrent = v == activeVersion
-                    val isDeleting = deletingVersion == v
+                    val removal = InstallProgressRegistry.removalOf(entry.id, v)
+                    val isDeleting = removal != null
+                    val deleteProgress = removal?.fraction ?: 0f
                     val isConfirming = confirmDeleteVersion == v && !isDeleting
                     Row(
                         modifier = Modifier
