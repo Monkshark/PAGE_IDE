@@ -168,6 +168,7 @@ fun CodeEditor(
     signatureHelpAnchorOffset: Int? = null,
     manageHistory: Boolean = true,
     viewportHeightProvider: (() -> Float)? = null,
+    viewportWidthProvider: (() -> Float)? = null,
     scrollOffsetProvider: (() -> Float)? = null,
     scopeGuides: ScopeGuides = ScopeGuides.None,
     bracketPairs: List<page.shared.syntax.BracketPair> = emptyList(),
@@ -221,8 +222,14 @@ fun CodeEditor(
         }
     }
 
-    val widthDp = with(density) { layout.size.width.toDp() }
-    val heightDp = with(density) { layout.size.height.toDp() }
+    val insets = editorInsets(contentPadding, LayoutDirection.Ltr)
+    val widthDp = clickSurfaceWidth(
+        textWidth = with(density) { layout.size.width.toDp() },
+        insets = insets,
+        viewportWidth = with(density) { (viewportWidthProvider?.invoke() ?: 0f).toDp() },
+        direction = LayoutDirection.Ltr,
+    )
+    val heightDp = with(density) { layout.size.height.toDp() } + insets.bottomSlack
 
     val latestValue by rememberUpdatedState(value)
     val latestOnChange by rememberUpdatedState(onValueChange)
@@ -367,7 +374,7 @@ fun CodeEditor(
                     }
                 }
             }
-            .padding(contentPadding)
+            .padding(insets.outer)
             .imeInput(value, onValueChange, caretRectProvider),
     ) {
         Canvas(
