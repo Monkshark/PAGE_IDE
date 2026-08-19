@@ -1479,6 +1479,7 @@ fun EditorPanel(
                 },
                 manageHistory = false,
                 viewportHeightProvider = { scrollState.viewportSize.toFloat() },
+                viewportWidthProvider = { horizontalScrollState.viewportSize.toFloat() },
                 scrollOffsetProvider = { scrollState.value.toFloat() },
                 scopeGuides = page.ui.ScopeGuides(
                     enabled = pageSettings.editor.scopeGuides != ScopeGuideMode.OFF,
