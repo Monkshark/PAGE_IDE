@@ -133,7 +133,9 @@ class JdtlsInstaller(
 
     private fun currentInstalledVersion(): String? {
         val pointer = LspInstaller.lspHome().resolve(languageId).resolve("CURRENT")
-        return runCatching { Files.readString(pointer).trim().takeIf { it.isNotEmpty() } }.getOrNull()
+        val tag = runCatching { Files.readString(pointer).trim().takeIf { it.isNotEmpty() } }.getOrNull()
+            ?: return null
+        return tag.takeIf { Files.exists(installRoot(it).resolve(launcherName())) }
     }
 
     private fun writePointer(version: String) {
