@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-19T04:21:36Z",
+  "updatedAt": "2026-08-20T04:21:37Z",
   "versions": [
     {
       "major": 8,
@@ -103,6 +103,11 @@
     },
     {
       "major": 17,
+      "semver": "17.0.20+101",
+      "openjdk_version": "17.0.20.1+1"
+    },
+    {
+      "major": 17,
       "semver": "17.0.20+8",
       "openjdk_version": "17.0.20+8"
     },
@@ -147,9 +152,9 @@
       "openjdk_version": "17.0.12+7"
     },
     {
-      "major": 17,
-      "semver": "17.0.11+9",
-      "openjdk_version": "17.0.11+9"
+      "major": 21,
+      "semver": "21.0.12+101.0.LTS",
+      "openjdk_version": "21.0.12.1+1-LTS"
     },
     {
       "major": 21,
@@ -197,9 +202,9 @@
       "openjdk_version": "21.0.4+7-LTS"
     },
     {
-      "major": 21,
-      "semver": "21.0.3+9.0.LTS",
-      "openjdk_version": "21.0.3+9-LTS"
+      "major": 25,
+      "semver": "25.0.4+101.0.LTS",
+      "openjdk_version": "25.0.4.1+1-LTS"
     },
     {
       "major": 25,
