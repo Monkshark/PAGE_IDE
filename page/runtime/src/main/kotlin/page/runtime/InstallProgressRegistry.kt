@@ -68,7 +68,13 @@ object InstallProgressRegistry {
 
     fun get(installerId: String): Entry? = _entries[installerId]
 
-    data class Removal(val installerId: String, val version: String, val fraction: Float)
+    data class Removal(
+        val installerId: String,
+        val version: String,
+        val fraction: Float,
+        val startedAtMs: Long = System.currentTimeMillis(),
+        val phase: String = "Removing",
+    )
 
     private val _removals: SnapshotStateMap<String, Removal> = mutableStateMapOf()
 
@@ -76,6 +82,12 @@ object InstallProgressRegistry {
 
     fun startRemoval(installerId: String, version: String) {
         _removals["$installerId/$version"] = Removal(installerId, version, 0f)
+    }
+
+    fun removalPhase(installerId: String, version: String, phase: String) {
+        val key = "$installerId/$version"
+        val existing = _removals[key] ?: return
+        _removals[key] = existing.copy(phase = phase)
     }
 
     fun updateRemoval(installerId: String, version: String, fraction: Float) {

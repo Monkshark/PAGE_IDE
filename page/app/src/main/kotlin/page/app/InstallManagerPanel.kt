@@ -65,6 +65,7 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import page.lsp.LanguageDefinition
 import page.lsp.LanguageRegistry
 
@@ -306,6 +307,8 @@ private fun ManagerDetailPane(
         if (full != null) sysDetail = full
     }
 
+    var deleteFailure by remember(entry.id) { mutableStateOf<Pair<String, String>?>(null) }
+
     fun refreshVersions() {
         installedVersions = installer?.installedVersions() ?: emptyList()
         activeVersion = installer?.activeVersion()
@@ -314,21 +317,29 @@ private fun ManagerDetailPane(
     fun deleteVersion(version: String) {
         val inst = installer ?: return
         val wasActive = activeVersion == version
+        deleteFailure = null
         InstallProgressRegistry.startRemoval(entry.id, version)
-        (removalScope ?: scope).launch(Dispatchers.IO) {
-            if (wasActive) runCatching { onBeforeDelete(entry.id) }
-            try {
+        val work = removalScope ?: scope
+        work.launch(Dispatchers.IO) {
+            if (wasActive) {
+                InstallProgressRegistry.removalPhase(entry.id, version, "Stopping")
+                val stop = work.launch(Dispatchers.IO) { runCatching { onBeforeDelete(entry.id) } }
+                withTimeoutOrNull(SERVER_STOP_TIMEOUT_MS) { stop.join() }
+            }
+            InstallProgressRegistry.removalPhase(entry.id, version, "Removing")
+            val failure = try {
                 runCatching {
                     inst.uninstall(version) { removed, total ->
                         val fraction = if (total > 0) removed.toFloat() / total else 0f
                         InstallProgressRegistry.updateRemoval(entry.id, version, fraction)
                     }
-                }
+                }.exceptionOrNull()
             } finally {
                 if (wasActive) runCatching { onAfterDelete(entry.id) }
             }
             withContext(Dispatchers.Main) {
                 InstallProgressRegistry.finishRemoval(entry.id, version)
+                deleteFailure = failure?.let { version to (it.message ?: "Removal failed.") }
                 refreshVersions()
                 InstallState.changed()
                 onVersionChanged()
@@ -402,6 +413,7 @@ private fun ManagerDetailPane(
                     val isDeleting = removal != null
                     val deleteProgress = removal?.fraction ?: 0f
                     val isConfirming = confirmDeleteVersion == v && !isDeleting
+                    val failedMessage = deleteFailure?.takeIf { it.first == v }?.second
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -434,9 +446,31 @@ private fun ManagerDetailPane(
                             }
                             Spacer(Modifier.width(10.dp))
                             Text(
-                                text = "Removing… ${(deleteProgress.coerceIn(0f, 1f) * 100).toInt()}%",
+                                text = removalLabel(removal?.phase, deleteProgress),
                                 color = Glass.colors.muted,
                                 style = centeredStyle.copy(fontSize = 11.sp),
+                            )
+                        } else if (failedMessage != null) {
+                            Text(
+                                text = v,
+                                color = Glass.colors.muted,
+                                style = centeredStyle.copy(fontFamily = FontFamily.Monospace),
+                            )
+                            Spacer(Modifier.width(10.dp))
+                            Text(
+                                text = failedMessage,
+                                color = Glass.colors.danger,
+                                style = centeredStyle.copy(fontSize = 11.sp),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f),
+                            )
+                            Spacer(Modifier.width(10.dp))
+                            Text(
+                                text = "Dismiss",
+                                color = Glass.colors.muted,
+                                style = centeredStyle.copy(fontSize = 11.sp),
+                                modifier = Modifier.clickable { deleteFailure = null }.padding(horizontal = 6.dp),
                             )
                         } else if (isConfirming) {
                             Text(text = "Delete $v?", color = Glass.colors.danger, style = centeredStyle)
@@ -709,4 +743,12 @@ private fun buildManagerEntries(): List<ManagerEntry> {
         )
     }
     return entries
+}
+
+private const val SERVER_STOP_TIMEOUT_MS = 8_000L
+
+internal fun removalLabel(phase: String?, fraction: Float): String {
+    val name = phase ?: "Removing"
+    if (fraction <= 0f) return "$name…"
+    return "$name… ${(fraction.coerceIn(0f, 1f) * 100).toInt()}%"
 }

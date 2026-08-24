@@ -42,7 +42,13 @@ interface LspInstaller {
         if (activeVersion() == version) {
             dir.parent?.resolve("CURRENT")?.let { runCatching { java.nio.file.Files.deleteIfExists(it) } }
         }
-        runCatching { ArchiveExtractors.deleteRecursively(dir, onProgress) }
+        val failed = runCatching { ArchiveExtractors.deleteRecursively(dir, onProgress) }.getOrDefault(0)
+        if (java.nio.file.Files.exists(dir)) {
+            throw java.io.IOException(
+                "$displayName $version could not be removed: $failed file(s) are still in use. " +
+                    "Close anything running from $dir and try again.",
+            )
+        }
     }
 
     sealed class Progress {

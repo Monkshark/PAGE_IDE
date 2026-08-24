@@ -109,8 +109,8 @@ internal fun GlobalStatusBar(
     val removalActivities = InstallProgressRegistry.removals.values.map { r ->
         LspController.Activity(
             kind = "remove",
-            label = "Removing ${r.version}",
-            startedAtMs = 0L,
+            label = "${r.phase} ${r.version}",
+            startedAtMs = r.startedAtMs,
             progress = r.fraction,
             installerId = r.installerId,
         )
