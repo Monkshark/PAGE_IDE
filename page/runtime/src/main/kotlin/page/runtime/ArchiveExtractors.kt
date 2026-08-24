@@ -175,8 +175,8 @@ object ArchiveExtractors {
 
     fun deleteRecursively(path: Path) = deleteRecursively(path) { _, _ -> }
 
-    fun deleteRecursively(path: Path, onProgress: (removed: Int, total: Int) -> Unit) {
-        if (!Files.exists(path)) return
+    fun deleteRecursively(path: Path, onProgress: (removed: Int, total: Int) -> Unit): Int {
+        if (!Files.exists(path)) return 0
         val entries = Files.walk(path).use { stream ->
             stream.sorted(Comparator.reverseOrder()).toList()
         }
@@ -184,14 +184,16 @@ object ArchiveExtractors {
         onProgress(0, total)
         var removed = 0
         var reported = 0
+        var failed = 0
         for (entry in entries) {
-            runCatching { Files.delete(entry) }
+            if (runCatching { Files.delete(entry) }.isFailure && Files.exists(entry)) failed++
             removed++
             if (removed == total || removed - reported >= REPORT_EVERY) {
                 reported = removed
                 onProgress(removed, total)
             }
         }
+        return failed
     }
 
     private const val REPORT_EVERY = 64
