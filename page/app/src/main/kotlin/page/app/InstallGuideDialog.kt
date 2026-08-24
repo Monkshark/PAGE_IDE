@@ -99,7 +99,15 @@ internal fun InstallGuideDialog(
     val initialOs = remember { InstallGuide.initialOsKey() }
     var selectedOs by remember { mutableStateOf(initialOs) }
     var installProgress by remember { mutableStateOf<LspInstaller.Progress?>(null) }
+    var downloadSize by remember(installer) { mutableStateOf<String?>(null) }
     var selectedVersion by remember(installer) { mutableStateOf<String?>(suggestedVersion ?: installer?.installedVersion() ?: installer?.defaultVersion()) }
+
+    LaunchedEffect(installer, selectedVersion) {
+        downloadSize = null
+        val url = installer?.archiveUrl(selectedVersion) ?: return@LaunchedEffect
+        val bytes = withContext(Dispatchers.IO) { DownloadSize.of(url) } ?: return@LaunchedEffect
+        downloadSize = DownloadSize.format(bytes)
+    }
     var availableVersions by remember(installer) { mutableStateOf<List<String>>(emptyList()) }
     var versionsLoading by remember(installer) { mutableStateOf(true) }
     var showUpstream by remember(installer) { mutableStateOf(false) }
@@ -399,7 +407,7 @@ internal fun InstallGuideDialog(
                     val heavyEstimate = installer?.heavyInstall
                     if (heavyEstimate != null && installProgress == null && precheck is LspInstaller.Precheck.Ok) {
                         Spacer(Modifier.height(8.dp))
-                        HeavyEstimateBanner(estimate = heavyEstimate)
+                        HeavyEstimateBanner(estimate = heavyEstimate, measuredSize = downloadSize)
                     }
                     Spacer(Modifier.height(10.dp))
                     val precheckBlocked = precheck is LspInstaller.Precheck.MissingTool
@@ -716,6 +724,7 @@ internal fun InstallGuideDialog(
                 HeavyConfirmOverlay(
                     displayName = definition.displayName,
                     estimate = activeHeavy,
+                    measuredSize = downloadSize,
                     onCancel = { showHeavyConfirm = false },
                     onOpenGuide = { onOpenGuide(definition.installGuideUrl) },
                     onContinue = {
@@ -1253,7 +1262,7 @@ private fun ButtonLabel(text: String, color: Color) {
 }
 
 @Composable
-private fun HeavyEstimateBanner(estimate: LspInstaller.HeavyInstallEstimate) {
+private fun HeavyEstimateBanner(estimate: LspInstaller.HeavyInstallEstimate, measuredSize: String?) {
     val shape = RoundedCornerShape(Glass.radius.sm)
     Box(
         modifier = Modifier
@@ -1265,7 +1274,7 @@ private fun HeavyEstimateBanner(estimate: LspInstaller.HeavyInstallEstimate) {
     ) {
         Column {
             Text(
-                text = "${estimate.sizeEstimate} · ${estimate.durationEstimate}",
+                text = "${measuredSize ?: estimate.sizeEstimate} · ${estimate.durationEstimate}",
                 color = Glass.colors.primary,
                 style = LocalTextStyle.current.copy(fontSize = 11.sp, fontFamily = FontFamily.Monospace),
             )
@@ -1384,6 +1393,7 @@ private fun OutputLogBox(modifier: Modifier = Modifier, lines: List<String>, fai
 private fun HeavyConfirmOverlay(
     displayName: String,
     estimate: LspInstaller.HeavyInstallEstimate,
+    measuredSize: String?,
     onCancel: () -> Unit,
     onContinue: () -> Unit,
     onOpenGuide: () -> Unit,
@@ -1420,7 +1430,7 @@ private fun HeavyConfirmOverlay(
                 )
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    text = "${estimate.sizeEstimate} · ${estimate.durationEstimate}",
+                    text = "${measuredSize ?: estimate.sizeEstimate} · ${estimate.durationEstimate}",
                     color = Glass.colors.primary,
                     style = LocalTextStyle.current.copy(fontSize = 12.sp, fontFamily = FontFamily.Monospace),
                 )

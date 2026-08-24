@@ -120,6 +120,11 @@ class MingwInstaller(
         }
     }
 
+    override fun archiveUrl(version: String?): String? {
+        val resolved = version?.takeIf { it.isNotBlank() } ?: defaultVersion() ?: return null
+        return runCatching { downloadUrl(resolved) }.getOrNull()
+    }
+
     internal fun downloadUrl(version: String): String =
         "https://github.com/$assetsRepo/releases/download/$releaseTag/page-cpp-mingw-windows-${assetArch()}-$version.tar.gz"
 

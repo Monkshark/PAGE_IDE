@@ -35,7 +35,7 @@ class RubyBootstrapInstaller(
     override val displayName: String = "solargraph"
     override val precheck: LspInstaller.Precheck = LspInstaller.Precheck.Ok
     override val heavyInstall: LspInstaller.HeavyInstallEstimate? = LspInstaller.HeavyInstallEstimate(
-        sizeEstimate = if (isWindows) "~700 MB to 1 GB (Ruby + MinGW UCRT64 + solargraph all-in-one bundle)" else "~25 MB",
+        sizeEstimate = if (isWindows) "~700 MB to 1 GB" else "~25 MB",
         durationEstimate = "~3 to 7 min",
         notes = if (isWindows)
             "PAGE downloads a prebuilt Ruby + MSYS2 + solargraph all-in-one zip bundle and extracts it into an isolated directory. " +
@@ -345,6 +345,11 @@ class RubyBootstrapInstaller(
 
     internal fun rubyBundleUrl(version: String): String =
         "https://github.com/$rubyBundleRepo/releases/download/$rubyBundleRelease/page-ruby-solargraph-windows-x86_64-$version.zip"
+
+    override fun archiveUrl(version: String?): String? {
+        val resolved = version?.takeIf { it.isNotBlank() } ?: defaultVersion() ?: return null
+        return runCatching { downloadUrl(resolved) }.getOrNull()
+    }
 
     internal fun downloadUrl(version: String): String = when (osKey) {
         "macos" -> {

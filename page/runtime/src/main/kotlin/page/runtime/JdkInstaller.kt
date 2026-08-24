@@ -28,7 +28,7 @@ class JdkInstaller(
     override val displayName: String = "Eclipse Temurin JDK"
     override val precheck: LspInstaller.Precheck = LspInstaller.Precheck.Ok
     override val heavyInstall: LspInstaller.HeavyInstallEstimate = LspInstaller.HeavyInstallEstimate(
-        sizeEstimate = "~180 MB to 240 MB (Temurin JDK runtime + headers)",
+        sizeEstimate = "~180 MB to 240 MB",
         durationEstimate = "~1 to 3 min",
         notes = "PAGE downloads the Eclipse Temurin JDK from page-ide-assets and extracts it into a project-isolated directory. " +
             "No system JDK is required.",
@@ -152,6 +152,11 @@ class JdkInstaller(
             runCatching { ArchiveExtractors.deleteRecursively(jdkRoot(sanitize(version?.takeIf { it.isNotBlank() } ?: defaultJdkVersion))) }
             onProgress(LspInstaller.Progress.Failed(t))
         }
+    }
+
+    override fun archiveUrl(version: String?): String? {
+        val resolved = version?.takeIf { it.isNotBlank() } ?: defaultVersion() ?: return null
+        return runCatching { downloadUrl(resolved) }.getOrNull()
     }
 
     internal fun downloadUrl(version: String): String {
