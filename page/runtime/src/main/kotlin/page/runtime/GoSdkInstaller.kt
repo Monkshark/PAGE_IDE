@@ -113,6 +113,11 @@ class GoSdkInstaller(
         }
     }
 
+    override fun archiveUrl(version: String?): String? {
+        val resolved = version?.takeIf { it.isNotBlank() } ?: defaultVersion() ?: return null
+        return runCatching { downloadUrl(resolved) }.getOrNull()
+    }
+
     internal fun downloadUrl(version: String): String {
         val os = when (osKey) {
             "macos" -> "darwin"

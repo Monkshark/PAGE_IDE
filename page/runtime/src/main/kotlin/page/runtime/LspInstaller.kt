@@ -9,6 +9,8 @@ interface LspInstaller {
     val precheck: Precheck
     val heavyInstall: HeavyInstallEstimate? get() = null
 
+    fun archiveUrl(version: String?): String? = null
+
     fun isInstalled(): Boolean
     fun executable(): Path?
     fun install(version: String?, onProgress: (Progress) -> Unit)
