@@ -62,6 +62,8 @@ Asynchronous notifications from the server flow to listeners: subscribe with `on
 
 `ProcessTransport` wires the server process's stdin/stdout to the client, and pumps stderr on a daemon thread into the log. On close it cleans up the process tree: on Windows it force-kills children with `taskkill /F /T`, and on other systems it destroys descendant processes. This is what keeps servers from lingering as zombies.
 
+The order matters. The process dies first, the pipes close second. The other way round means closing a stdout that the lsp4j listener is parked on, and on Windows that `close()` never returns — every path that stops a server (removal, restart, shutdown) stalls on that one line. The close itself also runs on a daemon thread with a two-second bound, so it can never hold its caller.
+
 ---
 
 ## Per-feature requests and augmentation
@@ -69,6 +71,7 @@ Asynchronous notifications from the server flow to listeners: subscribe with `on
 Completion, hover, definition, references, rename, signature help, symbols, call hierarchy, inlay hints, code actions, and diagnostics each live in their own file, building the lsp4j request and translating the response into a form the IDE can use.
 
 Where the server response alone is not enough, this layer augments it. `CompletionProfile` holds the per-language keyword set and whether auto-import is supported; `CompletionAugmentor` folds keywords and import candidates (found via workspace symbols) into the completion list. `PageQuickFixes` synthesizes quick fixes the server does not provide. `CompletionFrecency` promotes frequently and recently chosen items.
+
 
 ---
 
