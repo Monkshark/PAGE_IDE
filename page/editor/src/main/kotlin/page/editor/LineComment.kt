@@ -9,11 +9,37 @@ object LineComment {
 
     fun prefixFor(path: Path?): String? {
         val name = path?.fileName?.toString()?.lowercase(Locale.ROOT) ?: return null
-        val ext = name.substringAfterLast('.', missingDelimiterValue = "")
-        return when (ext) {
-            "kt", "kts", "java" -> "// "
-            else -> null
-        }
+        BY_NAME[name]?.let { return it }
+        return BY_EXTENSION[name.substringAfterLast('.', missingDelimiterValue = "")]
+    }
+
+    private val BY_EXTENSION: Map<String, String> = buildMap {
+        for (ext in listOf(
+            "kt", "kts", "java", "js", "jsx", "mjs", "cjs", "ts", "tsx",
+            "c", "h", "cc", "cpp", "cxx", "hh", "hpp", "hxx",
+            "cs", "csx", "go", "rs", "swift", "dart", "scala", "groovy", "php", "jsonc",
+        )) put(ext, "// ")
+        for (ext in listOf(
+            "py", "pyi", "pyw", "rb", "rake", "gemspec", "sh", "bash", "zsh", "fish",
+            "yaml", "yml", "toml", "ini", "cfg", "conf", "properties", "r", "pl", "pm",
+            "ex", "exs", "nim", "jl", "tf", "gradle",
+        )) put(ext, "# ")
+        for (ext in listOf("sql", "lua", "hs", "elm", "adb", "ads")) put(ext, "-- ")
+        for (ext in listOf("clj", "cljs", "cljc", "edn", "lisp", "el", "scm")) put(ext, ";; ")
+        for (ext in listOf("tex", "erl", "m")) put(ext, "% ")
+        put("vim", '"' + " ")
+        put("bat", "REM ")
+        put("cmd", "REM ")
+        put("ps1", "# ")
+    }
+
+    private val BY_NAME: Map<String, String> = buildMap {
+        for (name in listOf(
+            "dockerfile", "makefile", "gnumakefile", "gemfile", "rakefile", "vagrantfile",
+            "brewfile", "podfile", "fastfile", "appfile", "justfile", "procfile",
+            ".gitignore", ".gitattributes", ".dockerignore", ".npmrc", ".nvmrc", ".env",
+            ".editorconfig", ".bashrc", ".zshrc", ".profile",
+        )) put(name, "# ")
     }
 
     fun toggle(text: String, selectionStart: Int, selectionEnd: Int, prefix: String): Result {

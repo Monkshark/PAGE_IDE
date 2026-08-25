@@ -96,4 +96,51 @@ class LineCommentTest {
         assertEquals(0, r.selectionStart)
         assertEquals(19, r.selectionEnd)
     }
+
+    @Test
+    fun `every language page can open has a way to comment a line`() {
+        val expected = mapOf(
+            "a.swift" to "// ", "a.rs" to "// ", "a.go" to "// ", "a.ts" to "// ",
+            "a.tsx" to "// ", "a.js" to "// ", "a.c" to "// ", "a.hpp" to "// ",
+            "a.dart" to "// ", "a.php" to "// ", "a.cs" to "// ",
+            "a.py" to "# ", "a.rb" to "# ", "a.sh" to "# ", "a.yaml" to "# ", "a.toml" to "# ",
+            "a.sql" to "-- ", "a.lua" to "-- ",
+            "a.clj" to ";; ",
+        )
+        for ((name, prefix) in expected) {
+            assertEquals(prefix, LineComment.prefixFor(Paths.get(name)), name)
+        }
+    }
+
+    @Test
+    fun `files that go by name alone are known too`() {
+        assertEquals("# ", LineComment.prefixFor(Paths.get("Dockerfile")))
+        assertEquals("# ", LineComment.prefixFor(Paths.get("Makefile")))
+        assertEquals("# ", LineComment.prefixFor(Paths.get(".gitignore")))
+        assertEquals("# ", LineComment.prefixFor(Paths.get("Gemfile")))
+    }
+
+    @Test
+    fun `a language whose comment depends on where you are is left alone`() {
+        for (name in listOf("a.html", "a.xml", "a.md", "a.vue", "a.svelte", "a.css", "a.json")) {
+            assertNull(LineComment.prefixFor(Paths.get(name)), name)
+        }
+    }
+
+    @Test
+    fun `an unknown file offers nothing rather than guessing`() {
+        assertNull(LineComment.prefixFor(Paths.get("notes.whatever")))
+        assertNull(LineComment.prefixFor(Paths.get("noextension")))
+        assertNull(LineComment.prefixFor(null))
+    }
+
+    @Test
+    fun `the shell comment round trips on a python file`() {
+        val text = "x = 1\ny = 2\n"
+        val prefix = LineComment.prefixFor(Paths.get("a.py"))!!
+        val commented = LineComment.toggle(text, 0, text.length, prefix)
+        assertEquals("# x = 1\n# y = 2\n", commented.text)
+        val back = LineComment.toggle(commented.text, 0, commented.text.length, prefix)
+        assertEquals(text, back.text)
+    }
 }
