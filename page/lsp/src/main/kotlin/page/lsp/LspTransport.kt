@@ -46,10 +46,24 @@ class ProcessTransport(
     }
 
     override fun close() {
-        try { input.close() } catch (_: Throwable) {}
-        try { output.close() } catch (_: Throwable) {}
-        try { errorStream.close() } catch (_: Throwable) {}
-        try { stderrPump.interrupt() } catch (_: Throwable) {}
+        stopProcess()
+        runCatching { stderrPump.interrupt() }
+        closeStreams()
+    }
+
+    private fun closeStreams() {
+        val closer = Thread({
+            runCatching { input.close() }
+            runCatching { output.close() }
+            runCatching { errorStream.close() }
+        }, "lsp-stream-close").apply {
+            isDaemon = true
+            start()
+        }
+        runCatching { closer.join(STREAM_CLOSE_TIMEOUT_MS) }
+    }
+
+    private fun stopProcess() {
         val isWindows = System.getProperty("os.name").orEmpty().lowercase().contains("win")
         val pid = runCatching { process.pid() }.getOrNull()
         if (isWindows && pid != null && process.isAlive) {
@@ -79,5 +93,9 @@ class ProcessTransport(
                 runCatching { ph.onExit().get(2, java.util.concurrent.TimeUnit.SECONDS) }
             }
         }
+    }
+
+    private companion object {
+        const val STREAM_CLOSE_TIMEOUT_MS = 2_000L
     }
 }
