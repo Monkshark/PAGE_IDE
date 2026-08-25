@@ -66,17 +66,21 @@ class LspStartupBench {
                 continue
             }
             if (installer.isInstalled()) continue
-            println("[bench] installing $id …")
-            val startedAt = System.currentTimeMillis()
-            val failure = runCatching {
-                installer.install(null) { progress ->
-                    if (progress is LspInstaller.Progress.Failed) throw progress.error
-                }
-            }.exceptionOrNull()
-            val tookMs = System.currentTimeMillis() - startedAt
-            val outcome = if (failure == null) "installed" else "FAILED: ${failure.message}"
-            println("[bench] $id $outcome in ${tookMs}ms")
+            LspInstallers.missingPrerequisitesOf(installer).forEach { install(it) }
+            install(installer)
         }
+    }
+
+    private fun install(installer: LspInstaller) {
+        println("[bench] installing ${installer.languageId} …")
+        val startedAt = System.currentTimeMillis()
+        val failure = runCatching {
+            installer.install(null) { progress ->
+                if (progress is LspInstaller.Progress.Failed) throw progress.error
+            }
+        }.exceptionOrNull()
+        val outcome = failure?.let { "FAILED: ${it.message}" } ?: "installed"
+        println("[bench] ${installer.languageId} $outcome in ${System.currentTimeMillis() - startedAt}ms")
     }
 
     private fun measure(project: Path): Row {
