@@ -75,4 +75,29 @@ interface LanguageBackend {
 
 ---
 
+## 시작 시간 재기
+
+`LspStartupBench`는 언어별 서버가 뜨는 데 걸리는 시간을 한 번에 잰다. 언어마다 프로젝트 하나씩 담은 디렉터리를 가리키면, 각 프로젝트의 대표 소스 파일을 골라 백엔드를 해석하고 spawn한 뒤 `initialize` 응답까지의 시간을 기록한다.
+
+```
+./gradlew :page:app:test --tests 'page.app.LspStartupBench' --rerun-tasks -Dpage.lsp.bench=/path/to/lsp-bench -Dpage.lsp.bench.runs=2
+```
+
+`page.lsp.bench`를 주지 않으면 조용히 통과한다. 사용법은 그때 출력으로 안내한다.
+
+| 속성 | 뜻 |
+|---|---|
+| `page.lsp.bench` | 언어별 프로젝트를 담은 루트 (없으면 실행 안 함) |
+| `page.lsp.bench.only` | 측정할 프로젝트만 콤마로 지정 |
+| `page.lsp.bench.install` | 없으면 먼저 설치할 설치기 id |
+| `page.lsp.bench.runs` | 반복 횟수 — cold와 warm을 같이 보려면 2 이상 |
+| `page.lsp.bench.timeout` | `initialize` 대기 초 (기본 180) |
+| `page.lsp.bench.out` | 리포트 경로 (기본 `<루트>/lsp-startup.txt`) |
+
+프로젝트의 언어는 디렉터리 이름으로 잡고, 이름과 맞는 백엔드가 없으면 소스 파일이 가장 많이 쓰는 백엔드로 정한다. `json`·`yaml` 같은 설정 파일은 이 판정에서 빠진다.
+
+반복이 필요한 이유는 캐시다. solargraph·sourcekit-lsp·Dart Analysis Server는 첫 기동에 타입맵이나 툴체인 색인을 만들어서 1회차와 2회차가 열 배 넘게 벌어진다.
+
+---
+
 - [목차로 돌아가기](https://monkshark.github.io/page-ide/#README_kr.md)
