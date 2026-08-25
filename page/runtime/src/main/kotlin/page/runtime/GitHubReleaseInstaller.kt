@@ -18,6 +18,9 @@ class GitHubReleaseInstaller(
 
     override fun isInstalled(): Boolean = executable() != null
 
+    override fun prerequisites(): List<String> =
+        descriptor.prerequisites[LspInstaller.osKey()].orEmpty()
+
     override fun executable(): Path? {
         val os = descriptor.osBlock() ?: return null
         val root = installRoot()
@@ -143,6 +146,7 @@ data class GitHubReleaseDescriptor(
     val repo: String,
     val perOs: Map<String, OsAsset>,
     val defaultVersion: String? = null,
+    val prerequisites: Map<String, List<String>> = emptyMap(),
 ) {
     fun osBlock(osKey: String = LspInstaller.osKey()): OsAsset? = perOs[osKey]
 }

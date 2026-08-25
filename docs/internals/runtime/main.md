@@ -46,6 +46,8 @@ interface LspInstaller {
 
 언어 서버뿐 아니라 SDK·툴체인 인스톨러도 여기 산다. JDK·Node·Python·Go·Rust·Dart·Flutter·.NET·Swift·C++(LLVM/MinGW)·Ruby, 그리고 Windows SDK까지. 시스템에 이미 설치된 컴파일러는 `SystemToolchainDetector`가 MSVC·clang·gcc·Xcode를 탐지해, 굳이 다시 받지 않도록 한다.
 
+설치기 하나로 끝나지 않는 언어가 있다. `prerequisites()`가 먼저 깔려야 하는 설치기의 id를 돌려주고, `LspInstallers.missingPrerequisitesOf`가 그중 아직 없는 것만 추려 준다. Windows의 Swift는 `windows-sdk`를 요구한다 — Swift 툴체인만 깔면 컴파일은 되지만 `kernel32.lib`을 못 찾아 `LNK1104`로 링크가 죽는다. Windows의 clangd는 libc 헤더 때문에 `mingw-toolchain`을 요구한다. 이 선행 조건이 설치기에 붙어 있으므로 설치 다이얼로그든 스크립트든 부르는 쪽과 무관하게 같은 결과가 나온다.
+
 ---
 
 ## PageRuntimeEnv — 실행 환경 주입

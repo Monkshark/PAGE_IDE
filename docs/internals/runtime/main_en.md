@@ -46,6 +46,8 @@ interface LspInstaller {
 
 Beyond language servers, SDK and toolchain installers live here too: JDK, Node, Python, Go, Rust, Dart, Flutter, .NET, Swift, C++ (LLVM/MinGW), Ruby, and even the Windows SDK. Compilers already installed on the system are detected by `SystemToolchainDetector` — MSVC, clang, gcc, Xcode — so they need not be downloaded again.
 
+Some languages take more than one installer. `prerequisites()` returns the ids that must be installed first, and `LspInstallers.missingPrerequisitesOf` narrows that to the ones not yet present. Swift on Windows requires `windows-sdk` — install the Swift toolchain alone and code compiles but the link dies with `LNK1104`, unable to find `kernel32.lib`. clangd on Windows requires `mingw-toolchain` for its libc headers. Because the prerequisite hangs off the installer, the install dialog and a script reach the same result.
+
 ---
 
 ## PageRuntimeEnv — injecting the run environment
