@@ -248,10 +248,21 @@ fun CodeEditor(
     var latchedHoverPosition by remember { mutableStateOf<Offset?>(null) }
     var ctrlPressedState by remember { mutableStateOf(false) }
     var hoverOriginalOffset by remember { mutableStateOf<Int?>(null) }
+    var pointerInHoverPopup by remember { mutableStateOf(false) }
+    var hoverLeaving by remember { mutableStateOf(false) }
     val ctrlHoverLinkRange: IntRange? = run {
         val off = hoverOriginalOffset
         val resolver = latestResolveCtrlHoverLink
         if (ctrlPressedState && off != null && resolver != null) resolver(off) else null
+    }
+    LaunchedEffect(hoverLeaving, pointerInHoverPopup) {
+        if (!hoverLeaving || pointerInHoverPopup) return@LaunchedEffect
+        delay(HOVER_HANDOFF_MS)
+        if (pointerInHoverPopup) return@LaunchedEffect
+        hoverLeaving = false
+        hoverPosition = null
+        hoverOriginalOffset = null
+        latestOnHover?.invoke(null)
     }
     LaunchedEffect(hoverText, hoverDiagnostic, hoverPending, ctrlPressedState) {
         val empty = hoverText.isNullOrBlank() && hoverDiagnostic == null && !hoverPending
@@ -512,6 +523,7 @@ fun CodeEditor(
                                     } else if (!change.pressed) {
                                         val transOff = latestLayout.getOffsetForPosition(change.position)
                                         val origOff = latestMapping.transformedToOriginal(transOff)
+                                        hoverLeaving = false
                                         hoverPosition = change.position
                                         hoverOriginalOffset = origOff
                                         ctrlPressedState = e.keyboardModifiers.isPrimaryPressed()
@@ -519,9 +531,7 @@ fun CodeEditor(
                                     }
                                 }
                                 PointerEventType.Exit -> {
-                                    hoverPosition = null
-                                    hoverOriginalOffset = null
-                                    latestOnHover?.invoke(null)
+                                    hoverLeaving = true
                                 }
                                 PointerEventType.Release -> {
                                     if (moveSourceOffset >= 0) {
@@ -842,6 +852,10 @@ fun CodeEditor(
                 pending = hoverPending,
                 preset = hoverSyntaxPreset,
                 keepOpen = ctrlPressedState,
+                onPointerInside = { inside ->
+                    pointerInHoverPopup = inside
+                    if (inside) hoverLeaving = false
+                },
             )
         }
         if (completionItems.isNotEmpty()) {
@@ -1221,6 +1235,7 @@ private fun HoverPopup(
     pending: Boolean,
     preset: SyntaxPreset,
     keepOpen: Boolean,
+    onPointerInside: (Boolean) -> Unit,
 ) {
     val segments = remember(text) {
         if (text.isNullOrBlank()) emptyList() else parseHoverMarkdown(text)
@@ -1235,7 +1250,21 @@ private fun HoverPopup(
         popupPositionProvider = remember(position) { HoverPositionProvider(position) },
         focusable = false,
     ) {
-        GlassPopup(modifier = Modifier.widthIn(max = 560.dp)) {
+        GlassPopup(
+            modifier = Modifier
+                .widthIn(max = 560.dp)
+                .pointerInput(Unit) {
+                    awaitPointerEventScope {
+                        while (true) {
+                            when (awaitPointerEvent(PointerEventPass.Initial).type) {
+                                PointerEventType.Enter -> onPointerInside(true)
+                                PointerEventType.Exit -> onPointerInside(false)
+                                else -> Unit
+                            }
+                        }
+                    }
+                },
+        ) {
             SelectionContainer {
                 Column {
                     if (diagnostic != null) DiagnosticHeader(diagnostic)
@@ -1952,3 +1981,5 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawDottedUnderline
         }
     }
 }
+
+private const val HOVER_HANDOFF_MS = 220L
