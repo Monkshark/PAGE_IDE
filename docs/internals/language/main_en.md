@@ -43,6 +43,8 @@ In Compose, `rememberLspRouter(workspaceRoot)` ties the router to the workspace 
 
 Document sync flows through `didOpen` · `didChange` · `didSave` · `didClose`. To avoid hitting the server on every keystroke, `didChange` is coalesced with a 250 ms debounce. On top of that, every IDE feature rides as a request.
 
+How fast a server answers with diagnostics varies more than tenfold by language: rust-analyzer takes tens of milliseconds, sourcekit-lsp about six seconds per edit. With nothing on screen for that long, slow reads as broken, so the status bar shows `Analyzing…` while an edit goes unanswered. It waits 700 ms first (`ANALYSIS_GRACE_MS`), so on a fast server it never appears at all. `SlowAnalysisSignal` issues a token per edit, so a later edit supersedes the one before it and arriving diagnostics end the wait.
+
 | Feature | Augmentation |
 |---|---|
 | Completion | Result cache + prefix-extend reuse, keyword/import candidate merge, prefix sort |

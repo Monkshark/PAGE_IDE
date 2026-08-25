@@ -285,6 +285,14 @@ class LspController(
         }
     }
 
+    private val slowAnalysis = SlowAnalysisSignal()
+
+    private suspend fun announceIfAnalysisDrags() {
+        val token = slowAnalysis.requested()
+        kotlinx.coroutines.delay(ANALYSIS_GRACE_MS)
+        if (slowAnalysis.stillWaiting(token)) startActivity(ANALYSIS_KIND, "Analyzing…")
+    }
+
     internal fun startActivity(kind: String, label: String, progress: Float? = null) = offThread {
         val now = System.currentTimeMillis()
         val existing = activities[kind]
@@ -415,6 +423,7 @@ class LspController(
                     println("[lsp] didOpen $uri (lang=$languageId, ${text.length} chars)")
                     ws.didOpen(uri, languageId, text)
                 }
+                announceIfAnalysisDrags()
             } catch (t: Throwable) {
                 println("[lsp] didOpen failed for $uri: ${t.message}")
             }
@@ -450,6 +459,7 @@ class LspController(
             try {
                 println("[lsp] didChange → ${activeBackend?.id ?: "lsp"} for $uri (${text.length} chars)")
                 ws.didChange(uri, text)
+                announceIfAnalysisDrags()
             } catch (t: Throwable) {
                 println("[lsp] didChange failed for $uri: ${t.message}")
             }
@@ -1589,6 +1599,7 @@ class LspController(
             ".dart_tool", "ephemeral",
         )
         const val STARTUP_KIND = "startup"
+        const val ANALYSIS_GRACE_MS = 700L
         const val ANALYSIS_KIND = "analysis"
         const val GRADLE_DEPS_KIND = KLS_GRADLE_DEPS_KIND
         const val GRADLE_SCRIPT_DEPS_KIND = KLS_GRADLE_SCRIPT_DEPS_KIND
@@ -1620,6 +1631,7 @@ class LspController(
         val uri = params.uri ?: return
         if (isNoiseUri(uri)) return
         logFirstServerFeedback("diagnostics")
+        slowAnalysis.settled()
         if (activities.containsKey(ANALYSIS_KIND)) endActivity(ANALYSIS_KIND)
         val key = canonicalUri(uri)
         val mapped = params.diagnostics.orEmpty().map(Diagnostic::fromLsp)
