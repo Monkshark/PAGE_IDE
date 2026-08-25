@@ -83,7 +83,8 @@ object FileIcons {
         name == "utils" || name == "util" || name == "helpers" || name == "helper" -> "folder-utils"
         name == "types" || name == "interfaces" || name == "model" || name == "models" ||
             name == "entity" || name == "entities" -> "folder-interface"
-        name == "venv" || name == ".venv" || name == "__pycache__" || name == ".pytest_cache" -> "folder-python"
+        name == "python" || name == "py" ||
+            name == "venv" || name == ".venv" || name == "__pycache__" || name == ".pytest_cache" -> "folder-python"
         name == "android" -> "folder-android"
         name == "ios" -> "folder-ios"
         name == "packages" || name == "apps" || name == "modules" -> "folder-packages"
