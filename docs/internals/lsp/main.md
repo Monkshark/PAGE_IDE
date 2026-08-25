@@ -62,6 +62,8 @@ interface LanguageBackend {
 
 `ProcessTransport`는 서버 프로세스의 stdin/stdout을 클라이언트에 잇고, stderr는 데몬 스레드로 퍼 올려 로그로 흘린다. 종료 시 프로세스 트리를 정리하는데, Windows에서는 `taskkill /F /T`로 자식까지 강제 종료하고, 그 외 OS에서는 자손 프로세스를 destroy한다. 서버가 좀비로 남지 않게 하는 지점이다.
 
+순서가 중요하다. 프로세스를 먼저 죽이고 그다음에 파이프를 닫는다. 반대로 하면 lsp4j 리스너가 read로 물려 있는 stdout을 닫게 되고, Windows에서는 그 `close()`가 돌아오지 않는다. 서버를 멈추는 모든 경로(삭제·재시작·앱 종료)가 이 한 줄에서 멈춰 선다. 닫기 자체도 데몬 스레드에서 2초만 기다려, 어떤 경우에도 호출자를 붙잡지 않는다.
+
 ---
 
 ## 기능별 요청과 보강
@@ -69,6 +71,7 @@ interface LanguageBackend {
 완성·호버·정의·참조·이름 변경·시그니처 도움말·심볼·콜 계층·인레이 힌트·코드 액션·진단은 각각 파일로 나뉘어 lsp4j 요청을 만들고 응답을 IDE가 쓰기 좋은 형태로 옮긴다.
 
 서버 응답만으로 부족한 부분은 이 층에서 보강한다. `CompletionProfile`은 언어별 키워드 셋과 auto-import 지원 여부를 담고, `CompletionAugmentor`는 완성 목록에 키워드와 (워크스페이스 심볼로 찾은) import 후보를 끼워 넣는다. `PageQuickFixes`는 서버가 주지 않는 퀵픽스를 합성한다. `CompletionFrecency`는 자주·최근 고른 항목을 위로 올린다.
+
 
 ---
 
