@@ -176,6 +176,12 @@ class FileIconsTest {
         "jobs" to "folder-job",
         "queues" to "folder-queue",
         "rules" to "folder-rules",
+        "ruby" to "folder-ruby",
+        "swift" to "folder-swift",
+        "c" to "folder-c",
+        "cpp" to "folder-cpp",
+        "bash" to "folder-bash",
+        "web" to "folder-web",
     )
 
     @Test
