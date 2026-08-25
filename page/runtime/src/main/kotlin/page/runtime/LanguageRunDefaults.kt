@@ -306,6 +306,23 @@ object LanguageRunDefaults {
         return buildSwiftWindowsConfig(path, fileName, baseName, workspaceRoot, swiftc, swiftRunEnv(swift), linkLibs)
     }
 
+    internal fun buildSwiftPackageConfig(projectRoot: Path): RunConfig? {
+        val swift = runCatching { SwiftToolchainInstaller() }.getOrNull() ?: return null
+        val bin = swift.swiftExecutable() ?: return null
+        val manifest = runCatching { java.nio.file.Files.readString(projectRoot.resolve("Package.swift")) }
+            .getOrNull().orEmpty()
+        val verb = if (SwiftPackageDetector.declaresExecutable(manifest)) "run" else "build"
+        val name = projectRoot.fileName?.toString() ?: "package"
+        return RunConfig(
+            id = "auto-swiftpm-$name-${System.nanoTime()}",
+            name = "Swift · $name",
+            command = bin.toAbsolutePath().toString(),
+            args = listOf(verb),
+            workingDir = projectRoot.toString(),
+            env = swiftRunEnv(swift),
+        )
+    }
+
     private fun buildFlutterConfig(projectRoot: Path): RunConfig {
         val flutter = runCatching { FlutterSdkInstaller() }.getOrNull()
         val version = flutter?.currentInstalledVersion()
@@ -336,6 +353,10 @@ object LanguageRunDefaults {
         if ("dart" in template.extensions) {
             val flutterRoot = FlutterProjectDetector.flutterRootFor(path, workspaceRoot)
             if (flutterRoot != null) return buildFlutterConfig(flutterRoot)
+        }
+        if ("swift" in template.extensions) {
+            val packageRoot = SwiftPackageDetector.packageRootFor(path, workspaceRoot)
+            if (packageRoot != null) buildSwiftPackageConfig(packageRoot)?.let { return it }
         }
         val fileName = path.fileName?.toString() ?: return null
         val baseName = fileName.substringBeforeLast('.', fileName)

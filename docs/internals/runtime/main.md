@@ -64,6 +64,8 @@ Windows에서는 대소문자만 다른 중복 환경 변수를 하나로 접고
 
 prelaunch가 있으면 본 실행 전에 빌드를 돌리는데, `BuildCache`가 입력이 안 바뀌었다고 판정하면 재빌드를 건너뛴다. 실행 환경은 `PageRuntimeEnv`가 주입한 뒤 구성의 `env`를 덧씌운다. 여러 구성과 활성 선택은 `RunConfigsState`가 관리한다.
 
+구성이 없으면 `LanguageRunDefaults`가 파일 확장자로 하나 만들어 준다. 다만 파일 하나만 보고 정하면 틀리는 언어가 있어서, 먼저 그 파일이 속한 프로젝트를 찾는다. `FlutterProjectDetector`는 `pubspec.yaml`을 거슬러 올라가 Flutter 프로젝트면 `flutter run`을, `SwiftPackageDetector`는 `Package.swift`를 찾아 SwiftPM 패키지면 패키지 루트에서 `swift run`을 쓴다 (실행 산출물이 없는 라이브러리 패키지면 `swift build`). 프로젝트가 아니면 그때 단일 파일로 처리한다 — Windows의 Swift는 `swiftc`로 exe를 만들어 실행하는 prelaunch 구성이 된다.
+
 ---
 
 ## TerminalManager — 내장 터미널

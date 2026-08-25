@@ -64,6 +64,8 @@ On Windows it collapses environment variables that differ only in case (`normali
 
 When a prelaunch step is present, it runs a build before the main run; if `BuildCache` judges the inputs unchanged, the rebuild is skipped. The run environment is injected by `PageRuntimeEnv` and then overlaid with the config's own `env`. Multiple configs and the active selection are managed by `RunConfigsState`.
 
+With no config of its own, `LanguageRunDefaults` derives one from the file extension. Some languages cannot be judged from a single file, so it looks for the project that file belongs to first. `FlutterProjectDetector` walks up for `pubspec.yaml` and uses `flutter run` for a Flutter project; `SwiftPackageDetector` walks up for `Package.swift` and uses `swift run` from the package root for a SwiftPM package (`swift build` when the package produces no executable). Only when there is no project does it fall back to the single file — on Windows a Swift file becomes a prelaunch config that builds an exe with `swiftc` and runs it.
+
 ---
 
 ## TerminalManager — the embedded terminal
