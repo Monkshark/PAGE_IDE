@@ -63,9 +63,9 @@ import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeoutOrNull
 import page.lsp.LanguageDefinition
 import page.lsp.LanguageRegistry
 
@@ -324,14 +324,27 @@ private fun ManagerDetailPane(
             if (wasActive) {
                 InstallProgressRegistry.removalPhase(entry.id, version, "Stopping")
                 val stop = work.launch(Dispatchers.IO) { runCatching { onBeforeDelete(entry.id) } }
-                withTimeoutOrNull(SERVER_STOP_TIMEOUT_MS) { stop.join() }
+                val startedAt = System.currentTimeMillis()
+                while (stop.isActive) {
+                    val waited = System.currentTimeMillis() - startedAt
+                    if (waited >= SERVER_STOP_TIMEOUT_MS) break
+                    InstallProgressRegistry.updateRemoval(
+                        entry.id,
+                        version,
+                        stopFraction(waited, SERVER_STOP_TIMEOUT_MS),
+                    )
+                    delay(STOP_TICK_MS)
+                }
             }
             InstallProgressRegistry.removalPhase(entry.id, version, "Removing")
             val failure = try {
                 runCatching {
                     inst.uninstall(version) { removed, total ->
-                        val fraction = if (total > 0) removed.toFloat() / total else 0f
-                        InstallProgressRegistry.updateRemoval(entry.id, version, fraction)
+                        InstallProgressRegistry.updateRemoval(
+                            entry.id,
+                            version,
+                            sweepFraction(removed, total, afterStop = wasActive),
+                        )
                     }
                 }.exceptionOrNull()
             } finally {
@@ -746,6 +759,20 @@ private fun buildManagerEntries(): List<ManagerEntry> {
 }
 
 private const val SERVER_STOP_TIMEOUT_MS = 8_000L
+private const val STOP_TICK_MS = 100L
+
+internal const val STOP_SHARE = 0.1f
+
+internal fun stopFraction(waitedMs: Long, timeoutMs: Long): Float {
+    if (timeoutMs <= 0L) return STOP_SHARE
+    return (STOP_SHARE * waitedMs / timeoutMs).coerceIn(0f, STOP_SHARE)
+}
+
+internal fun sweepFraction(removed: Int, total: Int, afterStop: Boolean): Float {
+    val base = if (afterStop) STOP_SHARE else 0f
+    val swept = if (total > 0) removed.toFloat() / total else 0f
+    return (base + (1f - base) * swept.coerceIn(0f, 1f)).coerceIn(0f, 1f)
+}
 
 internal fun removalLabel(phase: String?, fraction: Float): String {
     val name = phase ?: "Removing"
