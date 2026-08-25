@@ -48,12 +48,18 @@ object LspInstallers {
 
     fun supports(languageId: String): Boolean = registry.containsKey(languageId)
 
+    fun missingPrerequisitesOf(installer: LspInstaller): List<LspInstaller> =
+        installer.prerequisites()
+            .mapNotNull { forId(it) }
+            .filterNot { runCatching { it.isInstalled() }.getOrDefault(false) }
+
     private fun clangdInstaller(): LspInstaller = GitHubReleaseInstaller(
         GitHubReleaseDescriptor(
             languageId = "clangd",
             displayName = "clangd",
             owner = "clangd",
             repo = "clangd",
+            prerequisites = mapOf("windows" to listOf("mingw-toolchain")),
             perOs = mapOf(
                 "macos" to OsAsset(
                     url = "https://github.com/clangd/clangd/releases/download/{tag}/clangd-mac-{tag}.zip",

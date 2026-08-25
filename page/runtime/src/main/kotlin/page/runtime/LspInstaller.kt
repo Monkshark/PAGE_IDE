@@ -11,6 +11,8 @@ interface LspInstaller {
 
     fun archiveUrl(version: String?): String? = null
 
+    fun prerequisites(): List<String> = emptyList()
+
     fun isInstalled(): Boolean
     fun executable(): Path?
     fun install(version: String?, onProgress: (Progress) -> Unit)

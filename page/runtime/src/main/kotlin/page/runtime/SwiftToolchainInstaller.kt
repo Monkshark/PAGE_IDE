@@ -19,6 +19,9 @@ class SwiftToolchainInstaller(
 ) : LspInstaller {
 
     override val languageId: String = "swift"
+
+    override fun prerequisites(): List<String> =
+        if (isWindows) listOf("windows-sdk") else emptyList()
     override val displayName: String = "Swift toolchain (sourcekit-lsp)"
     override val precheck: LspInstaller.Precheck = LspInstaller.Precheck.Ok
     override val heavyInstall: LspInstaller.HeavyInstallEstimate = LspInstaller.HeavyInstallEstimate(

@@ -227,39 +227,23 @@ internal fun InstallGuideDialog(
                             InstallProgressRegistry.appendLog(logId, "> Failed: ${p.error.message ?: p.error::class.simpleName}")
                     }
                 }
-                if (!cancelled.get() && LspInstaller.isWindows() && active.languageId == "clangd") {
-                    val mingw = MingwInstaller()
-                    if (!mingw.isInstalled()) {
-                        InstallProgressRegistry.appendLog(logId, "")
-                        InstallProgressRegistry.appendLog(logId, "> Installing MinGW-w64 (UCRT64) for libc headers (stdio.h etc.)...")
-                        InstallProgressRegistry.start("mingw-toolchain", "MinGW-w64 (UCRT64)")
-                        mingw.install(null) { p ->
-                            if (cancelled.get()) return@install
-                            installProgress = p
-                            InstallProgressRegistry.update("mingw-toolchain", p)
-                            if (p is LspInstaller.Progress.CommandOutput) {
-                                InstallProgressRegistry.appendLog(logId, p.line)
-                            }
+                for (prerequisite in LspInstallers.missingPrerequisitesOf(active)) {
+                    if (cancelled.get()) break
+                    InstallProgressRegistry.appendLog(logId, "")
+                    InstallProgressRegistry.appendLog(
+                        logId,
+                        "> Installing ${prerequisite.displayName}, which ${active.displayName} needs to build...",
+                    )
+                    InstallProgressRegistry.start(prerequisite.languageId, prerequisite.displayName)
+                    prerequisite.install(null) { p ->
+                        if (cancelled.get()) return@install
+                        installProgress = p
+                        InstallProgressRegistry.update(prerequisite.languageId, p)
+                        if (p is LspInstaller.Progress.CommandOutput) {
+                            InstallProgressRegistry.appendLog(logId, p.line)
                         }
-                        InstallProgressRegistry.finish("mingw-toolchain")
                     }
-                }
-                if (!cancelled.get() && LspInstaller.isWindows() && active.languageId == "swift") {
-                    val sdk = WindowsSdkInstaller()
-                    if (!sdk.isInstalled()) {
-                        InstallProgressRegistry.appendLog(logId, "")
-                        InstallProgressRegistry.appendLog(logId, "> Installing Windows SDK (MSVC CRT + headers via xwin) for Swift...")
-                        InstallProgressRegistry.start("windows-sdk", "Windows SDK (MSVC, xwin)")
-                        sdk.install(null) { p ->
-                            if (cancelled.get()) return@install
-                            installProgress = p
-                            InstallProgressRegistry.update("windows-sdk", p)
-                            if (p is LspInstaller.Progress.CommandOutput) {
-                                InstallProgressRegistry.appendLog(logId, p.line)
-                            }
-                        }
-                        InstallProgressRegistry.finish("windows-sdk")
-                    }
+                    InstallProgressRegistry.finish(prerequisite.languageId)
                 }
             }
             val succeeded = !cancelled.get() && withContext(Dispatchers.IO) { active.isInstalled() }
