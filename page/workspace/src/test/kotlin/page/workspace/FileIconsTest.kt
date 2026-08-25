@@ -113,6 +113,7 @@ class FileIconsTest {
         "packages" to "folder-packages",
         "plugins" to "folder-plugin",
         "public" to "folder-public",
+        "python" to "folder-python",
         "venv" to "folder-python",
         "resources" to "folder-resource",
         "routes" to "folder-routes",
