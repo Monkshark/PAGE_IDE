@@ -43,6 +43,8 @@ Compose에서는 `rememberLspRouter(workspaceRoot)`로 라우터를 워크스페
 
 문서 동기화는 `didOpen` · `didChange` · `didSave` · `didClose`로 흐른다. 타건마다 서버를 때리지 않도록 `didChange`는 250ms debounce로 묶는다. 그 위에 IDE 기능 전부가 요청으로 올라간다.
 
+서버가 진단을 돌려주는 속도는 언어마다 열 배 넘게 벌어진다. rust-analyzer는 수십 ms지만 sourcekit-lsp는 편집 한 번에 6초쯤 쓴다. 그동안 아무 표시가 없으면 느린 게 아니라 고장 난 것처럼 보이므로, 편집을 보낸 뒤 응답이 없으면 상태바에 `Analyzing…`을 띄운다. 다만 700ms를 기다린 뒤에 띄운다(`ANALYSIS_GRACE_MS`) — 빠른 서버에서는 한 번도 나타나지 않는다. `SlowAnalysisSignal`이 편집마다 토큰을 발급해, 뒤이은 편집이 앞의 것을 밀어내고 진단이 도착하면 대기를 끝낸다.
+
 | 기능 | 보강 |
 |---|---|
 | 완성(completion) | 결과 캐시 + 접두어 연장 재사용, 키워드·import 후보 병합, 접두어 정렬 |
