@@ -75,4 +75,29 @@ Where the server response alone is not enough, this layer augments it. `Completi
 
 ---
 
+## Measuring startup
+
+`LspStartupBench` times how long each language's server takes to come up. Point it at a directory holding one project per language and it picks each project's representative source file, resolves the backend, spawns it, and records the time to the `initialize` response.
+
+```
+./gradlew :page:app:test --tests 'page.app.LspStartupBench' --rerun-tasks -Dpage.lsp.bench=/path/to/lsp-bench -Dpage.lsp.bench.runs=2
+```
+
+Without `page.lsp.bench` it passes silently, printing how to use it.
+
+| Property | Meaning |
+|---|---|
+| `page.lsp.bench` | Root holding one project per language (absent means it does not run) |
+| `page.lsp.bench.only` | Comma-separated projects to measure |
+| `page.lsp.bench.install` | Installer ids to install first if missing |
+| `page.lsp.bench.runs` | Repeat count — 2 or more to see cold and warm together |
+| `page.lsp.bench.timeout` | Seconds to wait for `initialize` (default 180) |
+| `page.lsp.bench.out` | Report path (default `<root>/lsp-startup.txt`) |
+
+A project's language comes from its directory name; when no backend matches that name, it falls back to whichever backend most of the source files use. Config files such as `json` and `yaml` are left out of that vote.
+
+Repeating matters because of caches. solargraph, sourcekit-lsp, and the Dart Analysis Server build a type map or toolchain index on first start, so the first run and the second can differ by more than tenfold.
+
+---
+
 - [Back to index](https://monkshark.github.io/page-ide/#README_en.md)

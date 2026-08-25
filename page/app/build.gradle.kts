@@ -26,6 +26,16 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+    for (key in listOf(
+        "page.lsp.bench",
+        "page.lsp.bench.only",
+        "page.lsp.bench.install",
+        "page.lsp.bench.out",
+        "page.lsp.bench.runs",
+        "page.lsp.bench.timeout",
+    )) {
+        System.getProperty(key)?.let { systemProperty(key, it) }
+    }
 }
 
 val klsVersion = "1.3.13-page-4"
