@@ -115,10 +115,15 @@ class LspRouter(
         synchronized(this) { deleting -= id }
     }
 
-    @Synchronized
-    fun restartForExtensions(extensions: List<String>, reason: String) {
+    fun refreshForExtensions(extensions: List<String>, reason: String) {
+        val cold = mutableListOf<String>()
         for (id in backendIdsForExtensions(extensions)) {
-            controllers[id]?.restart(reason)
+            val running = controllers[id]
+            if (running != null) running.restart(reason) else cold += id
+        }
+        if (cold.isEmpty()) return
+        parentScope.launch(Dispatchers.IO) {
+            for (id in cold) if (prewarm(id)) println("[lsp] prewarming $id after $reason")
         }
     }
 
