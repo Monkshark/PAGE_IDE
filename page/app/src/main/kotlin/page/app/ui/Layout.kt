@@ -819,7 +819,7 @@ internal fun IdeMainLayout(
                 attempted = emptyList(),
                 onDismiss = { runtimeDialogOpen = null },
                 onInstalled = {
-                    lspRouter.restartForExtensions(def.extensions, "$runtimeDialogId installed")
+                    lspRouter.refreshForExtensions(def.extensions, "$runtimeDialogId installed")
                     runtimeScope.launch {
                         withContext(Dispatchers.IO) {
                             val (vers, srcs, bvs) = detectRuntimeVersionsWithSources(workspace.rootDir)

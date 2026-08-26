@@ -35,6 +35,8 @@ flowchart TB
 
 In Compose, `rememberLspRouter(workspaceRoot)` ties the router to the workspace lifetime. File renames are announced to the server via `notifyFilesRenamed`, and full restart and shutdown are also governed by the router. Diagnostics from multiple servers are merged into `allDiagnosticsByUri` so the editor reads them from one place.
 
+Two paths start a server ahead of time. `prewarmWorkspace` picks the language most of the workspace is written in and starts it on open; `refreshForExtensions` is called right after a toolchain is installed — it restarts controllers that are already up and **starts the ones that are not**. First-start cost varies wildly by language: solargraph spends ten seconds building its type map, sourcekit-lsp thirty seconds scanning the toolchain, and both drop under a second afterwards. Paying that while the install dialog is still up means the user does not pay it when they open their first file.
+
 ---
 
 ## LspController — per-server orchestration

@@ -35,6 +35,8 @@ flowchart TB
 
 Compose에서는 `rememberLspRouter(workspaceRoot)`로 라우터를 워크스페이스 수명에 묶는다. 파일 이름 변경은 `notifyFilesRenamed`로 서버에 알리고, 전체 재시작·종료도 라우터가 관장한다. 여러 서버의 진단은 `allDiagnosticsByUri`로 합쳐 에디터가 한곳에서 읽는다.
 
+서버를 미리 띄우는 경로가 둘 있다. `prewarmWorkspace`는 워크스페이스를 열 때 파일이 가장 많은 언어를 골라 먼저 띄우고, `refreshForExtensions`는 툴체인을 설치한 직후에 불린다 — 이미 떠 있는 컨트롤러는 재시작하고 **없으면 새로 띄운다**. 첫 기동 비용이 언어마다 크게 다르기 때문이다. solargraph는 첫 실행에 타입맵을 만드느라 10초, sourcekit-lsp는 툴체인을 훑느라 30초를 쓰고 두 번째부터는 1초 아래로 떨어진다. 설치 직후에 그 비용을 먹어두면 사용자가 나중에 첫 파일을 열 때 기다리지 않는다.
+
 ---
 
 ## LspController — 서버별 오케스트레이션
