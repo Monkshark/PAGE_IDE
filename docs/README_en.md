@@ -57,6 +57,7 @@ Build the viewer with `node build_viewer.js` to produce `index.html`, which open
 - [GlassTheme](https://monkshark.github.io/page-ide/#internals/ui/glass_theme_en.md) — Glass design tokens / `MaterialTheme` application
 - [EditorFonts](https://monkshark.github.io/page-ide/#internals/ui/editor_fonts_en.md) — Body font family
 - [SyntaxColors](https://monkshark.github.io/page-ide/#internals/ui/syntax_colors_en.md) — Syntax palette
+- [Testing composables](https://monkshark.github.io/page-ide/#internals/ui/ui_testing_en.md) — driving UI with pointer and key events, no window
 
 ### app module
 - [Main](https://monkshark.github.io/page-ide/#internals/app/main_en.md) — `application` entry point + window state

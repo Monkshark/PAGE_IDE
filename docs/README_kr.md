@@ -57,6 +57,7 @@ PAGE IDE의 공개 문서 진입점. 이 페이지는 목차 역할만 한다. �
 - [GlassTheme](https://monkshark.github.io/page-ide/#internals/ui/glass_theme.md) — Glass 디자인 토큰 / `MaterialTheme` 적용
 - [EditorFonts](https://monkshark.github.io/page-ide/#internals/ui/editor_fonts.md) — 본문 폰트 패밀리
 - [SyntaxColors](https://monkshark.github.io/page-ide/#internals/ui/syntax_colors.md) — 신택스 팔레트
+- [컴포저블 테스트](https://monkshark.github.io/page-ide/#internals/ui/ui_testing.md) — 창 없이 포인터·키 이벤트로 UI 확인
 
 ### app 모듈
 - [Main](https://monkshark.github.io/page-ide/#internals/app/main.md) — `application` 진입점 + 윈도우 상태
