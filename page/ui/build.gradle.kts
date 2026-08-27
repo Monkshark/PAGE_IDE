@@ -13,6 +13,7 @@ dependencies {
     api(compose.materialIconsExtended)
     implementation("net.java.dev.jna:jna:5.14.0")
     testImplementation(kotlin("test"))
+    testImplementation(compose.desktop.uiTestJUnit4)
 }
 
 tasks.test {
