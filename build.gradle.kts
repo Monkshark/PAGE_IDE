@@ -15,5 +15,11 @@ subprojects {
         extensions.configure<org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension> {
             jvmToolchain(21)
         }
+        plugins.withId("org.jetbrains.compose") {
+            val compose = extensions.getByType<org.jetbrains.compose.ComposeExtension>()
+            dependencies {
+                add("testImplementation", compose.dependencies.desktop.uiTestJUnit4)
+            }
+        }
     }
 }
