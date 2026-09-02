@@ -1,11 +1,39 @@
 {
-  "updatedAt": "2026-09-01T08:48:25.956Z",
+  "updatedAt": "2026-09-02T08:01:15.601Z",
   "owner": "clangd",
   "repo": "clangd",
   "releases": [
     {
       "tag": "22.1.6",
       "publishedAt": "2026-05-28T23:49:24Z"
+    },
+    {
+      "tag": "snapshot_20260902",
+      "publishedAt": "2026-09-02T06:57:31Z"
+    },
+    {
+      "tag": "snapshot_20260830",
+      "publishedAt": "2026-09-02T02:53:28Z"
+    },
+    {
+      "tag": "snapshot_20260823",
+      "publishedAt": "2026-09-02T02:53:25Z"
+    },
+    {
+      "tag": "snapshot_20260816",
+      "publishedAt": "2026-09-02T02:53:21Z"
+    },
+    {
+      "tag": "snapshot_20260809",
+      "publishedAt": "2026-09-02T02:53:17Z"
+    },
+    {
+      "tag": "snapshot_20260802",
+      "publishedAt": "2026-09-02T02:53:12Z"
+    },
+    {
+      "tag": "snapshot_20260726",
+      "publishedAt": "2026-09-02T02:53:06Z"
     },
     {
       "tag": "snapshot_20260712",
@@ -22,6 +50,14 @@
     {
       "tag": "snapshot_20260614",
       "publishedAt": "2026-06-15T01:50:16Z"
+    },
+    {
+      "tag": "snapshot_20260607",
+      "publishedAt": "2026-09-02T02:50:41Z"
+    },
+    {
+      "tag": "snapshot_20260531",
+      "publishedAt": "2026-09-02T02:50:24Z"
     },
     {
       "tag": "22.1.0",
@@ -166,42 +202,6 @@
     {
       "tag": "20.1.8",
       "publishedAt": "2025-07-11T05:52:36Z"
-    },
-    {
-      "tag": "snapshot_20251005",
-      "publishedAt": "2025-10-07T21:16:26Z"
-    },
-    {
-      "tag": "snapshot_20250928",
-      "publishedAt": "2025-09-28T23:26:51Z"
-    },
-    {
-      "tag": "snapshot_20250921",
-      "publishedAt": "2025-09-28T23:25:54Z"
-    },
-    {
-      "tag": "snapshot_20250914",
-      "publishedAt": "2025-09-16T21:00:52Z"
-    },
-    {
-      "tag": "snapshot_20250907",
-      "publishedAt": "2025-09-08T00:21:58Z"
-    },
-    {
-      "tag": "snapshot_20250831",
-      "publishedAt": "2025-09-01T00:15:10Z"
-    },
-    {
-      "tag": "snapshot_20250824",
-      "publishedAt": "2025-08-24T23:53:56Z"
-    },
-    {
-      "tag": "snapshot_20250817",
-      "publishedAt": "2025-08-24T00:39:22Z"
-    },
-    {
-      "tag": "snapshot_20250810",
-      "publishedAt": "2025-08-11T00:52:39Z"
     }
   ]
 }
