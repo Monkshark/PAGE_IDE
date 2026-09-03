@@ -1,6 +1,207 @@
 {
-  "updatedAt": "2026-09-03T08:24:40.798Z",
+  "updatedAt": "2026-09-03T12:54:38.677Z",
   "packageName": "intelephense",
   "latest": "1.18.5",
-  "versions": []
+  "versions": [
+    {
+      "version": "1.18.5",
+      "publishedAt": "2026-06-21T00:34:29.122Z"
+    },
+    {
+      "version": "1.18.4",
+      "publishedAt": "2026-05-25T21:02:00.208Z"
+    },
+    {
+      "version": "1.18.3",
+      "publishedAt": "2026-05-17T06:32:30.784Z"
+    },
+    {
+      "version": "1.18.2",
+      "publishedAt": "2026-05-02T04:39:02.356Z"
+    },
+    {
+      "version": "1.18.1",
+      "publishedAt": "2026-05-01T05:45:22.149Z"
+    },
+    {
+      "version": "1.18.0",
+      "publishedAt": "2026-04-28T02:21:00.134Z"
+    },
+    {
+      "version": "1.17.7-beta",
+      "publishedAt": "2026-04-20T02:24:53.324Z"
+    },
+    {
+      "version": "1.17.6-beta",
+      "publishedAt": "2026-04-19T03:13:48.680Z"
+    },
+    {
+      "version": "1.17.5-beta",
+      "publishedAt": "2026-04-08T03:55:50.710Z"
+    },
+    {
+      "version": "1.17.4-beta",
+      "publishedAt": "2026-03-23T03:59:34.774Z"
+    },
+    {
+      "version": "1.17.3-beta",
+      "publishedAt": "2026-03-04T03:14:19.790Z"
+    },
+    {
+      "version": "1.17.2-beta",
+      "publishedAt": "2026-02-23T02:33:29.214Z"
+    },
+    {
+      "version": "1.17.1-beta",
+      "publishedAt": "2026-02-18T02:16:42.719Z"
+    },
+    {
+      "version": "1.17.0-beta",
+      "publishedAt": "2026-02-09T00:31:29.846Z"
+    },
+    {
+      "version": "1.16.5",
+      "publishedAt": "2026-02-01T23:48:16.152Z"
+    },
+    {
+      "version": "1.16.4",
+      "publishedAt": "2026-01-16T03:32:25.374Z"
+    },
+    {
+      "version": "1.16.3",
+      "publishedAt": "2025-12-08T03:26:32.920Z"
+    },
+    {
+      "version": "1.16.2",
+      "publishedAt": "2025-11-27T04:00:11.141Z"
+    },
+    {
+      "version": "1.16.1",
+      "publishedAt": "2025-11-22T04:31:20.076Z"
+    },
+    {
+      "version": "1.16.0",
+      "publishedAt": "2025-11-20T02:48:32.030Z"
+    },
+    {
+      "version": "1.15.3",
+      "publishedAt": "2025-11-17T05:11:38.590Z"
+    },
+    {
+      "version": "1.15.2",
+      "publishedAt": "2025-11-13T05:52:48.679Z"
+    },
+    {
+      "version": "1.15.1",
+      "publishedAt": "2025-11-12T07:02:02.812Z"
+    },
+    {
+      "version": "1.15.0-beta.1",
+      "publishedAt": "2025-11-10T23:54:56.471Z"
+    },
+    {
+      "version": "1.14.4",
+      "publishedAt": "2025-04-01T02:46:19.845Z"
+    },
+    {
+      "version": "1.14.3",
+      "publishedAt": "2025-03-04T00:00:23.740Z"
+    },
+    {
+      "version": "1.14.2",
+      "publishedAt": "2025-03-01T05:09:01.472Z"
+    },
+    {
+      "version": "1.14.1",
+      "publishedAt": "2025-02-28T06:18:47.591Z"
+    },
+    {
+      "version": "1.14.0",
+      "publishedAt": "2025-02-28T00:23:29.498Z"
+    },
+    {
+      "version": "1.13.1-beta.1",
+      "publishedAt": "2024-12-29T23:55:31.558Z"
+    },
+    {
+      "version": "1.13.0-beta.1",
+      "publishedAt": "2024-12-16T23:13:46.986Z"
+    },
+    {
+      "version": "1.12.6",
+      "publishedAt": "2024-09-09T03:07:23.016Z"
+    },
+    {
+      "version": "1.12.5",
+      "publishedAt": "2024-08-29T02:55:58.670Z"
+    },
+    {
+      "version": "1.12.4",
+      "publishedAt": "2024-08-19T00:28:04.362Z"
+    },
+    {
+      "version": "1.12.3",
+      "publishedAt": "2024-08-13T06:13:51.541Z"
+    },
+    {
+      "version": "1.12.2",
+      "publishedAt": "2024-08-08T09:20:37.165Z"
+    },
+    {
+      "version": "1.12.1",
+      "publishedAt": "2024-08-08T06:42:10.337Z"
+    },
+    {
+      "version": "1.12.0",
+      "publishedAt": "2024-08-08T06:05:11.519Z"
+    },
+    {
+      "version": "1.11.8",
+      "publishedAt": "2024-08-01T01:53:27.793Z"
+    },
+    {
+      "version": "1.11.7",
+      "publishedAt": "2024-07-30T08:35:52.326Z"
+    },
+    {
+      "version": "1.11.6",
+      "publishedAt": "2024-07-29T01:40:25.525Z"
+    },
+    {
+      "version": "1.11.5",
+      "publishedAt": "2024-07-07T03:31:14.055Z"
+    },
+    {
+      "version": "1.11.4",
+      "publishedAt": "2024-07-04T03:10:13.455Z"
+    },
+    {
+      "version": "1.11.3",
+      "publishedAt": "2024-07-04T02:18:38.937Z"
+    },
+    {
+      "version": "1.11.2",
+      "publishedAt": "2024-07-03T09:18:56.499Z"
+    },
+    {
+      "version": "1.11.1",
+      "publishedAt": "2024-07-02T03:49:31.439Z"
+    },
+    {
+      "version": "1.11.0",
+      "publishedAt": "2024-06-29T07:36:46.793Z"
+    },
+    {
+      "version": "1.10.4",
+      "publishedAt": "2024-03-26T01:28:12.406Z"
+    },
+    {
+      "version": "1.10.3",
+      "publishedAt": "2024-03-25T00:54:29.960Z"
+    },
+    {
+      "version": "1.10.2",
+      "publishedAt": "2023-12-10T10:23:03.983Z"
+    }
+  ]
 }

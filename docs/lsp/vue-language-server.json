@@ -1,6 +1,207 @@
 {
-  "updatedAt": "2026-09-03T08:24:40.584Z",
+  "updatedAt": "2026-09-03T12:54:38.538Z",
   "packageName": "@vue/language-server",
   "latest": "3.3.11",
-  "versions": []
+  "versions": [
+    {
+      "version": "3.3.11",
+      "publishedAt": "2026-08-21T10:06:32.008Z"
+    },
+    {
+      "version": "3.3.10",
+      "publishedAt": "2026-08-15T05:16:45.606Z"
+    },
+    {
+      "version": "3.3.9",
+      "publishedAt": "2026-07-31T07:20:31.814Z"
+    },
+    {
+      "version": "3.3.8",
+      "publishedAt": "2026-07-22T15:54:40.861Z"
+    },
+    {
+      "version": "3.3.7",
+      "publishedAt": "2026-07-08T03:45:11.200Z"
+    },
+    {
+      "version": "3.3.6",
+      "publishedAt": "2026-06-30T14:47:28.200Z"
+    },
+    {
+      "version": "3.3.5",
+      "publishedAt": "2026-06-13T06:19:07.001Z"
+    },
+    {
+      "version": "3.0.11",
+      "publishedAt": "2026-06-08T04:26:58.714Z"
+    },
+    {
+      "version": "3.3.4",
+      "publishedAt": "2026-06-08T03:49:49.786Z"
+    },
+    {
+      "version": "3.3.3",
+      "publishedAt": "2026-05-30T10:01:42.223Z"
+    },
+    {
+      "version": "3.3.2",
+      "publishedAt": "2026-05-25T14:34:46.391Z"
+    },
+    {
+      "version": "3.3.1",
+      "publishedAt": "2026-05-19T14:47:15.160Z"
+    },
+    {
+      "version": "3.3.0",
+      "publishedAt": "2026-05-18T11:39:06.762Z"
+    },
+    {
+      "version": "3.2.9",
+      "publishedAt": "2026-05-13T16:55:36.365Z"
+    },
+    {
+      "version": "3.2.8",
+      "publishedAt": "2026-05-04T08:29:52.408Z"
+    },
+    {
+      "version": "3.2.7",
+      "publishedAt": "2026-04-19T09:57:27.935Z"
+    },
+    {
+      "version": "3.2.6",
+      "publishedAt": "2026-03-17T10:33:23.617Z"
+    },
+    {
+      "version": "3.2.5",
+      "publishedAt": "2026-02-21T05:05:27.442Z"
+    },
+    {
+      "version": "3.2.4",
+      "publishedAt": "2026-01-26T03:48:59.605Z"
+    },
+    {
+      "version": "3.2.3",
+      "publishedAt": "2026-01-23T03:03:16.408Z"
+    },
+    {
+      "version": "3.2.2",
+      "publishedAt": "2026-01-05T19:54:46.623Z"
+    },
+    {
+      "version": "3.2.1",
+      "publishedAt": "2025-12-22T03:19:51.932Z"
+    },
+    {
+      "version": "3.2.0",
+      "publishedAt": "2025-12-20T14:03:33.035Z"
+    },
+    {
+      "version": "3.1.8",
+      "publishedAt": "2025-12-09T02:38:11.417Z"
+    },
+    {
+      "version": "3.1.7",
+      "publishedAt": "2025-12-07T17:58:30.426Z"
+    },
+    {
+      "version": "3.1.6",
+      "publishedAt": "2025-12-05T23:06:18.334Z"
+    },
+    {
+      "version": "3.1.5",
+      "publishedAt": "2025-11-22T19:57:18.584Z"
+    },
+    {
+      "version": "3.1.4",
+      "publishedAt": "2025-11-15T17:48:53.587Z"
+    },
+    {
+      "version": "3.1.3",
+      "publishedAt": "2025-11-03T02:19:07.488Z"
+    },
+    {
+      "version": "3.1.2",
+      "publishedAt": "2025-10-25T01:46:20.418Z"
+    },
+    {
+      "version": "3.0.10",
+      "publishedAt": "2025-10-25T01:36:40.264Z"
+    },
+    {
+      "version": "3.0.9",
+      "publishedAt": "2025-10-07T10:30:54.437Z"
+    },
+    {
+      "version": "3.1.1",
+      "publishedAt": "2025-10-06T16:15:00.421Z"
+    },
+    {
+      "version": "3.1.0",
+      "publishedAt": "2025-09-28T13:59:47.793Z"
+    },
+    {
+      "version": "3.0.8",
+      "publishedAt": "2025-09-22T16:35:44.066Z"
+    },
+    {
+      "version": "3.1.0-alpha.0",
+      "publishedAt": "2025-09-12T15:30:38.762Z"
+    },
+    {
+      "version": "3.0.7",
+      "publishedAt": "2025-09-12T07:45:07.928Z"
+    },
+    {
+      "version": "3.0.7-alpha.1",
+      "publishedAt": "2025-09-04T10:20:19.572Z"
+    },
+    {
+      "version": "3.0.7-alpha.0",
+      "publishedAt": "2025-09-04T10:06:18.183Z"
+    },
+    {
+      "version": "3.0.6",
+      "publishedAt": "2025-08-20T14:53:49.906Z"
+    },
+    {
+      "version": "3.0.5",
+      "publishedAt": "2025-08-01T16:20:32.823Z"
+    },
+    {
+      "version": "3.0.4",
+      "publishedAt": "2025-07-24T17:52:23.232Z"
+    },
+    {
+      "version": "3.0.3",
+      "publishedAt": "2025-07-18T15:02:44.252Z"
+    },
+    {
+      "version": "3.0.2",
+      "publishedAt": "2025-07-17T17:38:34.300Z"
+    },
+    {
+      "version": "3.0.1",
+      "publishedAt": "2025-07-02T12:07:21.365Z"
+    },
+    {
+      "version": "2.2.12",
+      "publishedAt": "2025-07-02T00:57:23.194Z"
+    },
+    {
+      "version": "3.0.0",
+      "publishedAt": "2025-07-01T15:27:04.838Z"
+    },
+    {
+      "version": "3.0.0-beta.5",
+      "publishedAt": "2025-06-27T18:07:41.511Z"
+    },
+    {
+      "version": "3.0.0-beta.4",
+      "publishedAt": "2025-06-25T13:36:24.857Z"
+    },
+    {
+      "version": "3.0.0-beta.3",
+      "publishedAt": "2025-06-22T09:58:39.609Z"
+    }
+  ]
 }
