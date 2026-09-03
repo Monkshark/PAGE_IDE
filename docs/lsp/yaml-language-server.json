@@ -1,6 +1,207 @@
 {
-  "updatedAt": "2026-09-03T08:24:40.065Z",
+  "updatedAt": "2026-09-03T12:54:38.260Z",
   "packageName": "yaml-language-server",
   "latest": "1.24.0",
-  "versions": []
+  "versions": [
+    {
+      "version": "1.25.1-f6e2e8e.0",
+      "publishedAt": "2026-08-31T14:47:57.328Z"
+    },
+    {
+      "version": "1.25.1-22b1816.0",
+      "publishedAt": "2026-08-19T15:41:07.439Z"
+    },
+    {
+      "version": "1.25.1-316c223.0",
+      "publishedAt": "2026-08-18T19:11:25.525Z"
+    },
+    {
+      "version": "1.25.1-30e7275.0",
+      "publishedAt": "2026-08-13T20:57:42.754Z"
+    },
+    {
+      "version": "1.25.1-d399eb9.0",
+      "publishedAt": "2026-08-06T22:51:58.376Z"
+    },
+    {
+      "version": "1.25.1-5922b6c.0",
+      "publishedAt": "2026-08-05T19:16:06.506Z"
+    },
+    {
+      "version": "1.25.1-538c8ab.0",
+      "publishedAt": "2026-07-31T20:57:56.863Z"
+    },
+    {
+      "version": "1.25.1-2b95f5a.0",
+      "publishedAt": "2026-07-31T13:15:41.266Z"
+    },
+    {
+      "version": "1.25.1-8073101.0",
+      "publishedAt": "2026-07-29T15:47:22.174Z"
+    },
+    {
+      "version": "1.25.1-921f86c.0",
+      "publishedAt": "2026-07-23T19:26:49.167Z"
+    },
+    {
+      "version": "1.25.1-221168d.0",
+      "publishedAt": "2026-07-23T15:57:12.007Z"
+    },
+    {
+      "version": "1.25.1-1541b7d.0",
+      "publishedAt": "2026-07-20T17:35:18.192Z"
+    },
+    {
+      "version": "1.25.1-aee4e21.0",
+      "publishedAt": "2026-07-17T17:53:48.065Z"
+    },
+    {
+      "version": "1.25.1-b842d99.0",
+      "publishedAt": "2026-07-14T18:40:18.628Z"
+    },
+    {
+      "version": "1.25.1-c1a439e.0",
+      "publishedAt": "2026-07-07T20:23:01.207Z"
+    },
+    {
+      "version": "1.24.0",
+      "publishedAt": "2026-07-07T20:01:54.754Z"
+    },
+    {
+      "version": "1.24.1-95ef21b.0",
+      "publishedAt": "2026-07-07T19:35:19.699Z"
+    },
+    {
+      "version": "1.24.1-fce7e79.0",
+      "publishedAt": "2026-05-19T20:52:05.309Z"
+    },
+    {
+      "version": "1.24.1-3ef7419.0",
+      "publishedAt": "2026-05-19T16:40:39.418Z"
+    },
+    {
+      "version": "1.24.1-ff2c8ea.0",
+      "publishedAt": "2026-05-15T13:26:13.682Z"
+    },
+    {
+      "version": "1.24.1-c9ce086.0",
+      "publishedAt": "2026-05-13T19:26:45.036Z"
+    },
+    {
+      "version": "1.24.1-e3076ac.0",
+      "publishedAt": "2026-05-11T12:48:49.403Z"
+    },
+    {
+      "version": "1.24.1-48d6f57.0",
+      "publishedAt": "2026-05-07T20:16:06.539Z"
+    },
+    {
+      "version": "1.23.0",
+      "publishedAt": "2026-05-07T19:27:59.127Z"
+    },
+    {
+      "version": "1.23.1-558f181.0",
+      "publishedAt": "2026-05-07T18:56:17.606Z"
+    },
+    {
+      "version": "1.23.1-d2eedcc.0",
+      "publishedAt": "2026-05-01T20:02:45.864Z"
+    },
+    {
+      "version": "1.23.1-27218d4.0",
+      "publishedAt": "2026-05-01T13:45:11.671Z"
+    },
+    {
+      "version": "1.23.1-46328b6.0",
+      "publishedAt": "2026-04-30T15:52:09.347Z"
+    },
+    {
+      "version": "1.23.1-af6fabb.0",
+      "publishedAt": "2026-04-30T15:18:48.909Z"
+    },
+    {
+      "version": "1.23.1-58b628b.0",
+      "publishedAt": "2026-04-29T19:41:20.465Z"
+    },
+    {
+      "version": "1.23.1-35d8e53.0",
+      "publishedAt": "2026-04-29T19:22:37.183Z"
+    },
+    {
+      "version": "1.23.1-cd3cba0.0",
+      "publishedAt": "2026-04-23T20:35:17.576Z"
+    },
+    {
+      "version": "1.23.1-93b9e72.0",
+      "publishedAt": "2026-04-22T22:12:42.785Z"
+    },
+    {
+      "version": "1.23.1-3904d0a.0",
+      "publishedAt": "2026-04-17T15:21:43.969Z"
+    },
+    {
+      "version": "1.23.1-d0b52a8.0",
+      "publishedAt": "2026-04-16T20:35:51.350Z"
+    },
+    {
+      "version": "1.22.0",
+      "publishedAt": "2026-04-16T20:08:34.029Z"
+    },
+    {
+      "version": "1.22.1-970952c.0",
+      "publishedAt": "2026-04-16T20:07:36.634Z"
+    },
+    {
+      "version": "1.22.1-d11461a.0",
+      "publishedAt": "2026-04-15T15:48:51.278Z"
+    },
+    {
+      "version": "1.22.1-f7ea162.0",
+      "publishedAt": "2026-04-15T14:40:26.800Z"
+    },
+    {
+      "version": "1.22.1-0ae5603.0",
+      "publishedAt": "2026-04-10T12:54:39.883Z"
+    },
+    {
+      "version": "1.22.1-6c5ee05.0",
+      "publishedAt": "2026-04-09T13:54:32.927Z"
+    },
+    {
+      "version": "1.22.1-5007fd5.0",
+      "publishedAt": "2026-04-08T18:48:23.537Z"
+    },
+    {
+      "version": "1.22.1-7c1ba50.0",
+      "publishedAt": "2026-04-02T21:12:49.893Z"
+    },
+    {
+      "version": "1.22.1-22d01b4.0",
+      "publishedAt": "2026-03-27T20:14:40.543Z"
+    },
+    {
+      "version": "1.22.1-577a456.0",
+      "publishedAt": "2026-03-26T16:40:05.017Z"
+    },
+    {
+      "version": "1.22.1-b73cfd8.0",
+      "publishedAt": "2026-03-26T12:54:54.420Z"
+    },
+    {
+      "version": "1.22.1-8465a4b.0",
+      "publishedAt": "2026-03-23T12:45:07.794Z"
+    },
+    {
+      "version": "1.22.1-b6f8873.0",
+      "publishedAt": "2026-03-20T21:15:56.002Z"
+    },
+    {
+      "version": "1.22.1-37a7b17.0",
+      "publishedAt": "2026-03-12T21:16:11.544Z"
+    },
+    {
+      "version": "1.22.1-d9f5349.0",
+      "publishedAt": "2026-03-12T16:01:05.635Z"
+    }
+  ]
 }

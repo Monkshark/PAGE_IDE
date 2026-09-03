@@ -1,6 +1,207 @@
 {
-  "updatedAt": "2026-09-03T08:24:40.172Z",
+  "updatedAt": "2026-09-03T12:54:38.288Z",
   "packageName": "bash-language-server",
   "latest": "5.6.0",
-  "versions": []
+  "versions": [
+    {
+      "version": "5.6.0",
+      "publishedAt": "2025-04-13T21:25:27.098Z"
+    },
+    {
+      "version": "5.5.0",
+      "publishedAt": "2025-04-13T20:24:35.907Z"
+    },
+    {
+      "version": "5.4.3",
+      "publishedAt": "2025-01-02T23:18:49.485Z"
+    },
+    {
+      "version": "5.4.2",
+      "publishedAt": "2024-09-25T21:35:21.082Z"
+    },
+    {
+      "version": "5.4.1",
+      "publishedAt": "2024-09-25T21:28:28.512Z"
+    },
+    {
+      "version": "5.4.0",
+      "publishedAt": "2024-06-10T06:56:11.750Z"
+    },
+    {
+      "version": "5.3.4",
+      "publishedAt": "2024-06-02T20:10:22.221Z"
+    },
+    {
+      "version": "5.3.3",
+      "publishedAt": "2024-05-15T14:33:42.661Z"
+    },
+    {
+      "version": "5.3.2",
+      "publishedAt": "2024-05-15T06:23:50.796Z"
+    },
+    {
+      "version": "5.3.1",
+      "publishedAt": "2024-05-13T13:05:16.961Z"
+    },
+    {
+      "version": "5.2.0",
+      "publishedAt": "2024-04-23T20:07:08.850Z"
+    },
+    {
+      "version": "5.1.2",
+      "publishedAt": "2024-01-12T07:44:53.523Z"
+    },
+    {
+      "version": "5.1.1",
+      "publishedAt": "2023-12-27T12:33:27.233Z"
+    },
+    {
+      "version": "5.1.0",
+      "publishedAt": "2023-12-27T12:29:03.159Z"
+    },
+    {
+      "version": "5.0.0",
+      "publishedAt": "2023-07-15T20:00:22.861Z"
+    },
+    {
+      "version": "5.0.0-rc2",
+      "publishedAt": "2023-07-15T19:55:33.210Z"
+    },
+    {
+      "version": "5.0.0-rc1",
+      "publishedAt": "2023-07-15T19:29:13.654Z"
+    },
+    {
+      "version": "4.10.3",
+      "publishedAt": "2023-07-15T19:07:33.515Z"
+    },
+    {
+      "version": "4.10.2",
+      "publishedAt": "2023-07-13T10:07:53.374Z"
+    },
+    {
+      "version": "4.10.1",
+      "publishedAt": "2023-06-27T05:33:05.050Z"
+    },
+    {
+      "version": "4.10.0",
+      "publishedAt": "2023-06-10T21:36:26.968Z"
+    },
+    {
+      "version": "4.9.3",
+      "publishedAt": "2023-06-10T20:49:41.437Z"
+    },
+    {
+      "version": "4.9.2",
+      "publishedAt": "2023-05-14T20:45:16.938Z"
+    },
+    {
+      "version": "4.9.1",
+      "publishedAt": "2023-04-11T06:44:47.268Z"
+    },
+    {
+      "version": "4.9.0",
+      "publishedAt": "2023-04-02T06:12:39.563Z"
+    },
+    {
+      "version": "4.8.4",
+      "publishedAt": "2023-03-24T21:35:18.471Z"
+    },
+    {
+      "version": "4.8.3",
+      "publishedAt": "2023-03-09T19:39:13.151Z"
+    },
+    {
+      "version": "4.8.2",
+      "publishedAt": "2023-03-05T20:20:17.725Z"
+    },
+    {
+      "version": "4.8.1",
+      "publishedAt": "2023-03-04T11:09:38.980Z"
+    },
+    {
+      "version": "4.8.0",
+      "publishedAt": "2023-03-04T10:47:47.343Z"
+    },
+    {
+      "version": "4.7.0",
+      "publishedAt": "2023-02-09T08:40:24.169Z"
+    },
+    {
+      "version": "4.6.2",
+      "publishedAt": "2023-02-01T20:54:06.327Z"
+    },
+    {
+      "version": "4.6.1",
+      "publishedAt": "2023-01-27T09:33:28.556Z"
+    },
+    {
+      "version": "4.6.0",
+      "publishedAt": "2023-01-26T09:32:12.310Z"
+    },
+    {
+      "version": "4.5.5",
+      "publishedAt": "2023-01-26T09:06:26.419Z"
+    },
+    {
+      "version": "4.5.4",
+      "publishedAt": "2023-01-25T10:53:09.116Z"
+    },
+    {
+      "version": "4.5.3",
+      "publishedAt": "2023-01-24T21:46:22.770Z"
+    },
+    {
+      "version": "4.5.2",
+      "publishedAt": "2023-01-23T09:02:45.731Z"
+    },
+    {
+      "version": "4.5.1",
+      "publishedAt": "2023-01-18T09:45:55.305Z"
+    },
+    {
+      "version": "4.5.0",
+      "publishedAt": "2023-01-17T09:30:38.561Z"
+    },
+    {
+      "version": "4.4.0",
+      "publishedAt": "2023-01-10T21:15:17.343Z"
+    },
+    {
+      "version": "4.3.2",
+      "publishedAt": "2023-01-10T12:36:02.314Z"
+    },
+    {
+      "version": "4.3.0",
+      "publishedAt": "2023-01-10T09:17:57.262Z"
+    },
+    {
+      "version": "4.2.5",
+      "publishedAt": "2023-01-06T23:19:08.739Z"
+    },
+    {
+      "version": "4.2.4",
+      "publishedAt": "2023-01-05T08:46:28.580Z"
+    },
+    {
+      "version": "4.2.3",
+      "publishedAt": "2023-01-05T08:40:18.465Z"
+    },
+    {
+      "version": "4.2.2",
+      "publishedAt": "2023-01-04T20:42:05.404Z"
+    },
+    {
+      "version": "4.2.1",
+      "publishedAt": "2023-01-02T20:41:16.093Z"
+    },
+    {
+      "version": "4.2.0",
+      "publishedAt": "2023-01-02T19:27:31.454Z"
+    },
+    {
+      "version": "4.1.3",
+      "publishedAt": "2022-12-20T08:44:56.041Z"
+    }
+  ]
 }
