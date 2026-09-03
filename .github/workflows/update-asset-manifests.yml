@@ -97,7 +97,10 @@ jobs:
           committer: Huido Choo <justinchoo0814@gmail.com>
           branch: ci/asset-manifest-refresh
           delete-branch: true
-          commit-message: "page-ide-assets 자산 + Adoptium JDK 매니페스트 자동 갱신"
+          commit-message: |
+            page-ide-assets 자산 + Adoptium JDK 매니페스트 자동 갱신
+
+            Co-authored-by: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
           title: "page-ide-assets 자산 + Adoptium JDK 매니페스트 자동 갱신"
           labels: |
             automation
