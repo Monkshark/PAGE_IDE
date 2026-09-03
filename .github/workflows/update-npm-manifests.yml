@@ -39,11 +39,13 @@ jobs:
             async function fetchPackument(pkg) {
               const url = `https://registry.npmjs.org/${pkg.replace('/', '%2F')}`;
               const res = await fetch(url, {
-                headers: { 'accept': 'application/vnd.npm.install-v1+json' },
+                headers: { 'accept': 'application/json' },
               });
               if (!res.ok) throw new Error(`${pkg}: HTTP ${res.status}`);
               return res.json();
             }
+
+            const VERSION_LIMIT = 50;
 
             function toVersionList(packument) {
               const time = packument.time ?? {};
@@ -51,7 +53,8 @@ jobs:
               return versions
                 .map(v => ({ version: v, publishedAt: time[v] ?? null }))
                 .filter(v => v.publishedAt)
-                .sort((a, b) => (b.publishedAt ?? '').localeCompare(a.publishedAt ?? ''));
+                .sort((a, b) => (b.publishedAt ?? '').localeCompare(a.publishedAt ?? ''))
+                .slice(0, VERSION_LIMIT);
             }
 
             const failed = [];
@@ -76,6 +79,14 @@ jobs:
             }
             if (failed.length === packages.length) {
               core.setFailed('all npm fetches failed:\n' + failed.join('\n'));
+            }
+            const empty = packages.filter(t => {
+              const file = path.join('docs', 'lsp', `${t.slug}.json`);
+              if (!fs.existsSync(file)) return false;
+              return (JSON.parse(fs.readFileSync(file, 'utf8')).versions ?? []).length === 0;
+            });
+            if (empty.length === packages.length) {
+              core.setFailed('every manifest came out with an empty version list');
             }
 
       - name: Create pull request
